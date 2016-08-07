@@ -1,0 +1,30 @@
+{% if project %}
+    <h1>{{ project.title }}</h1>
+
+    <div>{{ project.division.short_description }}</div>
+    <div>{{ project.category.short_description }} - {{ project.subcategory.short_description }}</div>
+
+    {% if student_list %}
+        {% for student in student_list %}
+            <ul>
+                <li>{{ student.first_name }} {{ student.last_name }} - {{ student.teacher.school.name }}</li>
+            </ul>
+        {% endfor %}
+    {% endif %}
+
+    {% if judge_list %}
+        {% for judge in judge_list %}
+            <ul>
+                <li>
+                    <a href="{% url 'fair_projects:judge_detail' judge.user.id %}" >
+                        {{ judge.user.first_name }} {{ judge.user.last_name }}
+                    </a>
+                </li>
+            </ul>
+        {% endfor %}
+    {% endif %}
+
+    <div>{{ project.abstract }}</div>
+{% else %}
+    No project
+{% endif %}
