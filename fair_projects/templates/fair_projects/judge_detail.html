@@ -6,7 +6,7 @@
         {% for project in project_list %}
             <ul>
                 <li>
-                    <a href="{% url 'fair_projects:detail' project.id %}" >{{ project.title }}</a>
+                    <a href="{% url 'fair_projects:detail' project.number %}" >{{ project.number }} - {{ project.title }}</a>
                     {{ project.division.short_description }}
                     {{ project.subcategory.short_description }}
                 </li>

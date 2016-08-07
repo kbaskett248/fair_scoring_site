@@ -15,13 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 def index(request):
-    project_list = Project.objects.order_by('title')
+    project_list = Project.objects.order_by('number', 'title')
     context = { 'project_list': project_list }
     return render(request, 'fair_projects/index.html', context)
 
-def detail(request, project_id):
-    project = get_object_or_404(Project, pk=project_id)
-    student_list = Student.objects.filter(project=project_id)
+def detail(request, project_number):
+    project = get_object_or_404(Project, number=project_number)
+    student_list = Student.objects.filter(project=project)
     judge_instances = JudgingInstance.objects.filter(project=project)
     judge_list = [ji.judge for ji in judge_instances]
 

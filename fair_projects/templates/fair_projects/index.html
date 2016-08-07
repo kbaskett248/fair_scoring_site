@@ -1,7 +1,8 @@
+<h1>Projects</h1>
 {% if project_list %}
     <ul>
     {% for project in project_list %}
-        <li><a href="{% url 'fair_projects:detail' project.id %}">{{ project.title }}</a></li>
+        <li><a href="{% url 'fair_projects:detail' project.number %}">{{ project.number }} - {{ project.title }}</a></li>
     {% endfor %}
     </ul>
 {% else %}
