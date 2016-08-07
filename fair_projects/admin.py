@@ -11,7 +11,7 @@ class StudentInline(admin.StackedInline):
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     model = Project
-    list_display = ('title', 'category', 'division')
+    list_display = ('number', 'title', 'category', 'division')
     list_filter = ('category', 'division')
     inlines = (StudentInline, )
 

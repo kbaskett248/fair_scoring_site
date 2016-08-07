@@ -1,7 +1,12 @@
-<h1>Import Projects</h1>
-<h2>Upload File</h2>
-<form action="/projects/import/" method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Submit" />
-</form>
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block content %}
+    <h1>Import Projects</h1>
+    <h2>Upload File</h2>
+    <form action="/projects/import/" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Submit" />
+    </form>
+{% endblock %}

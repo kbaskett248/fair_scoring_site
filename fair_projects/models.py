@@ -1,3 +1,4 @@
+import itertools
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -83,6 +84,28 @@ class Project(models.Model):
         Division,
         on_delete=models.PROTECT
     )
+
+    def __init__(self, *args, **kwargs):
+        # __init__ is run when objects are retrieved from the database
+        # in addition to when they are created.
+        super(Project, self).__init__(*args, **kwargs)
+        if not self.number:
+            self.number = self.get_next_number()
+            self.save()
+
+    def get_next_number(self):
+        max_proj_num = Project.objects.filter(
+            division=self.division, category=self.category).aggregate(models.Max('number'))['number__max']
+        if max_proj_num:
+            return int(max_proj_num) + 1
+        else:
+            categories = sorted(Category.objects.all(), key=lambda x: x.short_description)
+            divisions = sorted(Division.objects.all(), key=lambda x: x.short_description)
+            default_min = 0
+            for div, cat in itertools.product(divisions, categories):
+                default_min += 1000
+                if div == self.division and cat == self.category:
+                    return default_min + 1
 
     def __str__(self):
         return self.title
