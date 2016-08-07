@@ -18,34 +18,42 @@ IMPORT_DICT_KEYS = ('Timestamp', 'Project Title', 'Project Abstract',
                     'S3 Ethnicity',	'S3 Teacher', 'S3 Grade Level')
 
 def handle_project_import(file_):
-    reader = csv.DictReader(file_, fieldnames = IMPORT_DICT_KEYS,
-                            delimiter='\t')
-    for div in Division.objects.all():
+    categories = sorted(Category.objects.all(), key=lambda x: x.short_description)
+    divisions = sorted(Division.objects.all(), key=lambda x: x.short_description)
+    for div in divisions:
         if div.short_description == 'Middle School':
             mid_div = div
         elif div.short_description == 'High School':
             high_div = div
 
-    divisions = [(div.short_description, div) for div in Division.objects.all()]
-    divisions.sort()
-    categories = [(cat.short_description, cat) for cat in Category.objects.all()]
-    categories.sort()
-
     init_values = defaultdict(dict)
     default_min = 1000
     for div, cat in itertools.product(divisions, categories):
-        max_proj_number = int(Project.objects.filter(division=div[1], category=cat[1]).aggregate(Max('number'))['number_max'])
-        if max_proj_number:
-            init_values[div[0]][cat[0]] = max_proj_number
+        mpn = Project.objects.filter(division=div, category=cat).aggregate(Max('number'))['number__max']
+        if mpn:
+            init_values[div.short_description][cat.short_description] = int(mpn)
         else:
-            init_values[div[0]][cat[0]] = default_min
+            init_values[div.short_description][cat.short_description] = default_min
         default_min += 1000
 
+    contents = []
+    for chu in file_.chunks():
+        contents.append(chu.decode())
+    contents = ''.join(contents).split('\r\n')
+
+    dialect = csv.Sniffer().sniff(contents[0])
+    reader = csv.DictReader(contents[1:], fieldnames=IMPORT_DICT_KEYS, dialect=dialect)
 
     for row in reader:
+        # if not row['Project Title']:
+        #     continue
         cat = Category.objects.filter(short_description=row['Project Category'])[0]
-        subcat = Subcategory.objects.filter(category=cat,
-                                            short_description=row['Project Subcategory'])[0]
+        try:
+            subcat = Subcategory.objects.filter(category=cat,
+                                                short_description=row['Project Subcategory'])[0]
+        except IndexError:
+            subcat = Subcategory(category=cat, short_description='(NEW) ' + row['Project Subcategory'])
+            subcat.save()
 
         if int(row['S1 Grade Level']) >= 9:
             div = high_div
