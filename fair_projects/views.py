@@ -66,5 +66,7 @@ def import_projects(request):
             return HttpResponseRedirect('/admin/fair_projects/project/')
     else:
         form = UploadFileForm()
+
+    request.current_app = 'fair_projects'
     c.update({'form': form})
     return render(request, 'fair_projects/project_upload.html', c)
