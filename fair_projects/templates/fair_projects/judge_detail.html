@@ -1,19 +1,22 @@
-{% if judge %}
-    <h1>{{ judge.user.first_name }} {{ judge.user.last_name }}</h1>
+{% extends "base.html" %}
+{% block content %}
+    {% if judge %}
+        <h1>{{ judge.user.first_name }} {{ judge.user.last_name }}</h1>
 
-    {% if project_list %}
-        <h2>Assigned Projects</h2>
-        {% for project in project_list %}
-            <ul>
-                <li>
-                    <a href="{% url 'fair_projects:detail' project.number %}" >{{ project.number }} - {{ project.title }}</a>
-                    {{ project.division.short_description }}
-                    {{ project.subcategory.short_description }}
-                </li>
-            </ul>
-        {% endfor %}
+        {% if project_list %}
+            <h2>Assigned Projects</h2>
+            {% for project in project_list %}
+                <ul>
+                    <li>
+                        <a href="{% url 'fair_projects:detail' project.number %}" >{{ project.number }} - {{ project.title }}</a>
+                        {{ project.division.short_description }}
+                        {{ project.subcategory.short_description }}
+                    </li>
+                </ul>
+            {% endfor %}
+        {% endif %}
+
+    {% else %}
+        No project
     {% endif %}
-
-{% else %}
-    No project
-{% endif %}
+{% endblock %}
