@@ -5,6 +5,8 @@ from django.contrib.auth.models import User, Group
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import ObjectDoesNotExist
 
+from fair_projects.models import Teacher, School
+
 
 class Command(BaseCommand):
     help = 'Imports a csv file of teachers'
@@ -36,9 +38,10 @@ class Command(BaseCommand):
                                 row['Email'],
                                 row['First Name'],
                                 row['Last Name'],
+                                row['School'],
                                 password)
 
-    def create_teacher(self, username, email, first_name, last_name, password=None):
+    def create_teacher(self, username, email, first_name, last_name, school_name, password=None):
         try:
             User.objects.get(username=username)
         except ObjectDoesNotExist:
@@ -49,9 +52,16 @@ class Command(BaseCommand):
 
         if not password:
             password = User.objects.make_random_password()
-        teacher = User.objects.create_user(username, email, password)
-        teacher.first_name = first_name
-        teacher.last_name = last_name
-        teacher.groups.add(self.group)
+
+        user = User.objects.create_user(username, email, password)
+        user.first_name = first_name
+        user.last_name = last_name
+        user.groups.add(self.group)
+        user.save()
+
+        school, _ = School.objects.get_or_create(name=school_name)
+
+        teacher = Teacher.objects.create(user=user, school=school)
         teacher.save()
-        self.stdout.write(self.style.SUCCESS('Created new teacher %s' % teacher))
+
+        self.stdout.write(self.style.SUCCESS('Created new teacher %s' % user))
