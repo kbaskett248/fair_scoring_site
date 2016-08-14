@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
     <div class="page-header">
+        {% include "navbar.html" %}
         <h1>Projects</h1>
         <ol class="breadcrumb">
             <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
     {% if judge %}
+        {% include "navbar.html" %}
         <h1>{{ judge.user.first_name }} {{ judge.user.last_name }}</h1>
 
         {% if project_list %}
