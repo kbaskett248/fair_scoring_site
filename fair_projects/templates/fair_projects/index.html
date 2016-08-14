@@ -1,10 +1,21 @@
-<h1>Projects</h1>
-{% if project_list %}
-    <ul>
-    {% for project in project_list %}
-        <li><a href="{% url 'fair_projects:detail' project.number %}">{{ project.number }} - {{ project.title }}</a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No projects are available.</p>
-{% endif %}
+{% extends "base.html" %}
+{% block content %}
+    <div class="page-header">
+        {% include "navbar.html" %}
+        <h1>Projects</h1>
+        <ol class="breadcrumb">
+            <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>
+        </ol>
+    </div>
+    {% if project_list %}
+        <ul class="list-group">
+        {% for project in project_list %}
+            <li class="list-group-item">
+                <a href="{% url 'fair_projects:detail' project.number %}">{{ project.number }} - {{ project.title }}</a>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No projects are available.</p>
+    {% endif %}
+{% endblock %}

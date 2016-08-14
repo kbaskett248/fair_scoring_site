@@ -4,7 +4,7 @@
 {% block content %}
     <h1>Import Projects</h1>
     <h2>Upload File</h2>
-    <form action="/projects/import/" method="post" enctype="multipart/form-data">
+    <form action="/admin/fair_projects/project/import/" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form }}
         <input type="submit" value="Submit" />
