@@ -14,6 +14,7 @@ IMPORT_DICT_KEYS = ('Timestamp', 'Project Title', 'Project Abstract',
                     'S3 First Name', 'S3 Last Name', 'S3 Gender',
                     'S3 Ethnicity',	'S3 Teacher', 'S3 Grade Level')
 
+
 def handle_project_import(file_):
     for div in Division.objects.all():
         if div.short_description == 'Middle School':
@@ -72,16 +73,17 @@ def create_student(first_name, last_name, eth_name, gender, teacher_name, grade_
     if not first_name:
         return
 
-    ethnicity = Ethnicity.objects.get(short_description=eth_name)
+    ethnicity, _ = Ethnicity.objects.get_or_create(short_description=eth_name)
     teacher = Teacher.objects.get(user__last_name=teacher_name)
 
-    student = Student(first_name=first_name,
-                      last_name=last_name,
-                      ethnicity=ethnicity,
-                      gender=gender,
-                      teacher=teacher,
-                      grade_level=grade_level,
-                      project=project)
+    student, _ = Student.objects.get_or_create(
+        first_name=first_name, last_name=last_name,
+        defaults={'ethnicity': ethnicity,
+                  'gender': gender,
+                  'teacher': teacher,
+                  'grade_level': grade_level,
+                  'project': project}
+    )
     if email:
         student.email = email
 

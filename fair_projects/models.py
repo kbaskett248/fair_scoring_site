@@ -61,7 +61,8 @@ class Student(models.Model):
     email = models.EmailField(null=True)
     project = models.ForeignKey(
         'Project',
-        on_delete=models.PROTECT
+        on_delete=models.SET_NULL,
+        null=True
     )
 
     def __str__(self):
