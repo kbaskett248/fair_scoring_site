@@ -25,24 +25,24 @@ SECRET_KEY = '4u-)z(xg)t+=!o_gyw%^^r=pgpt)mbx*+qer_&9k3ynf^zg-t3'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': '/home/kbaskett/fair_scoring_site/debug.log',
-        },
-    },
-    'loggers': {
-        'fair_scoring_site': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-    },
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'file': {
+#             'level': 'DEBUG',
+#             'class': 'logging.FileHandler',
+#             'filename': '/home/kbaskett/fair_scoring_site/debug.log',
+#         },
+#     },
+#     'loggers': {
+#         'fair_scoring_site': {
+#             'handlers': ['file'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#     },
+# }
 
 ALLOWED_HOSTS = []
 
@@ -77,7 +77,7 @@ ROOT_URLCONF = 'fair_scoring_site.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['/home/kbaskett/fair_scoring_site/templates/'],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
