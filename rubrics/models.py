@@ -52,6 +52,8 @@ class Question(models.Model):
         choices=SORT_CHOICES
     )
 
+    ordering = ('rubric', 'order', 'short_description')
+
     def __init__(self, *args, **kwargs):
         # __init__ is run when objects are retrieved from the database
         # in addition to when they are created.
@@ -79,6 +81,12 @@ class Question(models.Model):
     def show_choices(self):
         return self.question_type and self.question_type in self.CHOICE_TYPES
 
+    def num_choices(self):
+        if self.show_choices():
+            return len(self.choice_set.all())
+        else:
+            return '-'
+
 
 class Choice(models.Model):
     question = models.ForeignKey(
@@ -88,6 +96,8 @@ class Choice(models.Model):
     order = models.PositiveSmallIntegerField(null=True, blank=True)
     key = models.CharField(max_length=20)
     description = models.CharField(max_length=200)
+
+    ordering = ('question', 'order', 'key')
 
     def __init__(self, *args, **kwargs):
         # __init__ is run when objects are retrieved from the database

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count
 from .models import Rubric, Question, Choice
 
 
@@ -9,10 +10,12 @@ class ChoiceInline(admin.TabularInline):
     ordering = ('order', )
 
 
-class QuestionInline(admin.StackedInline):
+class QuestionInline(admin.TabularInline):
     model = Question
     can_delete = True
-    ordering = ('order', )
+
+    ordering = ('order', 'short_description')
+    fields = ('order', 'short_description', 'weight', 'question_type')
 
 
 @admin.register(Rubric)
@@ -25,4 +28,7 @@ class RubricAdmin(admin.ModelAdmin):
 class QuestionAdmin(admin.ModelAdmin):
     model = Question
     inlines = (ChoiceInline, )
+    list_display = ('rubric', 'order', 'short_description', 'question_type', 'num_choices')
+
+    ordering = ('rubric', 'order', 'short_description')
 
