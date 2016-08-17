@@ -123,3 +123,32 @@ class Choice(models.Model):
     def __str__(self):
         return self.description
 
+
+class RubricResponse(models.Model):
+    rubric = models.ForeignKey(
+        'Rubric',
+        on_delete=models.CASCADE
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(RubricResponse, self).__init__(*args, **kwargs)
+        if not self.question_response_set.all():
+            for ques in self.rubric.question_set.all():
+                QuestionResponse.objects.create(rubric_response=self, question=ques)
+
+
+class QuestionResponse(models.Model):
+    rubric_response = models.ForeignKey(
+        'RubricResponse',
+        on_delete=models.CASCADE
+    )
+    question = models.ForeignKey(
+        'Question',
+        on_delete=models.CASCADE
+    )
+    choice_response = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True
+    )
+    text_response = models.TextField(null=True, blank=True)
