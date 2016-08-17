@@ -71,6 +71,15 @@ class Judge(models.Model):
         null=True
     )
 
+    categories = models.ManyToManyField(
+        'fair_categories.Category',
+        verbose_name='Which categories are you most comfortable judging?'
+    )
+    divisions = models.ManyToManyField(
+        'fair_categories.Division',
+        verbose_name='Which division(s) do you prefer to judge?'
+    )
+
     class Meta:
         permissions = (
             ('is_judge', 'Designates this user as a judge'),
