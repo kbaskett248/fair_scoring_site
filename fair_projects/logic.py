@@ -1,9 +1,12 @@
 import csv
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count
 
-from .models import Project, Student, Teacher
+from .models import Project, Student, Teacher, JudgingInstance
 from fair_categories.models import Category, Subcategory, Division, Ethnicity
+from judges.models import Judge
+from rubrics.models import Rubric
 
 IMPORT_DICT_KEYS = ('Timestamp', 'Project Title', 'Project Abstract',
                     'Project Category', 'Project Subcategory', 'Unused1',
@@ -90,4 +93,34 @@ def create_student(first_name, last_name, eth_name, gender, teacher_name, grade_
     student.save()
 
     return student
+
+
+def assign_judges():
+    rubric = Rubric.objects.get(name='Judging Rubric')
+    judge_set = Judge.objects.annotate(
+        num_projects=Count('judginginstance'),
+        num_categories=Count('categories'),
+        num_divisions=Count('divisions')).order_by(
+        'num_projects', 'num_categories', 'num_divisions')
+
+    for judge in judge_set.filter(num_projects__lt=max(get_num_project_range())):
+        print(judge, judge.num_projects)
+
+        number_to_add = max(get_num_project_range()) - judge.num_projects
+
+        avail_proj = Project.objects.filter(division__in=judge.divisions.all(), category__in=judge.categories.all())
+        avail_proj = avail_proj.annotate(num_judges=Count('judginginstance')).order_by('num_judges')
+        for proj in avail_proj.all():
+            if number_to_add <= 0:
+                break
+
+            create_judging_instance(judge, proj, rubric)
+            number_to_add -= 1
+
+def get_num_project_range():
+    return (8, 8)
+
+def create_judging_instance(judge, project, rubric):
+    print('Assigning {0} to {1}'.format(project, judge))
+    return JudgingInstance.objects.create(judge=judge, project=project, rubric=rubric)
 

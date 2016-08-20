@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 from fair_categories.models import Ethnicity, Category, Subcategory, Division
 from judges.models import Judge
+from rubrics.models import RubricResponse
 
 
 class School(models.Model):
@@ -121,7 +122,15 @@ class JudgingInstance(models.Model):
         Project,
         models.CASCADE
     )
+    response = models.ForeignKey(
+        'rubrics.RubricResponse',
+        models.CASCADE,
+        null=True, blank=True
+    )
 
-
-
-
+    def __init__(self, *args, **kwargs):
+        rubric = kwargs.pop('rubric', None)
+        super(JudgingInstance, self).__init__(*args, **kwargs)
+        if not self.response and rubric:
+            self.response = RubricResponse(rubric=rubric)
+            self.save()
