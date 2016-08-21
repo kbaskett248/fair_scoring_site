@@ -130,9 +130,9 @@ class RubricResponse(models.Model):
         on_delete=models.CASCADE
     )
 
-    def __init__(self, *args, **kwargs):
-        super(RubricResponse, self).__init__(*args, **kwargs)
-        if not self.question_response_set.all():
+    def save(self, **kwargs):
+        super(RubricResponse, self).save(**kwargs)
+        if not self.questionresponse_set.all():
             for ques in self.rubric.question_set.all():
                 QuestionResponse.objects.create(rubric_response=self, question=ques)
 

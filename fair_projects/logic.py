@@ -96,12 +96,11 @@ def create_student(first_name, last_name, eth_name, gender, teacher_name, grade_
 
 
 def assign_judges():
-    rubric = Rubric.objects.get(name='Judging Rubric')
-    judge_set = Judge.objects.annotate(
-        num_projects=Count('judginginstance'),
-        num_categories=Count('categories'),
-        num_divisions=Count('divisions')).order_by(
-        'num_projects', 'num_categories', 'num_divisions')
+    rubric = Rubric.objects.get(name='Judging Form')
+    judge_set = Judge.objects.annotate(num_projects=Count('judginginstance', distinct=True),
+                                       num_categories=Count('categories', distinct=True),
+                                       num_divisions=Count('divisions', distinct=True))\
+        .order_by('num_projects', 'num_categories', 'num_divisions')
 
     for judge in judge_set.filter(num_projects__lt=max(get_num_project_range())):
         print(judge, judge.num_projects)
@@ -118,7 +117,7 @@ def assign_judges():
             number_to_add -= 1
 
 def get_num_project_range():
-    return (8, 8)
+    return (8, 13)
 
 def create_judging_instance(judge, project, rubric):
     print('Assigning {0} to {1}'.format(project, judge))

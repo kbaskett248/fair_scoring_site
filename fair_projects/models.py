@@ -132,5 +132,7 @@ class JudgingInstance(models.Model):
         rubric = kwargs.pop('rubric', None)
         super(JudgingInstance, self).__init__(*args, **kwargs)
         if not self.response and rubric:
-            self.response = RubricResponse(rubric=rubric)
-            self.save()
+            self.response = RubricResponse.objects.create(rubric=rubric)
+
+    def __str__(self):
+        return '{0} - {1}: {2}'.format(self.judge, self.project, self.response.rubric.name)
