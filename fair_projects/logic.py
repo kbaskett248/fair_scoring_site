@@ -1,7 +1,9 @@
 import csv
+from collections import defaultdict
+from itertools import product, filterfalse
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count
+from django.db.models import Count, F, Sum, IntegerField
 
 from .models import Project, Student, Teacher, JudgingInstance
 from fair_categories.models import Category, Subcategory, Division, Ethnicity
@@ -13,9 +15,9 @@ IMPORT_DICT_KEYS = ('Timestamp', 'Project Title', 'Project Abstract',
                     'Team or Individual', 'S1 First Name', 'S1 Last Name',
                     'S1 Gender', 'S1 Ethnicity', 'S1 Teacher', 'S1 Grade Level',
                     'S2 First Name', 'S2 Last Name', 'S2 Gender',
-                    'S2 Ethnicity',	'S2 Teacher', 'S2 Grade Level', 'Unused2',
+                    'S2 Ethnicity', 'S2 Teacher', 'S2 Grade Level', 'Unused2',
                     'S3 First Name', 'S3 Last Name', 'S3 Gender',
-                    'S3 Ethnicity',	'S3 Teacher', 'S3 Grade Level')
+                    'S3 Ethnicity', 'S3 Teacher', 'S3 Grade Level')
 
 
 def handle_project_import(file_):
@@ -72,6 +74,7 @@ def create_project(title, abstract, cat_name, subcat_name, division):
 
     return project
 
+
 def create_student(first_name, last_name, eth_name, gender, teacher_name, grade_level, project, email=None):
     if not first_name:
         return
@@ -122,9 +125,8 @@ def assign_judges():
 
     rubric = Rubric.objects.get(name='Judging Form')
     assign_new_projects(rubric)
+    balance_judges(rubric)
 
-def get_num_project_range():
-    return (8, 13)
 
 def create_judging_instance(judge, project, rubric):
     print('Assigning {0} to {1}'.format(project, judge))
@@ -132,22 +134,21 @@ def create_judging_instance(judge, project, rubric):
 
 
 def assign_new_projects(rubric):
-    project_set = Project.objects.annotate(num_judges=Count('judginginstance'))\
+    project_set = Project.objects.annotate(num_judges=Count('judginginstance')) \
         .order_by('num_judges')
 
     judge_set = Judge.objects.annotate(num_projects=Count('judginginstance'),
                                        num_categories=Count('categories'),
-                                       num_divisions=Count('divisions'))\
+                                       num_divisions=Count('divisions')) \
         .order_by('num_projects', 'num_categories', 'num_divisions')
 
     for project in project_set.filter(num_judges__lt=get_minimum_judges_per_project()):
         num_judges = get_minimum_judges_per_project() - project.num_judges
         judges = judge_set.filter(categories=project.category,
-                                  divisions=project.division,
-                                  )
+                                  divisions=project.division)
 
         for judge in judges.all():
-            judge_projects = [ji.project for ji in judge.judginginstance_set.all()]
+            judge_projects = [ji.project for ji in judge.judginginstance_set.select_related('project').all()]
             if project in judge_projects:
                 continue
             else:
@@ -160,3 +161,83 @@ def assign_new_projects(rubric):
 
 def get_minimum_judges_per_project():
     return 2
+
+
+def get_minimum_projects_per_judge():
+    return 5
+
+
+def balance_judges(rubric):
+    quotients = build_quotient_array()
+
+    judge_set = Judge.objects.annotate(num_projects=Count('judginginstance'))
+    lower_bound = get_project_balancing_lower_bound(judge_set)
+
+    for judge in judge_set.filter(num_projects__gt=lower_bound).order_by('-num_projects'):
+        balance_judge(judge, rubric, judge_set.filter(num_projects__lt=lower_bound), lower_bound, quotients)
+
+
+def build_quotient_array():
+    class Quotient(object):
+        def __init__(self, num_projects, num_judges):
+            self.num_projects = num_projects
+            self.num_judges = num_judges
+
+        @property
+        def projects_per_judge(self):
+            return self.num_projects / self.num_judges
+
+        def __str__(self):
+            return 'Projects: {0}; Judges: {1}; Quotient: {2}'.format(self.num_projects,
+                                                                      self.num_judges,
+                                                                      self.projects_per_judge)
+
+        def __repr__(self):
+            return self.__str__()
+
+    proj_counts = {(d['category'], d['division']): d['count'] for d in
+                   Project.objects.values('category', 'division').annotate(count=Count('category'))}
+    judge_counts = {(d['categories'], d['divisions']): d['count'] for d in
+                    Judge.objects.values('categories', 'divisions').annotate(count=Count('categories'))}
+
+    quotient_array = defaultdict(dict)
+    for cat, div in product(Category.objects.all(), Division.objects.all()):
+        quotient_array[cat][div] = Quotient(proj_counts[(cat.pk, div.pk)], judge_counts[(cat.pk, div.pk)])
+
+    return quotient_array
+
+
+def get_project_balancing_lower_bound(judge_set):
+    median = get_median_projects_per_judge(judge_set)
+    print('Median: ', median)
+    minimum = get_minimum_projects_per_judge()
+    print('Minimum: ', minimum)
+    return max(median, minimum)
+
+
+def get_median_projects_per_judge(judge_set):
+    return median_value(judge_set, 'num_projects')
+
+
+def median_value(queryset, term):
+    count = queryset.count()
+    values = queryset.values_list(term, flat=True).order_by(term)
+    if count % 2 == 1:
+        return values[int(round(count / 2))]
+    else:
+        return sum(values[count / 2 - 1:count / 2 + 1]) / 2.0
+
+
+def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
+    print(judge)
+    print(possible_judges)
+    num_to_reassign = judge.num_projects - lower_bound
+    print(num_to_reassign)
+    instances_to_reassign = list(get_instances_that_can_be_reassigned(judge, rubric))
+    print(len(instances_to_reassign))
+
+
+def get_instances_that_can_be_reassigned(judge, rubric):
+    return filterfalse(lambda x: x.response.has_response,
+                       judge.judginginstance_set.filter(response__rubric=rubric)\
+                       .select_related('response'))

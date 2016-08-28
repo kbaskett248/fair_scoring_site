@@ -136,6 +136,10 @@ class RubricResponse(models.Model):
             for ques in self.rubric.question_set.all():
                 QuestionResponse.objects.create(rubric_response=self, question=ques)
 
+    @property
+    def has_response(self):
+        return self.questionresponse_set.exclude(choice_response__isnull=True, text_response__isnull=True).exists()
+
 
 class QuestionResponse(models.Model):
     rubric_response = models.ForeignKey(
@@ -152,3 +156,7 @@ class QuestionResponse(models.Model):
         blank=True
     )
     text_response = models.TextField(null=True, blank=True)
+
+    @property
+    def question_answered(self):
+        return self.choice_response or self.text_response
