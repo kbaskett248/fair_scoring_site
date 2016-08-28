@@ -103,13 +103,23 @@ def assign_judges():
     #       2. Search for judges that can judge the project's category and division, sorted by the number of projects
     #          ascending. Get the number of judges needed for the project.
     #       3. Assign the judges to the project
+
     # 2. Switch projects from judges that have too many projects
     #    1. Count the number of projects in each category division group, the number of judges that can judge that
     #       category and division, and calculate their quotient.
     #    2. Compute the median number of projects assigned to all judges.
     #    3. Compute the max of the median and the minimum number of projects per judge.
     #    4. Search for judges that have more than this number of projects assigned
-    #    5.
+    #    5. For each judge:
+    #       1. Compute the number of projects needed to bring the judge down to the number computed above
+    #       2. Get a list of the projects for this judge that don't have any responses.
+    #       3. Sort the projects by the quotient computed in step 1.
+    #       4. Loop through each project until the necessary number of projects have been removed or there are no
+    #          judges available to take the projects.
+    #          1. Search for judges that could be assigned the project and sort by number of projects, filtered by
+    #             judges that have fewer than the number computed above.
+    #          2. Remove the project from the first judge and assign it to the new judge.
+
     rubric = Rubric.objects.get(name='Judging Rubric')
     judge_set = Judge.objects.annotate(
         num_projects=Count('judginginstance'),
@@ -138,3 +148,30 @@ def create_judging_instance(judge, project, rubric):
     print('Assigning {0} to {1}'.format(project, judge))
     return JudgingInstance.objects.create(judge=judge, project=project, rubric=rubric)
 
+
+def assign_new_projects(rubric):
+    project_set = Project.objects.annotate(num_judges=Count('judginginstance'))\
+        .order_by('num_judges')
+
+    judge_set = Judge.objects.annotate(num_projects=Count('judginginstance'),
+                                       num_categories=Count('categories'),
+                                       num_divisions=Count('divisions'))\
+        .order_by('num_projects', 'num_categories', 'num_divisions')
+
+    for project in project_set.filter(num_judges__lt=get_minimum_judges_per_project()):
+        num_judges = get_minimum_judges_per_project() - project.num_judges
+        judges = judge_set.filter(category=project.category,
+                                  division=project.division,
+                                  )
+
+        for judge in judges.all():
+            create_judging_instance(judge, project, rubric)
+            num_judges -= 1
+
+            if num_judges <= 0:
+                break
+
+
+
+def get_minimum_judges_per_project():
+    return 4
