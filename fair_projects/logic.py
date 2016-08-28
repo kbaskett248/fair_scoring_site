@@ -121,24 +121,7 @@ def assign_judges():
     #          2. Remove the project from the first judge and assign it to the new judge.
 
     rubric = Rubric.objects.get(name='Judging Form')
-    judge_set = Judge.objects.annotate(num_projects=Count('judginginstance', distinct=True),
-                                       num_categories=Count('categories', distinct=True),
-                                       num_divisions=Count('divisions', distinct=True)) \
-        .order_by('num_projects', 'num_categories', 'num_divisions')
-
-    for judge in judge_set.filter(num_projects__lt=max(get_num_project_range())):
-        print(judge, judge.num_projects)
-
-        number_to_add = max(get_num_project_range()) - judge.num_projects
-
-        avail_proj = Project.objects.filter(division__in=judge.divisions.all(), category__in=judge.categories.all())
-        avail_proj = avail_proj.annotate(num_judges=Count('judginginstance')).order_by('num_judges')
-        for proj in avail_proj.all():
-            if number_to_add <= 0:
-                break
-
-            create_judging_instance(judge, proj, rubric)
-            number_to_add -= 1
+    assign_new_projects(rubric)
 
 def get_num_project_range():
     return (8, 13)
@@ -159,18 +142,21 @@ def assign_new_projects(rubric):
 
     for project in project_set.filter(num_judges__lt=get_minimum_judges_per_project()):
         num_judges = get_minimum_judges_per_project() - project.num_judges
-        judges = judge_set.filter(category=project.category,
-                                  division=project.division,
+        judges = judge_set.filter(categories=project.category,
+                                  divisions=project.division,
                                   )
 
         for judge in judges.all():
-            create_judging_instance(judge, project, rubric)
-            num_judges -= 1
+            judge_projects = [ji.project for ji in judge.judginginstance_set.all()]
+            if project in judge_projects:
+                continue
+            else:
+                create_judging_instance(judge, project, rubric)
+                num_judges -= 1
 
-            if num_judges <= 0:
-                break
-
+                if num_judges <= 0:
+                    break
 
 
 def get_minimum_judges_per_project():
-    return 4
+    return 2
