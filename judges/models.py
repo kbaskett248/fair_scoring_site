@@ -1,4 +1,5 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -89,4 +90,31 @@ class Judge(models.Model):
         return self.user.first_name + ' ' + self.user.last_name
 
 
+def create_judge(username, email, first_name, last_name, phone, education, fair_exp, categories, divisions,
+                 password=None, has_device=True, output_stream=None):
+    def write_output(message):
+        if output_stream:
+            output_stream.write(message)
 
+    try:
+        User.objects.get(username=username)
+    except ObjectDoesNotExist:
+        pass
+    else:
+        write_output('Teacher %s already exists' % username)
+        return
+
+    if not password:
+        password = User.objects.make_random_password()
+
+    user = User.objects.create_user(username, email, password)
+    user.first_name = first_name
+    user.last_name = last_name
+    group = Group.objects.get(name='Judges')
+    user.groups.add(group)
+    user.save()
+
+    judge = Judge.objects.create(user=user, phone=phone, has_device=has_device, education=education,
+                                 fair_experience=fair_exp, categories=categories, divisions=divisions)
+
+    return judge
