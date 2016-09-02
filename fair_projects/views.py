@@ -45,7 +45,7 @@ def judge_assignment(request):
 
 def judge_detail(request, judge_id):
     judge = get_object_or_404(Judge, pk=judge_id)
-    judge_instances = JudgingInstance.objects.filter(judge=judge)
+    judge_instances = JudgingInstance.objects.filter(judge=judge).order_by('project__number')
     project_list = [ji.project for ji in judge_instances]
 
     return render(request, 'fair_projects/judge_detail.html',

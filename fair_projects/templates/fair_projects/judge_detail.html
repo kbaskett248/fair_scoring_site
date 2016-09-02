@@ -5,7 +5,7 @@
         <h1>{{ judge.user.first_name }} {{ judge.user.last_name }}</h1>
 
         {% if project_list %}
-            <h2>Assigned Projects</h2>
+            <h2>Assigned Projects ({{ project_list|length }})</h2>
             {% for project in project_list %}
                 <ul>
                     <li>
