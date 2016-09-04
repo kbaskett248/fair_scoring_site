@@ -1,9 +1,12 @@
 import csv
 from collections import defaultdict
+from functools import reduce
 from itertools import product, filterfalse
+from operator import ior
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count, F, Sum, IntegerField
+from django.db.models import Count, F, Sum, IntegerField, Q, Avg
+from django.db import transaction
 
 from .models import Project, Student, Teacher, JudgingInstance
 from fair_categories.models import Category, Subcategory, Division, Ethnicity
@@ -110,8 +113,8 @@ def assign_judges():
     # 2. Switch projects from judges that have too many projects
     #    1. Count the number of projects in each category division group, the number of judges that can judge that
     #       category and division, and calculate their quotient.
-    #    2. Compute the median number of projects assigned to all judges.
-    #    3. Compute the max of the median and the minimum number of projects per judge.
+    #    2. Compute the median and average number of projects assigned to all judges.
+    #    3. Compute the max of the median, average and minimum number of projects per judge.
     #    4. Search for judges that have more than this number of projects assigned
     #    5. For each judge:
     #       1. Compute the number of projects needed to bring the judge down to the number computed above
@@ -129,7 +132,6 @@ def assign_judges():
 
 
 def create_judging_instance(judge, project, rubric):
-    print('Assigning {0} to {1}'.format(project, judge))
     return JudgingInstance.objects.create(judge=judge, project=project, rubric=rubric)
 
 
@@ -152,6 +154,7 @@ def assign_new_projects(rubric):
             if project in judge_projects:
                 continue
             else:
+                print('Assigning {0} to {1}'.format(project, judge))
                 create_judging_instance(judge, project, rubric)
                 num_judges -= 1
 
@@ -170,11 +173,11 @@ def get_minimum_projects_per_judge():
 def balance_judges(rubric):
     quotients = build_quotient_array()
 
-    judge_set = Judge.objects.annotate(num_projects=Count('judginginstance'))
+    judge_set = Judge.objects.annotate(num_projects=Count('judginginstance', distinct=True))
     lower_bound = get_project_balancing_lower_bound(judge_set)
 
     for judge in judge_set.filter(num_projects__gt=lower_bound).order_by('-num_projects'):
-        balance_judge(judge, rubric, judge_set.filter(num_projects__lt=lower_bound), lower_bound, quotients)
+        balance_judge(judge, rubric, judge_set.filter(num_projects__lt=lower_bound).order_by('num_projects'), lower_bound, quotients)
 
 
 def build_quotient_array():
@@ -212,7 +215,9 @@ def get_project_balancing_lower_bound(judge_set):
     print('Median: ', median)
     minimum = get_minimum_projects_per_judge()
     print('Minimum: ', minimum)
-    return max(median, minimum)
+    average = judge_set.aggregate(avg_projects=Avg('num_projects'))['avg_projects']
+    print('Average: ', average)
+    return max(median, minimum, average)
 
 
 def get_median_projects_per_judge(judge_set):
@@ -230,14 +235,51 @@ def median_value(queryset, term):
 
 def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
     print(judge)
-    print(possible_judges)
     num_to_reassign = judge.num_projects - lower_bound
+    cat_Q = reduce(ior, (Q(categories=cat) for cat in judge.categories.all()))
+    div_Q = reduce(ior, (Q(divisions=div) for div in judge.divisions.all()))
     print(num_to_reassign)
-    instances_to_reassign = list(get_instances_that_can_be_reassigned(judge, rubric))
-    print(len(instances_to_reassign))
+
+    def sort_value(judging_instance):
+        project = judging_instance.project
+        return quotients[project.category][project.division].projects_per_judge
+
+    instances = sorted(get_instances_that_can_be_reassigned(judge, rubric), key=sort_value)
+    for ji in instances:
+        avail_judge = get_available_judge(ji.project, rubric, possible_judges)
+        if avail_judge:
+            if reassign_project(ji, avail_judge):
+                num_to_reassign -= 1
+
+                for j in possible_judges.filter(cat_Q, div_Q):
+                    print(j, j.num_projects)
+
+                if num_to_reassign <= 0:
+                    break
+                elif not possible_judges.filter(cat_Q, div_Q).exists():
+                    break
+
 
 
 def get_instances_that_can_be_reassigned(judge, rubric):
     return filterfalse(lambda x: x.response.has_response,
                        judge.judginginstance_set.filter(response__rubric=rubric)\
-                       .select_related('response'))
+                           .select_related('response', 'project'))
+
+
+def get_available_judge(project, rubric, possible_judges):
+    for judge in possible_judges.filter(categories=project.category, divisions=project.division):
+        if judge.judginginstance_set.filter(project=project, response__rubric=rubric).exists():
+            # The judge has already been assigned this project, so continue
+            continue
+        else:
+            return judge
+    return None
+
+
+@transaction.atomic()
+def reassign_project(judging_instance, to_judge):
+    print("Reassigning {0} from {1} to {2}".format(judging_instance.project.number, judging_instance.judge, to_judge))
+    new_instance = create_judging_instance(to_judge, judging_instance.project, judging_instance.response.rubric)
+    judging_instance.delete()
+    return new_instance
