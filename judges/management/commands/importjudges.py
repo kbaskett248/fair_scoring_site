@@ -20,8 +20,10 @@ class Command(BaseCommand):
         if not os.path.isfile(csv_path):
             raise CommandError('File "%s" does not exist')
 
+        password = options.get('password', default=None)
+
         with open(csv_path, newline='') as csv_file:
-            self.read_file(csv_file)
+            self.read_file(csv_file, password)
 
     def read_file(self, csv_file, global_password=None):
         dialect = csv.Sniffer().sniff(csv_file.read(1024))
@@ -30,15 +32,32 @@ class Command(BaseCommand):
         has_password = 'Password' in reader.fieldnames
 
         for row in reader:
+            categories = []
+            for cat in row['Categories'].split(sep=','):
+                categories.append(Category.objects.get_or_create(short_description=cat.strip()))
+
+            divisions = []
+            for div in row['Divisions'].split(sep=','):
+                divisions.append(Division.objects.get_or_create(short_description=div.strip()))
+
+            education = JudgeEducation.objects.get_or_create(short_description=row['Education'])
+            fair_exp = JudgeFairExperience.objects.get_or_create(short_description=row['Fair Experience'])
+
             if global_password:
                 password = global_password
             elif has_password:
                 password = row['Password']
             else:
                 password = None
+
             create_judge(row['Username'],
-                                row['Email'],
-                                row['First Name'],
-                                row['Last Name'],
-                                row['School'],
-                                password)
+                         row['Email'],
+                         row['First Name'],
+                         row['Last Name'],
+                         row['Phone Number'],
+                         education,
+                         fair_exp,
+                         categories,
+                         divisions,
+                         password=password,
+                         output_stream=self.stdout)
