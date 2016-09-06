@@ -1,40 +1,45 @@
 {% extends "base.html" %}
+
+{% block html-title %}Project {{ project.number }} - RRSEF{% endblock %}
+
+{% block title %}{{ project.title }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>
+        <li><a href="{% url 'fair_projects:detail' project.number %}">{{ project.number }}</a></li>
+    </ol>
+{% endblock %}
+
 {% block content %}
-    {% if project %}
-        <div class="page-header">
-            {% include "navbar.html" %}
-            <h1>{{ project.title }} {{ project.number }}</h1>
-            <ol class="breadcrumb">
-                <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>
-                <li><a href="{% url 'fair_projects:detail' project.number %}">{{ project.number }}</a></li>
-            </ol>
-        </div>
+    <div>{{ project.division.short_description }}</div>
+    <div>{{ project.category.short_description }} - {{ project.subcategory.short_description }}</div>
 
-        <div>{{ project.division.short_description }}</div>
-        <div>{{ project.category.short_description }} - {{ project.subcategory.short_description }}</div>
-
-        {% if student_list %}
+    {% if student_list %}
+        <div class="student-list">
+            <h2>Students</h2>
             {% for student in student_list %}
-                <ul>
-                    <li>{{ student.first_name }} {{ student.last_name }} - {{ student.teacher.school.name }}</li>
+                <ul class="list-group">
+                    <li class="list-group-item">{{ student.first_name }} {{ student.last_name }} - {{ student.teacher.school.name }}</li>
                 </ul>
             {% endfor %}
-        {% endif %}
+        </div>
+    {% endif %}
 
-        {% if judge_list %}
-            {% for judge in judge_list %}
-                <ul>
-                    <li>
-                        <a href="{% url 'fair_projects:judge_detail' judge.user.id %}" >
+    {% if judge_list %}
+        <div class="judge-list">
+            <h2>Judges</h2>
+            <ul class="list-group">
+                {% for judge in judge_list %}
+                    <li class="list-group-item">
+                        <a href="{% url 'fair_projects:judge_detail' judge.user.username %}" >
                             {{ judge.user.first_name }} {{ judge.user.last_name }}
                         </a>
                     </li>
-                </ul>
             {% endfor %}
-        {% endif %}
-
-        <div>{{ project.abstract }}</div>
-    {% else %}
-        No project
+            </ul>
+        </div>
     {% endif %}
+
+    <div>{{ project.abstract }}</div>
 {% endblock %}

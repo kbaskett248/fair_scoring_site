@@ -1,12 +1,10 @@
 {% extends "base.html" %}
+
+{% block html-title %}Projects - RRSEF{% endblock %}
+
+{% block title %}Projects{% endblock %}
+
 {% block content %}
-    <div class="page-header">
-        {% include "navbar.html" %}
-        <h1>Projects</h1>
-        <ol class="breadcrumb">
-            <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>
-        </ol>
-    </div>
     {% if project_list %}
         <ul class="list-group">
         {% for project in project_list %}
