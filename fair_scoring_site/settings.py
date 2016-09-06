@@ -60,7 +60,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'bootstrap3'
+    'bootstrap3',
+    'widget_tweaks'
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -143,3 +144,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
 STATIC_URL = '/static/'
+
+BOOTSTRAP3 = {
+'include_jquery': True,
+}

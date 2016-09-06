@@ -1,23 +1,40 @@
 {% extends "base.html" %}
+
+{% block html-title %}{{ judge.user.first_name }} {{ judge.user.last_name }} - RRSEF{% endblock %}
+
+{% block title %}{{ judge.user.first_name }} {{ judge.user.last_name }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>
+    </ol>
+{% endblock %}
+
 {% block content %}
-    {% if judge %}
-        {% include "navbar.html" %}
-        <h1>{{ judge.user.first_name }} {{ judge.user.last_name }}</h1>
+    {% if project_list %}
+        <h2>Assigned Projects <small>{{ project_list|length }}</small></h2>
 
-        {% if project_list %}
-            <h2>Assigned Projects ({{ project_list|length }})</h2>
-            {% for project in project_list %}
-                <ul>
-                    <li>
-                        <a href="{% url 'fair_projects:detail' project.number %}" >{{ project.number }} - {{ project.title }}</a>
-                        {{ project.division.short_description }}
-                        {{ project.subcategory.short_description }}
-                    </li>
-                </ul>
-            {% endfor %}
-        {% endif %}
-
-    {% else %}
-        No project
+        <div class="table-responsive">
+            <table class="table table-striped table-condensed">
+                <thead>
+                    <tr>
+                        <td>#</td>
+                        <td>Title</td>
+                        <td>Category</td>
+                        <td>Division</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in project_list %}
+                        <tr>
+                            <td><a href="{% url 'fair_projects:detail' project.number %}" >{{ project.number }}</a></td>
+                            <td><a href="{% url 'fair_projects:detail' project.number %}" >{{ project.title }}</a></td>
+                            <td>{{ project.subcategory.short_description }} ({{ project.category.short_description }})</td>
+                            <td>{{ project.division.short_description }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 {% endblock %}
