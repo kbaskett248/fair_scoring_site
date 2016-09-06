@@ -1,14 +1,13 @@
 import logging
 
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 
+from judges.models import Judge
 from .forms import UploadFileForm
 from .logic import handle_project_import
 from .models import Project, Student, JudgingInstance
-from fair_categories.models import Division, Category, Subcategory
-from judges.models import Judge
 
 
 logger = logging.getLogger(__name__)
@@ -31,6 +30,7 @@ def detail(request, project_number):
                     'judge_list': judge_list,
                   })
 
+
 def judge_assignment(request):
     num_deleted = JudgingInstance.objects.all().delete()
     added = []
@@ -43,8 +43,9 @@ def judge_assignment(request):
         "Assigning Judges<br />{0}<br />{1}".format(
             str(num_deleted), "<br />".join(added)))
 
-def judge_detail(request, judge_id):
-    judge = get_object_or_404(Judge, pk=judge_id)
+
+def judge_detail(request, judge_username):
+    judge = get_object_or_404(Judge, user__username=judge_username)
     judge_instances = JudgingInstance.objects.filter(judge=judge).order_by('project__number')
     project_list = [ji.project for ji in judge_instances]
 
@@ -52,6 +53,19 @@ def judge_detail(request, judge_id):
                   { 'judge': judge,
                     'project_list': project_list }
                   )
+
+
+from django.contrib.auth import views
+from django.core.urlresolvers import reverse
+def login(request):
+    print(request.user)
+    template_response = views.login(request)
+    print(request.user)
+    if request.method == 'POST':
+        if request.user.has_perm('judges.is_judge'):
+            return HttpResponseRedirect(reverse('fair_projects:judge_detail', args=[request.user.username]))
+    return template_response
+
 
 @csrf_protect
 def import_projects(request):
