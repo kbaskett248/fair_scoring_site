@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block html-title %}{{ judge.user.first_name }} {{ judge.user.last_name }} - Project {{ project.number }} - RRSEF{% endblock %}
+
+{% block title %}{{ judge.user.first_name }} {{ judge.user.last_name }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>
+        <li><a href="{% url 'fair_projects:detail' project.number %}">{{ project.number }}</a></li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>{{ project.title }}</h2>
+    <div>{{ project.division.short_description }}</div>
+    <div>{{ project.category.short_description }} - {{ project.subcategory.short_description }}</div>
+
+    {% if student_list %}
+        <div class="student-list">
+            <h3>Students</h3>
+            {% for student in student_list %}
+                <ul class="list-group">
+                    <li class="list-group-item">{{ student.first_name }} {{ student.last_name }} - {{ student.teacher.school.name }}</li>
+                </ul>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div>{{ project.abstract }}</div>
+
+    {% include "fair_projects/rubric_display.HTML" %}
+
+{% endblock %}

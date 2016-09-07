@@ -46,13 +46,27 @@ def judge_assignment(request):
 
 def judge_detail(request, judge_username):
     judge = get_object_or_404(Judge, user__username=judge_username)
-    judge_instances = JudgingInstance.objects.filter(judge=judge).order_by('project__number')
-    project_list = [ji.project for ji in judge_instances]
+    judge_instances = JudgingInstance.objects.filter(judge=judge, response__rubric__name="Judging Form")\
+        .order_by('project__number')\
+        .select_related('project', 'project__category', 'project__division')
 
     return render(request, 'fair_projects/judge_detail.html',
                   { 'judge': judge,
-                    'project_list': project_list }
+                    'judginginstance_list': judge_instances }
                   )
+
+
+def judging_instance_detail(request, judginginstance_key):
+    judging_instance = JudgingInstance.objects\
+        .select_related('judge', 'project', 'response') \
+        .get(pk=judginginstance_key)
+    project = judging_instance.project
+    return render(request, 'fair_projects/judging_instance_detail.html',
+                  {'judge': judging_instance.judge,
+                   'project': project,
+                   'student_list': project.student_set.all(),
+                   'rubric_response': judging_instance.response,
+                   })
 
 
 from django.contrib.auth import views

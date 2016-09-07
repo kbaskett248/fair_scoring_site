@@ -1,0 +1,27 @@
+{% if rubric_response %}
+    <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <h3 class="panel-title">{{ rubric_response.rubric.name }}</h3>
+        </div>
+
+        <div class="list-group">
+            {% for question in rubric_response.questionresponse_set.all %}
+                {% firstof question.choice_response question.text_response "None" as answer %}
+                {% firstof question.question.long_description question.question.short_description as quest %}
+
+                {% if answer == "None" %}
+                    <div class="list-group-item list-group-item-danger">
+                        <p class="list-group-item-heading"><strong>{{ quest }}</strong></p>
+                        <p class="list-group-item-text">{{ answer }}</p>
+                    </div>
+                {% else %}
+                    <div class="list-group-item">
+                        <p class="list-group-item-heading"><strong>{{ quest }}</strong></p>
+                        <p class="list-group-item-text">{{ answer }}</p>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
