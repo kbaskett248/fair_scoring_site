@@ -19,7 +19,11 @@
                 <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li><a href="{% url 'login' %}">Log In</a></li>
+                {% if request.user.is_authenticated %}
+                    <li><a href="{% url 'login' %}">{{ request.user.username }}</a></li>
+                {% else %}
+                    <li><a href="{% url 'login' %}">Log In</a></li>
+                {% endif %}
             </ul>
         </div><!-- /.navbar-collapse -->
     </div><!-- /.container-fluid -->
