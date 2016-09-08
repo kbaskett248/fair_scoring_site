@@ -1,5 +1,6 @@
 import logging
 
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
@@ -56,6 +57,8 @@ def judge_detail(request, judge_username):
                   )
 
 
+@login_required
+@permission_required('judges.is_judge')
 def judging_instance_detail(request, judginginstance_key):
     judging_instance = JudgingInstance.objects\
         .select_related('judge', 'project', 'response') \
@@ -69,26 +72,12 @@ def judging_instance_detail(request, judginginstance_key):
                    })
 
 
-from django.contrib.auth import views
-from django.core.urlresolvers import reverse
-def login(request):
-    print(request.user)
-    template_response = views.login(request)
-    print(request.user)
-    if request.method == 'POST':
-        if request.user.has_perm('judges.is_judge'):
-            return HttpResponseRedirect(reverse('fair_projects:judge_detail', args=[request.user.username]))
-    return template_response
-
-
 @csrf_protect
 def import_projects(request):
     logger.info('Import Projects; request=%s', request)
     c = {}
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
-        logger.info('%s', form)
-        logger.info('&s', request.FILES)
         if form.is_valid():
             handle_project_import(request.FILES['file'])
             return HttpResponseRedirect('/admin/fair_projects/project/')
