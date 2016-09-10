@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.auth.decorators import login_required, permission_required
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
@@ -9,6 +10,7 @@ from judges.models import Judge
 from .forms import UploadFileForm
 from .logic import handle_project_import
 from .models import Project, Student, JudgingInstance
+from rubrics.forms import RubricForm
 
 
 logger = logging.getLogger(__name__)
@@ -64,12 +66,16 @@ def judging_instance_detail(request, judginginstance_key):
         .select_related('judge', 'project', 'response') \
         .get(pk=judginginstance_key)
     project = judging_instance.project
+    context = {'judge': judging_instance.judge,
+               'project': project,
+               'student_list': project.student_set.all(),
+               'rubric_response': judging_instance.response,
+               'judging_instance': judging_instance}
+    if request.path == reverse('fair_projects:judging_instance_edit', args=[judginginstance_key]):
+        context['rubric_form'] = RubricForm(judging_instance.response.rubric)
+
     return render(request, 'fair_projects/judging_instance_detail.html',
-                  {'judge': judging_instance.judge,
-                   'project': project,
-                   'student_list': project.student_set.all(),
-                   'rubric_response': judging_instance.response,
-                   })
+                  context)
 
 
 @csrf_protect

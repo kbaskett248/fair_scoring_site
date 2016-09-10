@@ -83,9 +83,16 @@ class Question(models.Model):
 
     def num_choices(self):
         if self.show_choices():
-            return len(self.choice_set.all())
+            return self.choice_set.count()
         else:
             return '-'
+
+    def description(self):
+        return self.long_description or self.short_description
+
+    def choices(self):
+        for choice in self.choice_set.all():
+            yield (choice.key, choice.description)
 
 
 class Choice(models.Model):

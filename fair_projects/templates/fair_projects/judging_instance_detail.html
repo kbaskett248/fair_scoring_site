@@ -29,6 +29,10 @@
 
     <div>{{ project.abstract }}</div>
 
-    {% include "fair_projects/rubric_display.HTML" %}
+    {% if rubric_form %}
+        {% include "fair_projects/rubric_edit.html" %}
+    {% else %}
+        {% include "fair_projects/rubric_display.HTML" %}
+    {% endif %}
 
 {% endblock %}
