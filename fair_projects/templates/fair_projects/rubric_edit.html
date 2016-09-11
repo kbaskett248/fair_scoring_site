@@ -1,8 +1,0 @@
-{% if rubric_form %}
-    <h3 class="panel-title">{{ rubric_response.rubric.name }}</h3>
-    <form action="/your-name/" method="post">
-        {% csrf_token %}
-        {{ rubric_form }}
-        <input type="submit" value="Submit" />
-    </form>
-{% endif %}

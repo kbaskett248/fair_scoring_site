@@ -1,0 +1,31 @@
+{% if field.is_hidden %}
+    {{ field }}
+{% else %}
+    {% if field.errors %}
+        <span class="help-block">
+            {% for error in  field.errors %}{{ error }}{% endfor %}
+        </span>
+    {% endif %}
+    <label class="control-label" for="id_{{ field.name }}">{{ field.label }}</label>
+    {% if field.help_text %}
+        <p class="help-block"><small>{{ field.help_text|safe }}</small></p>
+    {% else %}
+        <br />
+    {% endif %}
+        {% for choice in field.field.choices %}
+            <div class="checkbox">
+                <label for='id_{{field.name}}_{{forloop.counter0}}' class="checkbox">
+                    <input name='{{ field.name }}'
+                       id='id_{{field.name}}_{{forloop.counter0}}'
+                       type='checkbox'
+                       value='{{ choice.0 }}'
+                       {% if not form.is_bound %}
+                           {% ifequal field.field.initial choice.0 %} checked='checked' {% endifequal %}
+                       {% else %}
+                           {% ifequal field.data choice.0 %} checked='checked' {% endifequal %}
+                       {% endif %}/>
+                    {{ choice.1 }}
+                </label>
+            </div>
+        {% endfor %}
+{% endif %}

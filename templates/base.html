@@ -1,36 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block html-title %}{{ title_string | default:"Science Fair" }}{% endblock %}</title>
-    {% load bootstrap3 %}
+    {% load bootstrap3 static %}
     {% bootstrap_css %}
     {% bootstrap_javascript %}
-  </head>
-  <body>
-   <div class="container">
-       {% block page-header %}
-           <div class="page-header">
-               {% include "navbar.html" %}
+</head>
+<body>
+    <div class="container">
+        {% block page-header %}
+            <div class="page-header">
+                {% include "navbar.html" %}
 
-               <h1>{% block title %}{{ title_string | default:"Science Fair" }}{% endblock %}</h1>
+                <h1>{% block title %}{{ title_string | default:"Science Fair" }}{% endblock %}</h1>
 
-               {% block breadcrumbs %}
-                   {% if breadcrumbs %}
-                       <ol class="breadcrumb">
-                           {% for breadcrumb in breadcrumbs %}
-                               <li><a href="{% url breadcrumb.url %}">{{ breadcrumb.title }}</a></li>
-                           {% endfor %}
-                       </ol>
-                   {% endif %}
-               {% endblock %}
-           </div>
-       {% endblock %}
+                {% block breadcrumbs %}
+                    {% if breadcrumbs %}
+                    <ol class="breadcrumb">
+                        {% for breadcrumb in breadcrumbs %}
+                        <li><a href="{% url breadcrumb.url %}">{{ breadcrumb.title }}</a></li>
+                        {% endfor %}
+                    </ol>
+                    {% endif %}
+                {% endblock %}
+            </div>
+        {% endblock %}
 
-       {% block content %}
-       {% endblock %}
-   </div>
-  </body>
+        {% block content %}{% endblock %}
+    </div>
+</body>
 </html>
