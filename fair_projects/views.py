@@ -1,12 +1,14 @@
 import logging
 
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.mixins import AccessMixin
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
-from django.views.generic.base import TemplateView
+from django.views.generic import DetailView, ListView
 
 from judges.models import Judge
 from .forms import UploadFileForm
@@ -49,18 +51,6 @@ def judge_assignment(request):
             str(num_deleted), "<br />".join(added)))
 
 
-# def judge_detail(request, judge_username):
-#     judge = get_object_or_404(Judge, user__username=judge_username)
-#     judge_instances = JudgingInstance.objects.filter(judge=judge, response__rubric__name="Judging Form")\
-#         .order_by('project__number')\
-#         .select_related('project', 'project__category', 'project__division')
-#
-#     return render(request, 'fair_projects/judge_detail.html',
-#                   { 'judge': judge,
-#                     'judginginstance_list': judge_instances }
-#                   )
-
-
 @login_required
 @permission_required('judges.is_judge')
 def judging_instance_detail(request, judginginstance_key):
@@ -97,43 +87,46 @@ def import_projects(request):
     return render(request, 'fair_projects/project_upload.html', c)
 
 
-class SpecificUserRequiredMixin(UserPassesTestMixin):
+class SpecificUserRequiredMixin(AccessMixin):
+    allow_superuser = False
 
-    def test_func(self):
-        current_user = self.request.user
-        if not current_user.is_authenticated():
-            return False
-
-        required_user = self.get_user()
-        if current_user is not required_user:
-            return False
-
-        return super(SpecificUserRequiredMixin, self).test_func()
-
-    def get_user(self):
+    def get_required_user(self, *args, **kwargs):
         raise NotImplementedError(
             '{0} is missing the implementation of the get_user_from_path() method.'.format(self.__class__.__name__)
         )
 
+    def dispatch(self, request, *args, **kwargs):
+        current_user = self.request.user
+        if not current_user.is_authenticated():
+            return self.handle_no_permission()
 
-class JudgeDetail(SpecificUserRequiredMixin, TemplateView):
+        if self.allow_superuser and current_user.is_superuser:
+            return super(SpecificUserRequiredMixin, self).dispatch(request, *args, **kwargs)
 
+        required_user = self.get_required_user(*args, **kwargs)
+        if current_user != required_user:
+            return self.handle_no_permission()
+
+        return super(SpecificUserRequiredMixin, self).dispatch(request, *args, **kwargs)
+
+
+class JudgeDetail(SpecificUserRequiredMixin, ListView):
+    allow_superuser = True
     template_name = 'fair_projects/judge_detail.html'
+    context_object_name = 'judginginstance_list'
 
-    def __init__(self, *args, **kwargs):
-        super(JudgeDetail, self).__init__()
-        self.judge = get_object_or_404(Judge, user__username=self.judge_username)
+    def get_required_user(self, *args, **kwargs):
+        return get_object_or_404(User, username=kwargs['judge_username'])
 
-    def get_user(self):
-        return self.judge.user
+    def get_queryset(self):
+        self.judge = get_object_or_404(Judge, user__username=self.kwargs['judge_username'])
+        return JudgingInstance.objects.filter(judge=self.judge,
+                                              response__rubric__name="Judging Form") \
+            .order_by('project__number') \
+            .select_related('project', 'project__category', 'project__division')
 
     def get_context_data(self, **kwargs):
         context = super(JudgeDetail, self).get_context_data(**kwargs)
         context['judge'] = self.judge
-        context['judginginstance_list'] = JudgingInstance.objects.filter(judge=self.judge,
-                                                                         response__rubric__name="Judging Form") \
-            .order_by('project__number') \
-            .select_related('project', 'project__category', 'project__division')
-
         return context
 
