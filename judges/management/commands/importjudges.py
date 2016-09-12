@@ -30,9 +30,9 @@ class Command(BaseCommand):
         if not os.path.isfile(tsv_path):
             raise CommandError('File "%s" does not exist' % tsv_path)
 
-        password = options.get('password', default=None)
-        email = options.get('email', default=None)
-        phone = options.get('phone', default=None)
+        password = options.get('password', None)
+        email = options.get('email', None)
+        phone = options.get('phone', None)
 
         with open(tsv_path, newline='') as tsv_file:
             self.read_file(tsv_file, global_password=password, global_email=email, global_phone=phone)
@@ -48,14 +48,14 @@ class Command(BaseCommand):
         for row in reader:
             categories = []
             for cat in row['Categories'].split(sep=','):
-                categories.append(Category.objects.get_or_create(short_description=cat.strip()))
+                categories.append(Category.objects.get_or_create(short_description=cat.strip())[0])
 
             divisions = []
             for div in row['Divisions'].split(sep=','):
-                divisions.append(Division.objects.get_or_create(short_description=div.strip()))
+                divisions.append(Division.objects.get_or_create(short_description=div.strip())[0])
 
-            education = JudgeEducation.objects.get_or_create(short_description=row['Education'])
-            fair_exp = JudgeFairExperience.objects.get_or_create(short_description=row['Fair Experience'])
+            education, _ = JudgeEducation.objects.get_or_create(short_description=row['Education'])
+            fair_exp, _ = JudgeFairExperience.objects.get_or_create(short_description=row['Fair Experience'])
 
             password = global_password
             if not password and has_password:
