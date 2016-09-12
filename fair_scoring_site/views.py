@@ -16,5 +16,6 @@ def profile(request):
     else:
         return HttpResponseRedirect(reverse('fair_projects:index'))
 
+
 def home(request):
     return HttpResponseRedirect(reverse('fair_projects:index'))

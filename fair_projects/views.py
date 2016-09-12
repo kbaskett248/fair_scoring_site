@@ -1,10 +1,12 @@
 import logging
 
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
+from django.views.generic.base import TemplateView
 
 from judges.models import Judge
 from .forms import UploadFileForm
@@ -47,16 +49,16 @@ def judge_assignment(request):
             str(num_deleted), "<br />".join(added)))
 
 
-def judge_detail(request, judge_username):
-    judge = get_object_or_404(Judge, user__username=judge_username)
-    judge_instances = JudgingInstance.objects.filter(judge=judge, response__rubric__name="Judging Form")\
-        .order_by('project__number')\
-        .select_related('project', 'project__category', 'project__division')
-
-    return render(request, 'fair_projects/judge_detail.html',
-                  { 'judge': judge,
-                    'judginginstance_list': judge_instances }
-                  )
+# def judge_detail(request, judge_username):
+#     judge = get_object_or_404(Judge, user__username=judge_username)
+#     judge_instances = JudgingInstance.objects.filter(judge=judge, response__rubric__name="Judging Form")\
+#         .order_by('project__number')\
+#         .select_related('project', 'project__category', 'project__division')
+#
+#     return render(request, 'fair_projects/judge_detail.html',
+#                   { 'judge': judge,
+#                     'judginginstance_list': judge_instances }
+#                   )
 
 
 @login_required
@@ -93,3 +95,45 @@ def import_projects(request):
     request.current_app = 'fair_projects'
     c.update({'form': form})
     return render(request, 'fair_projects/project_upload.html', c)
+
+
+class SpecificUserRequiredMixin(UserPassesTestMixin):
+
+    def test_func(self):
+        current_user = self.request.user
+        if not current_user.is_authenticated():
+            return False
+
+        required_user = self.get_user()
+        if current_user is not required_user:
+            return False
+
+        return super(SpecificUserRequiredMixin, self).test_func()
+
+    def get_user(self):
+        raise NotImplementedError(
+            '{0} is missing the implementation of the get_user_from_path() method.'.format(self.__class__.__name__)
+        )
+
+
+class JudgeDetail(SpecificUserRequiredMixin, TemplateView):
+
+    template_name = 'fair_projects/judge_detail.html'
+
+    def __init__(self, *args, **kwargs):
+        super(JudgeDetail, self).__init__()
+        self.judge = get_object_or_404(Judge, user__username=self.judge_username)
+
+    def get_user(self):
+        return self.judge.user
+
+    def get_context_data(self, **kwargs):
+        context = super(JudgeDetail, self).get_context_data(**kwargs)
+        context['judge'] = self.judge
+        context['judginginstance_list'] = JudgingInstance.objects.filter(judge=self.judge,
+                                                                         response__rubric__name="Judging Form") \
+            .order_by('project__number') \
+            .select_related('project', 'project__category', 'project__division')
+
+        return context
+
