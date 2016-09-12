@@ -5,6 +5,7 @@ from django.contrib.auth.mixins import AccessMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
@@ -49,25 +50,6 @@ def judge_assignment(request):
     return HttpResponse(
         "Assigning Judges<br />{0}<br />{1}".format(
             str(num_deleted), "<br />".join(added)))
-
-
-@login_required
-@permission_required('judges.is_judge')
-def judging_instance_detail(request, judginginstance_key):
-    judging_instance = JudgingInstance.objects\
-        .select_related('judge', 'project', 'response') \
-        .get(pk=judginginstance_key)
-    project = judging_instance.project
-    context = {'judge': judging_instance.judge,
-               'project': project,
-               'student_list': project.student_set.all(),
-               'rubric_response': judging_instance.response,
-               'judging_instance': judging_instance}
-    if request.path == reverse('fair_projects:judging_instance_edit', args=[judginginstance_key]):
-        context['rubric_form'] = RubricForm(judging_instance.response.rubric)
-
-    return render(request, 'fair_projects/judging_instance_detail.html',
-                  context)
 
 
 @csrf_protect
@@ -129,4 +111,38 @@ class JudgeDetail(SpecificUserRequiredMixin, ListView):
         context = super(JudgeDetail, self).get_context_data(**kwargs)
         context['judge'] = self.judge
         return context
+
+
+class JudgingInstanceDetail(SpecificUserRequiredMixin, DetailView):
+    allow_superuser = True
+    template_name = 'fair_projects/judging_instance_detail.html'
+    pk_url_kwarg = 'judginginstance_key'
+    model = JudgingInstance
+    queryset = JudgingInstance.objects.select_related(
+        'judge', 'project', 'response', 'judge__user')
+    context_object_name = 'judging_instance'
+
+    def get_required_user(self, *args, **kwargs):
+        self.judging_instance = self.get_object()
+        self.judge = self.judging_instance.judge
+        user_name = self.judge.user.username
+        return get_object_or_404(User, username=user_name)
+
+    def get_object(self, queryset=None):
+        return super(JudgingInstanceDetail, self).get_object(queryset)
+
+    def get_context_data(self, **kwargs):
+        context = super(JudgingInstanceDetail, self).get_context_data(**kwargs)
+
+        context['judge'] = self.judge
+        project = self.judging_instance.project
+        context['project'] = project
+        context['student_list'] = project.student_set.all()
+        context['rubric_response'] = self.judging_instance.response
+        context['edit_mode'] = self.kwargs['edit_mode']
+        if self.kwargs['edit_mode']:
+            context['rubric_form'] = RubricForm(self.judging_instance.response.rubric)
+
+        return context
+
 

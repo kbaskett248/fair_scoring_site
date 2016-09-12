@@ -3,7 +3,7 @@
         <!-- Default panel contents -->
         <div class="panel-heading">
             <h3 class="panel-title">{{ rubric_response.rubric.name }}</h3>
-            <a href="{% url 'fair_projects:judging_instance_edit' judging_instance.pk %}">Edit response</a>
+            <a href="{% url 'fair_projects:judging_instance_detail' judging_instance.pk '/edit' %}">Edit response</a>
         </div>
 
         <div class="list-group">
