@@ -51,6 +51,9 @@ class Question(models.Model):
         max_length=1,
         choices=SORT_CHOICES
     )
+    required = models.BooleanField(
+        default=True
+    )
 
     ordering = ('rubric', 'order', 'short_description')
 
@@ -163,6 +166,13 @@ class QuestionResponse(models.Model):
         blank=True
     )
     text_response = models.TextField(null=True, blank=True)
+
+    @property
+    def response(self):
+        result = self.choice_response or self.text_response
+        if not result:
+            result = None
+        return result
 
     @property
     def question_answered(self):

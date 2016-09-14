@@ -79,13 +79,14 @@ class SpecificUserRequiredMixin(AccessMixin):
 
     def dispatch(self, request, *args, **kwargs):
         current_user = self.request.user
+        required_user = self.get_required_user(*args, **kwargs)
+
         if not current_user.is_authenticated():
             return self.handle_no_permission()
 
         if self.allow_superuser and current_user.is_superuser:
             return super(SpecificUserRequiredMixin, self).dispatch(request, *args, **kwargs)
 
-        required_user = self.get_required_user(*args, **kwargs)
         if current_user != required_user:
             return self.handle_no_permission()
 
@@ -141,8 +142,16 @@ class JudgingInstanceDetail(SpecificUserRequiredMixin, DetailView):
         context['rubric_response'] = self.judging_instance.response
         context['edit_mode'] = self.kwargs['edit_mode']
         if self.kwargs['edit_mode']:
-            context['rubric_form'] = RubricForm(self.judging_instance.response.rubric)
+            context['post_url'] = reverse('fair_projects:judging_instance_detail',
+                                          args=(self.judging_instance.pk, True))
+            if self.request.method == 'POST':
+                form = RubricForm(self.judging_instance.response, data=self.request.POST)
+            else:
+                form = RubricForm(self.judging_instance.response)
+            context['rubric_form'] = form
 
         return context
 
+    def post(self, request, *args, **kwargs):
+        return 'We posted'
 
