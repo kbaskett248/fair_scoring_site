@@ -1,22 +1,19 @@
 {% load i18n widget_tweaks %}
 
 {% if rubric_form %}
-    <form action="post_url" method="post">
+    <form action="{{ post_url }}" method="post">
         {% csrf_token %}
         <div class="panel panel-default">
             <!-- Default panel contents -->
             <div class="panel-heading">
                 <h3 class="panel-title">{{ rubric_form.title }}</h3>
-                {{ rubric_form.is_bound }}
             </div>
 
             <div class="list-group">
                 {% for field in rubric_form %}
-
                     <div class="list-group-item">
                         {% include field.field.template %}
                     </div>
-
                 {% endfor %}
             </div>
             <div class="panel-footer">

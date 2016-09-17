@@ -1,4 +1,8 @@
+from collections import namedtuple
+import json
 from django.db import models
+from django.db import transaction
+
 
 class Rubric(models.Model):
     name = models.CharField(
@@ -148,7 +152,20 @@ class RubricResponse(models.Model):
 
     @property
     def has_response(self):
-        return self.questionresponse_set.exclude(choice_response__isnull=True, text_response__isnull=True).exists()
+        return self.questionresponse_set.exclude(
+            choice_response__isnull=True, text_response__isnull=True).exists()
+
+    @property
+    def question_response_dict(self):
+        return {resp.question.pk: resp
+                for resp in self.questionresponse_set.select_related('question').all()}
+
+    @transaction.atomic
+    def update_data(self, updated_data):
+        qr_dict = self.question_response_dict
+        for key, value in updated_data.items():
+            resp = qr_dict[key]
+            resp.update_response(value)
 
 
 class QuestionResponse(models.Model):
@@ -177,3 +194,16 @@ class QuestionResponse(models.Model):
     @property
     def question_answered(self):
         return self.choice_response or self.text_response
+
+    @property
+    def name(self):
+        return 'question_%s' % self.pk
+
+    def update_response(self, value):
+        if self.question.question_type == Question.LONG_TEXT:
+            self.text_response = value
+        elif self.question.question_type == Question.MULTI_SELECT_TYPE:
+            self.choice_response = json.dumps(value)
+        else:
+            self.choice_response = value
+        self.save()

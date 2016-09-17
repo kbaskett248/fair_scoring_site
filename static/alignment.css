@@ -1,0 +1,218 @@
+/*
+ * Responsive text aligning
+ * http://ohryan.ca/2014/08/14/set-responsive-text-alignment-bootstrap-3/
+ */
+.text-xs-left { text-align: left; }
+.text-xs-right { text-align: right; }
+.text-xs-center { text-align: center; }
+.text-xs-justify { text-align: justify; }
+
+.radio-xs,
+.checkbox-xs {
+  position: relative;
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.radio-xs label,
+.checkbox-xs label{
+  min-height: 20px;
+  margin-bottom: 0;
+  font-weight: normal;
+  cursor: pointer;
+}
+.radio-xs + .radio,
+.checkbox-xs + .checkbox {
+  margin-top: -5px;
+}
+.radio-xs.disabled label,
+.checkbox-xs.disabled label,
+fieldset[disabled] .radio-xs label,
+fieldset[disabled] .checkbox-xs label {
+  cursor: not-allowed;
+}
+
+.radio-inline-xs,
+.checkbox-inline-xs {
+  position: relative;
+  display: inline-block;
+  padding-left: 20px;
+  margin-top: 0;
+  margin-bottom: 0;
+  font-weight: normal;
+  vertical-align: middle;
+  cursor: pointer;
+}
+.radio-inline-xs + .radio-inline-xs,
+.checkbox-inline-xs + .checkbox-inline-xs {
+  margin-top: 0;
+  margin-left: 10px;
+}
+.radio-inline-xs.disabled,
+.checkbox-inline-xs.disabled,
+fieldset[disabled] .radio-inline-xs,
+fieldset[disabled] .checkbox-inline-xs {
+  cursor: not-allowed;
+}
+
+@media (min-width: 768px) {
+  .text-sm-left { text-align: left; }
+  .text-sm-right { text-align: right; }
+  .text-sm-center { text-align: center; }
+  .text-sm-justify { text-align: justify; }
+  .radio-sm,
+  .checkbox-sm {
+    position: relative;
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+  .radio-sm label,
+  .checkbox-sm label{
+    min-height: 20px;
+    margin-bottom: 0;
+    font-weight: normal;
+    cursor: pointer;
+  }
+  .radio-sm + .radio,
+  .checkbox-sm + .checkbox {
+    margin-top: -5px;
+  }
+  .radio-sm.disabled label,
+  .checkbox-sm.disabled label,
+  fieldset[disabled] .radio-sm label,
+  fieldset[disabled] .checkbox-sm label {
+    cursor: not-allowed;
+  }
+    
+  .radio-inline-sm,
+  .checkbox-inline-sm {
+    position: relative;
+    display: inline-block;
+    padding-left: 20px;
+    margin-bottom: 0;
+    margin-top: 0;
+    font-weight: normal;
+    vertical-align: middle;
+    cursor: pointer;
+  }
+  .radio-inline-sm + .radio-inline-sm,
+  .checkbox-inline-sm + .checkbox-inline-sm {
+    margin-top: 0;
+    margin-left: 10px;
+  }
+  .radio-inline-sm.disabled,
+  .checkbox-inline-sm.disabled,
+  fieldset[disabled] .radio-inline-sm,
+  fieldset[disabled] .checkbox-inline-sm {
+    cursor: not-allowed;
+  }
+}
+
+@media (min-width: 992px) {
+  .text-md-left { text-align: left; }
+  .text-md-right { text-align: right; }
+  .text-md-center { text-align: center; }
+  .text-md-justify { text-align: justify; }
+  .radio-md,
+  .checkbox-md {
+    position: relative;
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+  .radio-md label,
+  .checkbox-md label{
+    min-height: 20px;
+    margin-bottom: 0;
+    font-weight: normal;
+    cursor: pointer;
+  }
+  .radio-md + .radio,
+  .checkbox-md + .checkbox {
+    margin-top: -5px;
+  }
+  .radio-md.disabled label,
+  .checkbox-md.disabled label,
+  fieldset[disabled] .radio-md label,
+  fieldset[disabled] .checkbox-md label {
+    cursor: not-allowed;
+  }
+    
+  .radio-inline-md,
+  .checkbox-inline-md {
+    position: relative;
+    display: inline-block;
+    padding-left: 20px;
+    margin-top: 0;
+    margin-bottom: 0;
+    font-weight: normal;
+    vertical-align: middle;
+    cursor: pointer;
+  }
+  .radio-inline-md + .radio-inline-md,
+  .checkbox-inline-md + .checkbox-inline-md {
+    margin-top: 0;
+    margin-left: 10px;
+  }
+  .radio-inline-md.disabled,
+  .checkbox-inline-md.disabled,
+  fieldset[disabled] .radio-inline-md,
+  fieldset[disabled] .checkbox-inline-md {
+    cursor: not-allowed;
+  }
+}
+
+@media (min-width: 1200px) {
+  .text-lg-left { text-align: left; }
+  .text-lg-right { text-align: right; }
+  .text-lg-center { text-align: center; }
+  .text-lg-justify { text-align: justify; }
+  .radio-lg,
+  .checkbox-lg {
+    position: relative;
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+  .radio-lg label,
+  .checkbox-lg label{
+    min-height: 20px;
+    margin-bottom: 0;
+    font-weight: normal;
+    cursor: pointer;
+  }
+  .radio-lg + .radio,
+  .checkbox-lg + .checkbox {
+    margin-top: -5px;
+  }
+  .radio-lg.disabled label,
+  .checkbox-lg.disabled label,
+  fieldset[disabled] .radio-lg label,
+  fieldset[disabled] .checkbox-lg label {
+    cursor: not-allowed;
+  }
+    
+  .radio-inline-lg,
+  .checkbox-inline-lg {
+    position: relative;
+    display: inline-block;
+    padding-left: 20px;
+    margin-top: 0;
+    margin-bottom: 0;
+    font-weight: normal;
+    vertical-align: middle;
+    cursor: pointer;
+  }
+  .radio-inline-lg + .radio-inline-lg,
+  .checkbox-inline-lg + .checkbox-inline-lg {
+    margin-top: 0;
+    margin-left: 10px;
+  }
+  .radio-inline-lg.disabled,
+  .checkbox-inline-lg.disabled,
+  fieldset[disabled] .radio-inline-lg,
+  fieldset[disabled] .checkbox-inline-lg {
+    cursor: not-allowed;
+  }
+}

@@ -10,12 +10,13 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import DetailView, ListView
+from django.views.generic.edit import UpdateView, FormView
 
 from judges.models import Judge
 from .forms import UploadFileForm
 from .logic import handle_project_import
 from .models import Project, Student, JudgingInstance
-from rubrics.forms import RubricForm
+from rubrics.forms import rubric_form_factory
 
 
 logger = logging.getLogger(__name__)
@@ -114,7 +115,7 @@ class JudgeDetail(SpecificUserRequiredMixin, ListView):
         return context
 
 
-class JudgingInstanceDetail(SpecificUserRequiredMixin, DetailView):
+class JudgingInstanceMixin(SpecificUserRequiredMixin):
     allow_superuser = True
     template_name = 'fair_projects/judging_instance_detail.html'
     pk_url_kwarg = 'judginginstance_key'
@@ -124,34 +125,91 @@ class JudgingInstanceDetail(SpecificUserRequiredMixin, DetailView):
     context_object_name = 'judging_instance'
 
     def get_required_user(self, *args, **kwargs):
-        self.judging_instance = self.get_object()
+        self.judging_instance = self.queryset.get(pk=kwargs[self.pk_url_kwarg])
         self.judge = self.judging_instance.judge
         user_name = self.judge.user.username
         return get_object_or_404(User, username=user_name)
 
-    def get_object(self, queryset=None):
-        return super(JudgingInstanceDetail, self).get_object(queryset)
+    # def get_object(self, queryset=None):
+    #     return super(JudgingInstanceMixin, self).get_object(queryset)
 
     def get_context_data(self, **kwargs):
-        context = super(JudgingInstanceDetail, self).get_context_data(**kwargs)
+        context = super(JudgingInstanceMixin, self).get_context_data(**kwargs)
 
         context['judge'] = self.judge
         project = self.judging_instance.project
         context['project'] = project
         context['student_list'] = project.student_set.all()
         context['rubric_response'] = self.judging_instance.response
-        context['edit_mode'] = self.kwargs['edit_mode']
-        if self.kwargs['edit_mode']:
-            context['post_url'] = reverse('fair_projects:judging_instance_detail',
-                                          args=(self.judging_instance.pk, True))
-            if self.request.method == 'POST':
-                form = RubricForm(self.judging_instance.response, data=self.request.POST)
-            else:
-                form = RubricForm(self.judging_instance.response)
-            context['rubric_form'] = form
+        context['edit_mode'] = False
 
         return context
 
-    def post(self, request, *args, **kwargs):
-        return 'We posted'
+class JudgingInstanceDetail(JudgingInstanceMixin, DetailView):
+    # allow_superuser = True
+    # template_name = 'fair_projects/judging_instance_detail.html'
+    # pk_url_kwarg = 'judginginstance_key'
+    # model = JudgingInstance
+    # queryset = JudgingInstance.objects.select_related(
+    #     'judge', 'project', 'response', 'judge__user')
+    # context_object_name = 'judging_instance'
+    #
+    # def get_required_user(self, *args, **kwargs):
+    #     self.judging_instance = self.get_object()
+    #     self.judge = self.judging_instance.judge
+    #     user_name = self.judge.user.username
+    #     return get_object_or_404(User, username=user_name)
+    #
+    # def get_object(self, queryset=None):
+    #     return super(JudgingInstanceDetail, self).get_object(queryset)
+    #
+    # def get_context_data(self, **kwargs):
+    #     context = super(JudgingInstanceDetail, self).get_context_data(**kwargs)
+    #
+    #     context['judge'] = self.judge
+    #     project = self.judging_instance.project
+    #     context['project'] = project
+    #     context['student_list'] = project.student_set.all()
+    #     context['rubric_response'] = self.judging_instance.response
+    #     context['edit_mode'] = self.kwargs['edit_mode']
+    #     if self.kwargs['edit_mode']:
+    #         context['post_url'] = reverse('fair_projects:judging_instance_detail',
+    #                                       args=(self.judging_instance.pk, )) + '/edit/'
+    #         if self.request.method == 'POST':
+    #             form = RubricForm(self.judging_instance.response, data=self.request.POST)
+    #         else:
+    #             form = RubricForm(self.judging_instance.response)
+    #         context['rubric_form'] = form
+    #
+    #     return context
+    pass
 
+class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
+
+    def get_context_data(self, **kwargs):
+        context = super(JudgingInstanceUpdate, self).get_context_data(**kwargs)
+
+        context['edit_mode'] = True
+        context['post_url'] = reverse('fair_projects:judging_instance_edit',
+                                      args=(self.judging_instance.pk,))
+        context['rubric_form'] = context['form']
+
+        return context
+
+    def get_form_class(self):
+        return rubric_form_factory(self.object.response.rubric)
+
+    def get_form_kwargs(self):
+        kwargs = super(JudgingInstanceUpdate, self).get_form_kwargs()
+        kwargs['instance'] = kwargs['instance'].response
+        return kwargs
+
+    def get_success_url(self):
+        return reverse('fair_projects:judging_instance_detail',
+                       args=(self.object.pk, ))
+
+    # def get_initial(self):
+    #     data = {}
+    #     for q_resp in self.object.response.questionresponse_set.all():
+    #         data[q_resp.name] = q_resp.response
+    #     return data

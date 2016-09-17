@@ -12,34 +12,20 @@
     {% else %}
         <br />
     {% endif %}
-        {% for choice in field.field.choices %}
-            <div class="radio-inline hidden-xs hidden-sm">
-                <label for='id_{{field.name}}_{{forloop.counter0}}' class="radio-inline">
-                    <input name='{{ field.name }}'
-                       id='id_{{field.name}}_{{forloop.counter0}}'
-                       type='radio'
-                       value='{{ choice.0 }}'
-                       {% if not form.is_bound %}
-                           {% ifequal field.field.initial choice.0 %} checked='checked' {% endifequal %}
-                       {% else %}
-                           {% ifequal field.data choice.0 %} checked='checked' {% endifequal %}
-                       {% endif %}/>
-                    {{ choice.1 }}
-                </label>
-            </div>
-            <div class="radio hidden-md hidden-lg">
-                <label for='id_{{field.name}}_{{forloop.counter0}}' class="radio">
-                    <input name='{{ field.name }}'
-                       id='id_{{field.name}}_{{forloop.counter0}}'
-                       type='radio'
-                       value='{{ choice.0 }}'
-                       {% if not form.is_bound %}
-                           {% ifequal field.field.initial choice.0 %} checked='checked' {% endifequal %}
-                       {% else %}
-                           {% ifequal field.data choice.0 %} checked='checked' {% endifequal %}
-                       {% endif %}/>
-                    {{ choice.1 }}
-                </label>
-            </div>
-        {% endfor %}
+    {% for choice in field.field.choices %}
+        <div class="radio-xs radio-inline-md">
+            <label for='id_{{field.name}}_{{forloop.counter0}}' class="radio-xs radio-inline-md">
+                <input name='{{ field.name }}'
+                   id='id_{{field.name}}_{{forloop.counter0}}'
+                   type='radio'
+                   value='{{ choice.0 }}'
+                   {% if not form.is_bound %}
+                       {% ifequal field.field.initial choice.0 %} checked='checked' {% endifequal %}
+                   {% else %}
+                       {% ifequal field.data choice.0 %} checked='checked' {% endifequal %}
+                   {% endif %}/>
+                {{ choice.1 }}
+            </label>
+        </div>
+    {% endfor %}
 {% endif %}
