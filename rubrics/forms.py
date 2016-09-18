@@ -30,10 +30,10 @@ def multi_select_field(question):
 
 class RubricForm(forms.Form):
     DEFAULT_TEMPLATE_DICT = {
-        Question.LONG_TEXT: 'rubrics/long_text_type.html',
-        Question.SCALE_TYPE: 'rubrics/scale_type.html',
-        Question.SINGLE_SELECT_TYPE: 'rubrics/single_select_type.html',
-        Question.MULTI_SELECT_TYPE: 'rubrics/multi_select_type.html'
+        Question.LONG_TEXT: 'rubrics/long_text_type_edit.html',
+        Question.SCALE_TYPE: 'rubrics/scale_type_edit.html',
+        Question.SINGLE_SELECT_TYPE: 'rubrics/single_select_type_edit.html',
+        Question.MULTI_SELECT_TYPE: 'rubrics/multi_select_type_edit.html'
     }
 
     DEFAULT_FIELD_DICT = {
@@ -67,7 +67,7 @@ def rubric_form_factory(rubric, field_dict=RubricForm.DEFAULT_FIELD_DICT,
         field = field_dict.get(question.question_type, default_field)(question)
         field.question_type = question.question_type
         field.template = template_dict.get(question.question_type,
-                                           'rubrics/default_type.html')
+                                           'rubrics/default_type_edit.html')
         form_dict[name] = field
 
     return type(form_name, form_bases, form_dict)

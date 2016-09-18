@@ -1,0 +1,10 @@
+<p class="list-group-item-heading"><strong>{{ question }}</strong></p>
+{% if not answer %}
+    <p class="list-group-item-text">None</p>
+{% else %}
+    <ul class="list-group-item-text">
+        {% for indv in answer %}
+            <li>{{ indv }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}

@@ -163,6 +163,10 @@ class RubricResponse(models.Model):
         return {resp.question.pk: resp
                 for resp in self.questionresponse_set.select_related('question').all()}
 
+    def question_answer_iter(self):
+        for resp in self.questionresponse_set.select_related('question').all():
+            yield resp.question.question_type, resp.question.description(), resp.response_external()
+
     def get_form_data(self):
         return {response.question.field_name(): response.response
                 for response in self.question_response_dict.values()}
@@ -204,6 +208,20 @@ class QuestionResponse(models.Model):
     @property
     def question_answered(self):
         return self.choice_response or self.text_response
+
+    def response_external(self):
+        if self.question.question_type == Question.LONG_TEXT:
+            return self.text_response
+        elif self.question.question_type == Question.MULTI_SELECT_TYPE:
+            resp = json.loads(self.choice_response)
+            choices = {key: value for key, value in self.question.choices()}
+
+            return [choices[indv] for indv in resp]
+        else:
+            resp = self.choice_response
+            choices = {key: value for key, value in self.question.choices()}
+
+            return choices[resp]
 
     def update_response(self, value):
         if self.question.question_type == Question.LONG_TEXT:

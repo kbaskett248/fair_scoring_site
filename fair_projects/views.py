@@ -1,5 +1,7 @@
 import logging
+from collections import defaultdict
 
+import functools
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.auth.models import User
@@ -13,6 +15,7 @@ from django.views.generic import DetailView, ListView
 from django.views.generic.edit import UpdateView, FormView
 
 from judges.models import Judge
+from rubrics.models import Question
 from .forms import UploadFileForm
 from .logic import handle_project_import
 from .models import Project, Student, JudgingInstance
@@ -144,7 +147,27 @@ class JudgingInstanceMixin(SpecificUserRequiredMixin):
 
 
 class JudgingInstanceDetail(JudgingInstanceMixin, DetailView):
-    pass
+    template_dict = {Question.MULTI_SELECT_TYPE: 'rubrics/multi_select_type_view.html',
+                     Question.LONG_TEXT: 'rubrics/long_text_type_view.html'}
+    default_template = 'rubrics/default_type_view.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(JudgingInstanceDetail, self).get_context_data(**kwargs)
+        template_dict = defaultdict(functools.partial(self.get_default_template, **kwargs))
+        template_dict.update(self.get_template_dict(**kwargs))
+        question_list = [(template_dict[question_type], question, answer)
+                         for question_type, question, answer
+                         in context['rubric_response'].question_answer_iter()]
+        context['question_list'] = question_list
+
+        return context
+
+    def get_template_dict(self, **kwargs):
+        return self.template_dict
+
+    def get_default_template(self, **kwargs):
+        return self.default_template
+
 
 
 class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
