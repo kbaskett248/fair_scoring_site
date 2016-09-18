@@ -201,7 +201,10 @@ class QuestionResponse(models.Model):
         if self.question.question_type == Question.LONG_TEXT:
             return self.text_response
         elif self.question.question_type == Question.MULTI_SELECT_TYPE:
-            return json.loads(self.choice_response)
+            resp = self.choice_response
+            if not resp:
+                return []
+            return json.loads(resp)
         else:
             return self.choice_response
 
@@ -213,12 +216,17 @@ class QuestionResponse(models.Model):
         if self.question.question_type == Question.LONG_TEXT:
             return self.text_response
         elif self.question.question_type == Question.MULTI_SELECT_TYPE:
-            resp = json.loads(self.choice_response)
+            resp = self.choice_response
+            if not resp:
+                return []
+            resp = json.loads(resp)
             choices = {key: value for key, value in self.question.choices()}
 
             return [choices[indv] for indv in resp]
         else:
             resp = self.choice_response
+            if resp is None:
+                return None
             choices = {key: value for key, value in self.question.choices()}
 
             return choices[resp]

@@ -169,7 +169,6 @@ class JudgingInstanceDetail(JudgingInstanceMixin, DetailView):
         return self.default_template
 
 
-
 class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super(JudgingInstanceUpdate, self).get_context_data(**kwargs)
@@ -194,9 +193,3 @@ class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
     def get_success_url(self):
         return reverse('fair_projects:judging_instance_detail',
                        args=(self.object.pk,))
-
-    # def get_initial(self):
-    #     data = {}
-    #     for q_resp in self.object.response.questionresponse_set.all():
-    #         data[q_resp.name] = q_resp.response
-    #     return data
