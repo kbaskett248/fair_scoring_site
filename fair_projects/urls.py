@@ -11,4 +11,5 @@ urlpatterns = [
         views.JudgingInstanceDetail.as_view(), name='judging_instance_detail'),
     url(r'^judgingresponse/(?P<judginginstance_key>[0-9]+)/edit/?$',
         views.JudgingInstanceUpdate.as_view(), name='judging_instance_edit'),
+    url(r'^teacher/(?P<username>[A-Za-z._0-9]+)/?', views.TeacherDetail.as_view(), name='teacher_detail')
 ]

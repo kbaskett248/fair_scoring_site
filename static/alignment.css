@@ -2,6 +2,11 @@
  * Responsive text aligning
  * http://ohryan.ca/2014/08/14/set-responsive-text-alignment-bootstrap-3/
  */
+.truncated {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
 .text-xs-left { text-align: left; }
 .text-xs-right { text-align: right; }
 .text-xs-center { text-align: center; }

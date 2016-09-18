@@ -11,6 +11,9 @@ def profile(request):
         elif request.user.has_perm('judges.is_judge'):
             return HttpResponseRedirect(reverse('fair_projects:judge_detail',
                                                 args=[request.user.username]))
+        elif request.user.has_perm('fair_projects.is_teacher'):
+            return HttpResponseRedirect(reverse('fair_projects:teacher_detail',
+                                                args=(request.user.username, )))
         else:
             return HttpResponseRedirect(reverse('fair_projects:index'))
     else:

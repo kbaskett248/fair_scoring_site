@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block html-title %}{{ teacher.user.first_name }} {{ teacher.user.last_name }} - RRSEF{% endblock %}
+
+{% block title %}{{ teacher.user.first_name }} {{ teacher.user.last_name }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% include 'fair_projects/project_list.html' %}
+{% endblock %}

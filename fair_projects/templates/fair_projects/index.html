@@ -5,20 +5,5 @@
 {% block title %}Projects{% endblock %}
 
 {% block content %}
-    {% if project_list %}
-        <div class="list-group">
-            {% for project in project_list %}
-                <a href="{% url 'fair_projects:detail' project.number %}" class="row list-group-item">
-                    <div class="col-xs-1">{{ project.number }}</div>
-                    <div class="col-xs-11 col-sm-11 col-md-7 col-lg-5" style="text-overflow:ellipsis; white-space: nowrap;overflow: hidden;">{{ project.title }}</div>
-                    <div class="col-xs-1 col-sm-1 hidden-md hidden-lg"></div>
-                    <div class="hidden-xs col-sm-8 hidden-md col-lg-4">{{ project.subcategory.short_description }} ({{ project.category.short_description }})</div>
-                    <div class="col-xs-4 hidden-sm col-md-2 hidden-lg">{{ project.category.short_description }}</div>
-                    <div class="col-xs-4 col-sm-2">{{ project.division.short_description }}</div>
-                </a>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p>No projects are available.</p>
-    {% endif %}
+    {% include 'fair_projects/project_list.html' %}
 {% endblock %}
