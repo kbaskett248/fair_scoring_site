@@ -18,14 +18,14 @@ from .logic import handle_project_import
 from .models import Project, Student, JudgingInstance
 from rubrics.forms import rubric_form_factory
 
-
 logger = logging.getLogger(__name__)
 
 
 def index(request):
     project_list = Project.objects.order_by('number', 'title')
-    context = { 'project_list': project_list }
+    context = {'project_list': project_list}
     return render(request, 'fair_projects/index.html', context)
+
 
 def detail(request, project_number):
     project = get_object_or_404(Project, number=project_number)
@@ -34,10 +34,10 @@ def detail(request, project_number):
     judge_list = [ji.judge for ji in judge_instances]
 
     return render(request, 'fair_projects/detail.html',
-                  { 'project': project,
-                    'student_list': student_list,
-                    'judge_list': judge_list,
-                  })
+                  {'project': project,
+                   'student_list': student_list,
+                   'judge_list': judge_list,
+                   })
 
 
 def judge_assignment(request):
@@ -130,9 +130,6 @@ class JudgingInstanceMixin(SpecificUserRequiredMixin):
         user_name = self.judge.user.username
         return get_object_or_404(User, username=user_name)
 
-    # def get_object(self, queryset=None):
-    #     return super(JudgingInstanceMixin, self).get_object(queryset)
-
     def get_context_data(self, **kwargs):
         context = super(JudgingInstanceMixin, self).get_context_data(**kwargs)
 
@@ -145,47 +142,12 @@ class JudgingInstanceMixin(SpecificUserRequiredMixin):
 
         return context
 
+
 class JudgingInstanceDetail(JudgingInstanceMixin, DetailView):
-    # allow_superuser = True
-    # template_name = 'fair_projects/judging_instance_detail.html'
-    # pk_url_kwarg = 'judginginstance_key'
-    # model = JudgingInstance
-    # queryset = JudgingInstance.objects.select_related(
-    #     'judge', 'project', 'response', 'judge__user')
-    # context_object_name = 'judging_instance'
-    #
-    # def get_required_user(self, *args, **kwargs):
-    #     self.judging_instance = self.get_object()
-    #     self.judge = self.judging_instance.judge
-    #     user_name = self.judge.user.username
-    #     return get_object_or_404(User, username=user_name)
-    #
-    # def get_object(self, queryset=None):
-    #     return super(JudgingInstanceDetail, self).get_object(queryset)
-    #
-    # def get_context_data(self, **kwargs):
-    #     context = super(JudgingInstanceDetail, self).get_context_data(**kwargs)
-    #
-    #     context['judge'] = self.judge
-    #     project = self.judging_instance.project
-    #     context['project'] = project
-    #     context['student_list'] = project.student_set.all()
-    #     context['rubric_response'] = self.judging_instance.response
-    #     context['edit_mode'] = self.kwargs['edit_mode']
-    #     if self.kwargs['edit_mode']:
-    #         context['post_url'] = reverse('fair_projects:judging_instance_detail',
-    #                                       args=(self.judging_instance.pk, )) + '/edit/'
-    #         if self.request.method == 'POST':
-    #             form = RubricForm(self.judging_instance.response, data=self.request.POST)
-    #         else:
-    #             form = RubricForm(self.judging_instance.response)
-    #         context['rubric_form'] = form
-    #
-    #     return context
     pass
 
-class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
 
+class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super(JudgingInstanceUpdate, self).get_context_data(**kwargs)
 
@@ -202,11 +164,13 @@ class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
     def get_form_kwargs(self):
         kwargs = super(JudgingInstanceUpdate, self).get_form_kwargs()
         kwargs['instance'] = kwargs['instance'].response
+        if 'data' not in kwargs:
+            kwargs['data'] = kwargs['instance'].get_form_data()
         return kwargs
 
     def get_success_url(self):
         return reverse('fair_projects:judging_instance_detail',
-                       args=(self.object.pk, ))
+                       args=(self.object.pk,))
 
     # def get_initial(self):
     #     data = {}

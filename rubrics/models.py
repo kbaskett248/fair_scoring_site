@@ -101,6 +101,9 @@ class Question(models.Model):
         for choice in self.choice_set.all():
             yield (choice.key, choice.description)
 
+    def field_name(self):
+        return 'question_%s' % self.pk
+
 
 class Choice(models.Model):
     question = models.ForeignKey(
@@ -160,6 +163,11 @@ class RubricResponse(models.Model):
         return {resp.question.pk: resp
                 for resp in self.questionresponse_set.select_related('question').all()}
 
+    def get_form_data(self):
+        return {response.question.field_name(): response.response
+                for response in self.question_response_dict.values()}
+
+
     @transaction.atomic
     def update_data(self, updated_data):
         qr_dict = self.question_response_dict
@@ -186,18 +194,16 @@ class QuestionResponse(models.Model):
 
     @property
     def response(self):
-        result = self.choice_response or self.text_response
-        if not result:
-            result = None
-        return result
+        if self.question.question_type == Question.LONG_TEXT:
+            return self.text_response
+        elif self.question.question_type == Question.MULTI_SELECT_TYPE:
+            return json.loads(self.choice_response)
+        else:
+            return self.choice_response
 
     @property
     def question_answered(self):
         return self.choice_response or self.text_response
-
-    @property
-    def name(self):
-        return 'question_%s' % self.pk
 
     def update_response(self, value):
         if self.question.question_type == Question.LONG_TEXT:

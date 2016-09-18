@@ -20,9 +20,13 @@
                        type='checkbox'
                        value='{{ choice.0 }}'
                        {% if not form.is_bound %}
-                           {% ifequal field.field.initial choice.0 %} checked='checked' {% endifequal %}
+                           {% if choice.0 in field.field.initial %}
+                               checked='checked'
+                           {% endif %}
                        {% else %}
-                           {% ifequal field.data choice.0 %} checked='checked' {% endifequal %}
+                           {% if choice.0 in field.data %}
+                               checked='checked'
+                           {% endif %}
                        {% endif %}/>
                     {{ choice.1 }}
                 </label>
