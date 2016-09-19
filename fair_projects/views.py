@@ -2,7 +2,7 @@ import functools
 import logging
 from collections import defaultdict
 
-from django.contrib.auth.mixins import AccessMixin
+from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import DetailView, ListView
-from django.views.generic.edit import UpdateView
+from django.views.generic.edit import UpdateView, CreateView
 
 from .forms import UploadFileForm
 from .logic import handle_project_import
@@ -23,10 +23,33 @@ from rubrics.forms import rubric_form_factory
 logger = logging.getLogger(__name__)
 
 
-def index(request):
-    project_list = Project.objects.order_by('number', 'title')
-    context = {'project_list': project_list}
-    return render(request, 'fair_projects/index.html', context)
+class ProjectIndex(ListView):
+    template_name = 'fair_projects/index.html'
+    model = Project
+    queryset = Project.objects.select_related('category', 'subcategory', 'division')\
+        .order_by('number', 'title')
+    context_object_name = 'project_list'
+
+    def get_context_data(self, **kwargs):
+        context = super(ProjectIndex, self).get_context_data(**kwargs)
+
+        request_user = self.request.user
+        context['allow_create'] = False
+        if request_user.is_authenticated():
+            if request_user.has_perm('fair_projects.add_project'):
+                context['allow_create'] = True
+
+        return context
+
+
+class ProjectCreate(PermissionRequiredMixin, CreateView):
+    model = Project
+    template_name = 'fair_projects/project_create.html'
+    fields = ('title', 'category', 'subcategory', 'division')
+    permission_required = 'fair_projects.add_project'
+
+    def get_success_url(self):
+        return reverse('fair_projects:detail', args=(self.object.number, ))
 
 
 class ProjectDetail(DetailView):

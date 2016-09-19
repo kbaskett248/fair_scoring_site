@@ -87,13 +87,13 @@ class Project(models.Model):
         on_delete=models.PROTECT
     )
 
-    def __init__(self, *args, **kwargs):
-        # __init__ is run when objects are retrieved from the database
-        # in addition to when they are created.
-        super(Project, self).__init__(*args, **kwargs)
-        if not self.number:
-            self.number = self.get_next_number()
-            self.save()
+    # def __init__(self, *args, **kwargs):
+    #     # __init__ is run when objects are retrieved from the database
+    #     # in addition to when they are created.
+    #     super(Project, self).__init__(*args, **kwargs)
+    #     if not self.number:
+    #         self.number = self.get_next_number()
+    #         self.save()
 
     def get_next_number(self):
         max_proj_num = Project.objects.filter(
@@ -108,6 +108,13 @@ class Project(models.Model):
                 default_min += 1000
                 if div == self.division and cat == self.category:
                     return default_min + 1
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if not self.number:
+            self.number = self.get_next_number()
+        return super(Project, self).save(force_insert, force_update, using,
+                                         update_fields)
 
     def __str__(self):
         return self.title
