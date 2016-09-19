@@ -4,7 +4,9 @@ from collections import defaultdict
 
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
@@ -27,17 +29,41 @@ def index(request):
     return render(request, 'fair_projects/index.html', context)
 
 
-def detail(request, project_number):
-    project = get_object_or_404(Project, number=project_number)
-    student_list = Student.objects.filter(project=project)
-    judge_instances = JudgingInstance.objects.filter(project=project)
-    judge_list = [ji.judge for ji in judge_instances]
+class ProjectDetail(DetailView):
+    template_name = 'fair_projects/detail.html'
+    model = Project
+    context_object_name = 'project'
+    queryset = Project.objects.select_related(
+        'category', 'subcategory', 'division')
 
-    return render(request, 'fair_projects/detail.html',
-                  {'project': project,
-                   'student_list': student_list,
-                   'judge_list': judge_list,
-                   })
+    def get_object(self, queryset=None):
+        if not queryset:
+            queryset = self.queryset
+
+        try:
+            return queryset.get(number=self.kwargs['project_number'])
+        except ObjectDoesNotExist:
+            raise Http404()
+
+    def get_context_data(self, **kwargs):
+        context = super(ProjectDetail, self).get_context_data(**kwargs)
+
+        context['student_list'] = Student.objects.filter(project=self.object)
+        judge_instances = JudgingInstance.objects.filter(project=self.object)
+        context['judge_list'] = [ji.judge for ji in judge_instances]
+
+        request_user = self.request.user
+        context['is_submitting_teacher'] = False
+        if request_user.is_authenticated():
+            if request_user.is_superuser:
+                context['is_submitting_teacher'] = True
+            elif request_user.has_perm('fair_projects.is_teacher'):
+                teacher = Teacher.objects.get(user=request_user)
+                if [student for student in context['student_list']
+                        if student.teacher == teacher]:
+                    context['is_submitting_teacher'] = True
+
+        return context
 
 
 def judge_assignment(request):

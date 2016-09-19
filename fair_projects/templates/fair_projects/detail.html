@@ -12,6 +12,9 @@
 {% endblock %}
 
 {% block content %}
+    {% if is_submitting_teacher %}
+        <a href="#" class="btn btn-primary">Edit</a>
+    {% endif %}
     <div>{{ project.division.short_description }}</div>
     <div>{{ project.category.short_description }} - {{ project.subcategory.short_description }}</div>
 
