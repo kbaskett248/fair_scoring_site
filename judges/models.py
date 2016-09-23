@@ -1,10 +1,9 @@
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
-from django.db import models
+from django.db import models, transaction
 
 
-# Create your models here.
 class PhoneField(models.CharField):
     phone_regex = RegexValidator(
         regex=r'^\+?1?\d{9,15}$',
@@ -90,31 +89,39 @@ class Judge(models.Model):
         return self.user.first_name + ' ' + self.user.last_name
 
 
+@transaction.atomic()
 def create_judge(username, email, first_name, last_name, phone, education, fair_exp, categories, divisions,
                  password=None, has_device=True, output_stream=None):
     def write_output(message):
         if output_stream:
             output_stream.write(message)
 
-    try:
-        User.objects.get(username=username)
-    except ObjectDoesNotExist:
-        pass
+    user, save_user = User.objects.get_or_create(username=username)
+    if save_user:
+        if not password:
+            password = User.objects.make_random_password()
+        user.first_name = first_name
+        user.last_name = last_name
+        user.password = password
     else:
-        write_output('Teacher %s already exists' % username)
-        return
+        write_output('Judge user %s already exists' % username)
 
-    if not password:
-        password = User.objects.make_random_password()
+    judges_group = Group.objects.get(name='Judges')
+    if judges_group.pk not in user.groups.all():
+        user.groups.add(judges_group.pk)
+        save_user = True
 
-    user = User.objects.create_user(username, email, password)
-    user.first_name = first_name
-    user.last_name = last_name
-    group = Group.objects.get(name='Judges')
-    user.groups.add(group)
-    user.save()
+    if save_user:
+        user.save()
 
-    judge = Judge.objects.create(user=user, phone=phone, has_device=has_device, education=education,
-                                 fair_experience=fair_exp, categories=categories, divisions=divisions)
-
-    return judge
+    if save_user:
+        try:
+            judge = Judge.objects.get(user=user)
+        except ObjectDoesNotExist:
+            judge = Judge.objects.create(user=user, phone=phone, has_device=has_device, education=education,
+                                         fair_experience=fair_exp)
+            judge.categories.add(*categories)
+            judge.divisions.add(*divisions)
+            judge.save()
+            write_output('Judge %s created' % username)
+            return judge
