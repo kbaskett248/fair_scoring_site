@@ -1,8 +1,8 @@
 import itertools
 
+from django.contrib.auth.models import User, Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.contrib.auth.models import User, Group
 from django.db import transaction
 
 from fair_categories.models import Ethnicity, Category, Subcategory, Division
@@ -52,7 +52,7 @@ def create_teacher(username, email, first_name, last_name, school_name, password
         user.email = email
         user.password = password
     else:
-        write_output('Judge user %s already exists' % username)
+        write_output('Teacher user %s already exists' % username)
 
     teachers_group = Group.objects.get(name='Teachers')
     if teachers_group.pk not in user.groups.all():
@@ -111,6 +111,38 @@ class Student(models.Model):
         return self.first_name + ' ' + self.last_name
 
 
+def create_student(first_name, last_name, eth_name, gender, teacher_name, grade_level, project, email=None,
+                   output_stream=None):
+    def write_output(message):
+        if output_stream:
+            output_stream.write(message)
+
+    if not first_name:
+        write_output('No input data')
+        return
+
+    ethnicity, _ = Ethnicity.objects.get_or_create(short_description=eth_name)
+    teacher = Teacher.objects.get(user__last_name=teacher_name)
+
+    student, save_student = Student.objects.get_or_create(
+        first_name=first_name, last_name=last_name,
+        defaults={'ethnicity': ethnicity,
+                  'gender': gender,
+                  'teacher': teacher,
+                  'grade_level': grade_level,
+                  'project': project}
+    )
+    if save_student:
+        if email:
+            student.email = email
+        write_output('Created student %s' % student)
+        student.save()
+    else:
+        write_output('Student already exists: %s' % student)
+
+    return student
+
+
 class Project(models.Model):
     title = models.CharField(max_length=65)
     abstract = models.TextField(blank=True)
@@ -127,14 +159,6 @@ class Project(models.Model):
         Division,
         on_delete=models.PROTECT
     )
-
-    # def __init__(self, *args, **kwargs):
-    #     # __init__ is run when objects are retrieved from the database
-    #     # in addition to when they are created.
-    #     super(Project, self).__init__(*args, **kwargs)
-    #     if not self.number:
-    #         self.number = self.get_next_number()
-    #         self.save()
 
     def get_next_number(self):
         max_proj_num = Project.objects.filter(
@@ -159,6 +183,29 @@ class Project(models.Model):
 
     def __str__(self):
         return self.title
+
+
+def create_project(title, abstract, cat_name, subcat_name, division, output_stream=None):
+    def write_output(message):
+        if output_stream:
+            output_stream.write(message)
+
+    cat = Category.objects.get(short_description__icontains=cat_name)
+    try:
+        subcat = Subcategory.objects.get(category=cat,
+                                         short_description__icontains=subcat_name)
+    except ObjectDoesNotExist:
+        return None
+
+    project = Project(title=title,
+                      abstract=abstract,
+                      category=cat,
+                      subcategory=subcat,
+                      division=division)
+    project.save()
+    write_output('Created project: %s' % project)
+
+    return project
 
 
 class JudgingInstance(models.Model):

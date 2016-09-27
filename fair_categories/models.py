@@ -15,6 +15,21 @@ class Division(models.Model):
     def __str__(self):
         return self.short_description
 
+    @classmethod
+    def get_grade_div_dict(cls):
+        result = {}
+        for div in cls.objects.all():
+            if div.short_description == 'Middle School':
+                mid_div = div
+            elif div.short_description == 'High School':
+                high_div = div
+        for grade in range(6, 9):
+            result[grade] = mid_div
+        for grade in range(9, 13):
+            result[grade] = high_div
+
+        return result
+
 
 class Category(models.Model):
     active = models.BooleanField(

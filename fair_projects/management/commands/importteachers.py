@@ -60,4 +60,5 @@ class Command(BaseCommand):
                            row['First Name'],
                            row['Last Name'],
                            row['School'],
-                           password)
+                           password,
+                           output_stream=self.stdout)
