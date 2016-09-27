@@ -1,6 +1,9 @@
 import itertools
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
+from django.db import transaction
 
 from fair_categories.models import Ethnicity, Category, Subcategory, Division
 from judges.models import Judge
@@ -32,6 +35,44 @@ class Teacher(models.Model):
 
     def __str__(self):
         return self.user.first_name + ' ' + self.user.last_name
+
+
+@transaction.atomic()
+def create_teacher(username, email, first_name, last_name, school_name, password=None, output_stream=None):
+    def write_output(message):
+        if output_stream:
+            output_stream.write(message)
+
+    user, save_user = User.objects.get_or_create(username=username)
+    if save_user:
+        if not password:
+            password = User.objects.make_random_password()
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.password = password
+    else:
+        write_output('Judge user %s already exists' % username)
+
+    teachers_group = Group.objects.get(name='Teachers')
+    if teachers_group.pk not in user.groups.all():
+        user.groups.add(teachers_group.pk)
+        save_user = True
+
+    if save_user:
+        user.save()
+
+    if save_user:
+        try:
+            teacher = Teacher.objects.get(user=user)
+        except ObjectDoesNotExist:
+            school, _ = School.objects.get_or_create(name=school_name)
+            teacher = Teacher.objects.create(user=user, school=school)
+            teacher.save()
+            write_output('Teacher %s created' % username)
+            return teacher
+        else:
+            return teacher
 
 
 class Student(models.Model):

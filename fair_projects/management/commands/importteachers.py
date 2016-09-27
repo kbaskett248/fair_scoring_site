@@ -1,11 +1,10 @@
 import csv
 import os
 
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand, CommandError
-from django.core.exceptions import ObjectDoesNotExist
 
-from fair_projects.models import Teacher, School
+from fair_projects.models import create_teacher
 
 
 class Command(BaseCommand):
@@ -13,6 +12,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('csv_path', type=str)
+        parser.add_argument('-p', '--password', type=str,
+                            help=('Password to assign to each teacher. This value will override any password stored '
+                                  'in the input file. If no password is specified here, and no password is stored '
+                                  'in the input file, then a random password is assigned.'))
+        parser.add_argument('-e', '--email', type=str,
+                            help=('Email to assign to each teacher. This will override any email stored in the input '
+                                  'file. Useful for setting up test teachers.'))
 
     def handle(self, *args, **options):
         csv_path = options['csv_path']
@@ -20,48 +26,38 @@ class Command(BaseCommand):
             raise CommandError('File "%s" does not exist')
 
         self.group = Group.objects.get(name='Teachers')
-        with open(csv_path, newline='') as csv_file:
-            self.read_file(csv_file)
 
-    def read_file(self, csv_file):
+        password = options.get('password', None)
+        email = options.get('email', None)
+        phone = options.get('phone', None)
+
+        with open(csv_path, newline='') as csv_file:
+            self.read_file(csv_file, global_password=password, global_email=email, global_phone=phone)
+
+    def read_file(self, csv_file, global_password=None, global_email=None, global_phone=None):
         dialect = csv.Sniffer().sniff(csv_file.read(1024))
         csv_file.seek(0)
         reader = csv.DictReader(csv_file, dialect=dialect)
         has_password = 'Password' in reader.fieldnames
+        has_email = 'Email' in reader.fieldnames
+        has_phone = 'Phone Number' in reader.fieldnames
 
         for row in reader:
-            if has_password:
+            password = global_password
+            if not password and has_password:
                 password = row['Password']
-            else:
-                password = None
-            self.create_teacher(row['Username'],
-                                row['Email'],
-                                row['First Name'],
-                                row['Last Name'],
-                                row['School'],
-                                password)
 
-    def create_teacher(self, username, email, first_name, last_name, school_name, password=None):
-        try:
-            User.objects.get(username=username)
-        except ObjectDoesNotExist:
-            pass
-        else:
-            self.stdout.write(self.style.NOTICE('Teacher %s already exists' % username))
-            return
+            email = global_email
+            if not email and has_email:
+                email = row['Email']
 
-        if not password:
-            password = User.objects.make_random_password()
+            phone = global_phone
+            if not phone and has_phone:
+                phone = row['Phone Number']
 
-        user = User.objects.create_user(username, email, password)
-        user.first_name = first_name
-        user.last_name = last_name
-        user.groups.add(self.group)
-        user.save()
-
-        school, _ = School.objects.get_or_create(name=school_name)
-
-        teacher = Teacher.objects.create(user=user, school=school)
-        teacher.save()
-
-        self.stdout.write(self.style.SUCCESS('Created new teacher %s' % user))
+            create_teacher(row['Username'],
+                           email,
+                           row['First Name'],
+                           row['Last Name'],
+                           row['School'],
+                           password)
