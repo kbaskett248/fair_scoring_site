@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Group, Permission
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 GROUPS = [
     ('Fair runners',
@@ -8,7 +8,7 @@ GROUPS = [
     ('Judges',
      ['Designates this user as a judge']),
     ('Teachers',
-     ['Designate this user as a teacher'])
+     ['Designate this user as a teacher', 'Can add project', 'Can change project', 'Can delete project'])
 ]
 
 

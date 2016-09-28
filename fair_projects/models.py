@@ -4,6 +4,7 @@ from django.contrib.auth.models import User, Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db import transaction
+from django.forms import inlineformset_factory
 
 from fair_categories.models import Ethnicity, Category, Subcategory, Division
 from judges.models import Judge
@@ -231,3 +232,10 @@ class JudgingInstance(models.Model):
 
     def __str__(self):
         return '{0} - {1}: {2}'.format(self.judge, self.project, self.response.rubric.name)
+
+
+StudentFormset = inlineformset_factory(
+    Project, Student,
+    fields=('first_name', 'last_name', 'gender', 'ethnicity', 'grade_level', 'email'),
+    min_num=1, max_num=4, extra=3,
+    can_delete=False)

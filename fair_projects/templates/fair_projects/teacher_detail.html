@@ -11,5 +11,10 @@
 {% endblock %}
 
 {% block content %}
+{% if allow_create %}
+<a href="{% url 'fair_projects:project_create' %}" class="btn btn-primary">
+    Add Project
+</a>
+{% endif %}
     {% include 'fair_projects/project_list.html' %}
 {% endblock %}

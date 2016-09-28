@@ -13,12 +13,12 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import UpdateView, CreateView
 
+from judges.models import Judge
+from rubrics.forms import rubric_form_factory
+from rubrics.models import Question
 from .forms import UploadFileForm
 from .logic import handle_project_import
-from .models import Project, Student, JudgingInstance, Teacher
-from judges.models import Judge
-from rubrics.models import Question
-from rubrics.forms import rubric_form_factory
+from .models import Project, Student, JudgingInstance, Teacher, StudentFormset
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +45,43 @@ class ProjectIndex(ListView):
 class ProjectCreate(PermissionRequiredMixin, CreateView):
     model = Project
     template_name = 'fair_projects/project_create.html'
-    fields = ('title', 'category', 'subcategory', 'division')
+    fields = ('title', 'category', 'subcategory', 'division', 'abstract')
     permission_required = 'fair_projects.add_project'
 
     def get_success_url(self):
         return reverse('fair_projects:detail', args=(self.object.number, ))
+
+    def get_context_data(self, **kwargs):
+        context = super(ProjectCreate, self).get_context_data(**kwargs)
+        context['student_formset'] = self.get_student_formset(self.request)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        fs = self.get_student_formset(request)
+        if fs.is_valid():
+            self.student_formset = fs
+            return super(ProjectCreate, self).post(request, *args, **kwargs)
+        else:
+            self.object = None
+            return self.form_invalid(self.get_form(self.get_form_class()))
+
+    def form_valid(self, form):
+        project = form.save()
+        self.object = project
+        teacher = Teacher.objects.get(user=self.request.user)
+        for student in self.student_formset.save(commit=False):
+            student.project = self.object
+            student.teacher = teacher
+            student.save()
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_student_formset(self, request):
+        if request.method == 'POST':
+            return StudentFormset(self.request.POST, self.request.FILES, prefix='Students',
+                                  queryset=Project.objects.none())
+        else:
+            return StudentFormset(prefix='Students', queryset=Project.objects.none())
 
 
 class ProjectDetail(DetailView):
@@ -258,4 +290,10 @@ class TeacherDetail(SpecificUserRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(TeacherDetail, self).get_context_data(**kwargs)
         context['teacher'] = self.teacher
+
+        request_user = self.request.user
+        context['allow_create'] = False
+        if request_user.is_authenticated():
+            if request_user.has_perm('fair_projects.add_project'):
+                context['allow_create'] = True
         return context

@@ -21,11 +21,13 @@
     {% if student_list %}
         <div class="student-list">
             <h2>Students</h2>
-            {% for student in student_list %}
-                <ul class="list-group">
-                    <li class="list-group-item">{{ student.first_name }} {{ student.last_name }} - {{ student.teacher.school.name }}</li>
-                </ul>
-            {% endfor %}
+            <ul class="list-group">
+                {% for student in student_list %}
+                <li class="list-group-item">{{ student.first_name }} {{ student.last_name }} - {{
+                    student.teacher.school.name }}
+                </li>
+                {% endfor %}
+            </ul>
         </div>
     {% endif %}
 
