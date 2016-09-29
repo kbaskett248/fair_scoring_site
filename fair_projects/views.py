@@ -5,13 +5,13 @@ from collections import defaultdict
 from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import DetailView, ListView
-from django.views.generic.edit import UpdateView, CreateView
+from django.views.generic.edit import UpdateView, CreateView, DeleteView
 
 from judges.models import Judge
 from rubrics.forms import rubric_form_factory
@@ -111,6 +111,15 @@ class ProjectUpdate(ProjectModifyMixin, UpdateView):
                                   instance=self.object)
         else:
             return StudentFormset(prefix='Students', instance=self.object)
+
+
+class ProjectDelete(PermissionRequiredMixin, DeleteView):
+    template_name = 'fair_projects/project_delete.html'
+    permission_required = 'fair_projects.delete_project'
+    model = Project
+    slug_url_kwarg = 'project_number'
+    slug_field = 'number'
+    success_url = reverse_lazy('fair_projects:index')
 
 
 class ProjectDetail(DetailView):

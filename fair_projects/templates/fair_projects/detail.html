@@ -13,7 +13,8 @@
 
 {% block content %}
     {% if is_submitting_teacher %}
-        <a href="{% url 'fair_projects:project_update' project.number %}" class="btn btn-primary">Edit</a>
+        <a href="{% url 'fair_projects:project_update' project.number %}" class="btn btn-primary">Update</a>
+        <a href="{% url 'fair_projects:project_delete' project.number %}" class="btn btn-danger">Delete</a>
     {% endif %}
     <div>{{ project.division.short_description }}</div>
     <div>{{ project.category.short_description }} - {{ project.subcategory.short_description }}</div>

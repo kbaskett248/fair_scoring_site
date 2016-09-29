@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% load i18n widget_tweaks %}
+
+{% block html-title %}Delete Project {{ object.number }} - RRSEF{% endblock %}
+
+{% block title %}{{ object.title }}{% endblock %}
+
+{% block content %}
+    <form action="{% url 'fair_projects:project_delete' object.number %}" method="post">
+        {% csrf_token %}
+        <p>Are you sure you want to delete Project {{ object.number }} - {{ object }}?</p>
+        <input type="submit" value="Delete" class="btn btn-danger" />
+        <a href="{% url 'fair_projects:detail' object.number %}" class="btn btn-default">Cancel</a>
+    </form>
+{% endblock %}
