@@ -129,6 +129,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher'
+]
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
@@ -152,3 +158,6 @@ STATIC_URL = '/static/'
 BOOTSTRAP3 = {
 'include_jquery': True,
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'app-messages') # change this to a proper location

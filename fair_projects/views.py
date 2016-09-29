@@ -4,8 +4,10 @@ from collections import defaultdict
 
 from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.auth.models import User
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse, reverse_lazy
+from django.db import transaction
 from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
@@ -17,7 +19,7 @@ from judges.models import Judge
 from rubrics.forms import rubric_form_factory
 from rubrics.models import Question
 from .forms import UploadFileForm
-from .logic import handle_project_import
+from .logic import handle_project_import, email_teachers
 from .models import Project, Student, JudgingInstance, Teacher, StudentFormset
 
 logger = logging.getLogger(__name__)
@@ -69,6 +71,7 @@ class ProjectModifyMixin(PermissionRequiredMixin):
         else:
             return self.form_invalid(self.get_form(self.get_form_class()))
 
+    @transaction.atomic
     def form_valid(self, form):
         project = form.save()
         self.object = project
@@ -187,6 +190,15 @@ def import_projects(request):
     request.current_app = 'fair_projects'
     c.update({'form': form})
     return render(request, 'fair_projects/project_upload.html', c)
+
+
+def notify_teachers(request):
+    current_site = get_current_site(request)
+    site_name = current_site.name
+    domain = current_site.domain
+
+    email_teachers(site_name, domain)
+    return HttpResponseRedirect('/admin/auth/user/')
 
 
 class SpecificUserRequiredMixin(AccessMixin):

@@ -1,49 +1,49 @@
 {% load i18n widget_tweaks widgettype %}
 
 {% if field.errors %}
-<div class="form-group has-error">
-    {% if field|widgettype == "CheckboxInput" %}
-    <div class="checkbox col-sm-offset-2 col-sm-10">
-        <label class=for="id_{{ field.name }}">
-        {{ field }} {{ field.label }}
-        </label>
-        <span class="help-block">
+    <div class="form-group has-error">
+        {% if field|widgettype == "CheckboxInput" %}
+            <div class="checkbox col-sm-offset-2 col-sm-10">
+                <label class=for="id_{{ field.name }}">
+                    {{ field }} {{ field.label }}
+                </label>
+                <span class="help-block">
                     {% for error in  field.errors %}{{ error }}{% endfor %}
                 </span>
-    </div>
-    {% else %}
-    <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
-    <div class="col-sm-10">
-        {{ field|attr:"class:form-control" }}
-        <span class="help-block">
-                    {% for error in  field.errors %}{{ error }}{% endfor %}
+            </div>
+        {% else %}
+            <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
+            <div class="col-sm-10">
+                {{ field|attr:"class:form-control" }}
+                <span class="help-block">
+                    {% for error in field.errors %}{{ error }}{% endfor %}
                 </span>
+            </div>
+        {% endif %}
     </div>
-    {% endif %}
-</div>
 {% else %}
-<div class="form-group">
-    {% if field|widgettype == "CheckboxInput" %}
-    <div class="checkbox col-sm-offset-2 col-sm-10">
-        <label class=for="id_{{ field.name }}">
-        {{ field }} {{ field.label }}
-        </label>
-        {% if field.help_text %}
-        <p class="help-block">
-            <small>{{ field.help_text }}</small>
-        </p>
+    <div class="form-group">
+        {% if field|widgettype == "CheckboxInput" %}
+            <div class="checkbox col-sm-offset-2 col-sm-10">
+                <label class=for="id_{{ field.name }}">
+                    {{ field }} {{ field.label }}
+                </label>
+                {% if field.help_text %}
+                    <p class="help-block">
+                        <small>{{ field.help_text|safe }}</small>
+                    </p>
+                {% endif %}
+            </div>
+        {% else %}
+            <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
+            <div class="col-sm-10">
+                {{ field|attr:"class:form-control" }}
+                {% if field.help_text %}
+                    <p class="help-block">
+                        <small>{{ field.help_text|safe }}</small>
+                    </p>
+                {% endif %}
+            </div>
         {% endif %}
     </div>
-    {% else %}
-    <label class="col-sm-2 control-label" for="id_{{ field.name }}">{{ field.label }}</label>
-    <div class="col-sm-10">
-        {{ field|attr:"class:form-control" }}
-        {% if field.help_text %}
-        <p class="help-block">
-            <small>{{ field.help_text }}</small>
-        </p>
-        {% endif %}
-    </div>
-    {% endif %}
-</div>
 {% endif %}

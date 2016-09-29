@@ -16,12 +16,13 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 
+from fair_projects.views import import_projects, judge_assignment, notify_teachers
 from .views import *
-from fair_projects.views import import_projects, judge_assignment
 
 urlpatterns = [
     url(r'^admin/fair_projects/project/import', import_projects, name='import_projects'),
     url(r'^admin/fair_projects/project/assign', judge_assignment, name='assign_projects'),
+    url(r'^admin/auth/user/teacher-notify', notify_teachers, name='teacher_notify'),
     url(r'^admin/', admin.site.urls),
     url(r'^accounts/profile/', profile, name='profile'),
     url(r'^accounts/', include('django.contrib.auth.urls')),

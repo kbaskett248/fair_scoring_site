@@ -4,13 +4,19 @@ from functools import reduce
 from itertools import product, filterfalse
 from operator import ior
 
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import EmailMultiAlternatives
+from django.core.mail import get_connection
 from django.db import transaction
 from django.db.models import Count, Q, Avg
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 from fair_categories.models import Category, Division
 from judges.models import Judge
 from rubrics.models import Rubric
-from .models import Project, JudgingInstance, create_student, create_project
+from .models import Project, JudgingInstance, create_student, create_project, Teacher
 
 IMPORT_DICT_KEYS = ('Timestamp', 'Project Title', 'Project Abstract',
                     'Project Category', 'Project Subcategory', 'Unused1',
@@ -220,7 +226,6 @@ def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
                     break
 
 
-
 def get_instances_that_can_be_reassigned(judge, rubric):
     return filterfalse(lambda x: x.response.has_response,
                        judge.judginginstance_set.filter(response__rubric=rubric)\
@@ -243,3 +248,42 @@ def reassign_project(judging_instance, to_judge):
     new_instance = create_judging_instance(to_judge, judging_instance.project, judging_instance.response.rubric)
     judging_instance.delete()
     return new_instance
+
+
+def email_teachers(site_name, domain, use_https=False):
+    messages = []
+    context = {
+        'domain': domain,
+        'site_name': site_name,
+        'protocol': 'https' if use_https else 'http',
+    }
+    for teacher in get_teachers():
+        context.update(
+            {'email': teacher.email,
+             'uid': urlsafe_base64_encode(force_bytes(teacher.pk)),
+             'user': teacher,
+             'token': default_token_generator.make_token(teacher)}
+        )
+
+        subject = render_to_string('fair_projects/email/teacher_signup_subject.txt', context)
+        # Email subject *must not* contain newlines
+        subject = ''.join(subject.splitlines())
+
+        body = render_to_string('fair_projects/email/teacher_signup.txt', context)
+        html_email = render_to_string('fair_projects/email/teacher_signup.html', context)
+
+        email_message = EmailMultiAlternatives(subject, body, to=[teacher.email])
+        email_message.attach_alternative(html_email, 'text/html')
+
+        messages.append(email_message)
+
+    with get_connection() as connection:
+        connection.send_messages(messages)
+
+
+def get_teachers():
+    for teacher in Teacher.objects.select_related('user').all():
+        if teacher.user.is_superuser:
+            continue
+
+        yield teacher.user
