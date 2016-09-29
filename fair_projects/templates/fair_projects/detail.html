@@ -13,7 +13,7 @@
 
 {% block content %}
     {% if is_submitting_teacher %}
-        <a href="#" class="btn btn-primary">Edit</a>
+        <a href="{% url 'fair_projects:project_update' project.number %}" class="btn btn-primary">Edit</a>
     {% endif %}
     <div>{{ project.division.short_description }}</div>
     <div>{{ project.category.short_description }} - {{ project.subcategory.short_description }}</div>
@@ -23,8 +23,8 @@
             <h2>Students</h2>
             <ul class="list-group">
                 {% for student in student_list %}
-                <li class="list-group-item">{{ student.first_name }} {{ student.last_name }} - {{
-                    student.teacher.school.name }}
+                <li class="list-group-item">
+                    {{ student.first_name }} {{ student.last_name }} - {{ student.teacher.school.name }}
                 </li>
                 {% endfor %}
             </ul>

@@ -42,39 +42,53 @@ class ProjectIndex(ListView):
         return context
 
 
-class ProjectCreate(PermissionRequiredMixin, CreateView):
+class ProjectModifyMixin(PermissionRequiredMixin):
     model = Project
-    template_name = 'fair_projects/project_create.html'
     fields = ('title', 'category', 'subcategory', 'division', 'abstract')
-    permission_required = 'fair_projects.add_project'
+    slug_url_kwarg = 'project_number'
+    slug_field = 'number'
 
     def get_success_url(self):
-        return reverse('fair_projects:detail', args=(self.object.number, ))
+        return reverse('fair_projects:detail', args=(self.object.number,))
 
     def get_context_data(self, **kwargs):
-        context = super(ProjectCreate, self).get_context_data(**kwargs)
+        context = super(ProjectModifyMixin, self).get_context_data(**kwargs)
         context['student_formset'] = self.get_student_formset(self.request)
         return context
 
+    def get_student_formset(self, request):
+        raise NotImplementedError(
+            'Implement get_student_formset().')
+
     def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
         fs = self.get_student_formset(request)
         if fs.is_valid():
             self.student_formset = fs
-            return super(ProjectCreate, self).post(request, *args, **kwargs)
+            return super(ProjectModifyMixin, self).post(request, *args, **kwargs)
         else:
-            self.object = None
             return self.form_invalid(self.get_form(self.get_form_class()))
 
     def form_valid(self, form):
         project = form.save()
         self.object = project
         teacher = Teacher.objects.get(user=self.request.user)
+
         for student in self.student_formset.save(commit=False):
-            student.project = self.object
-            student.teacher = teacher
+            if not student.project_id:
+                student.project = project
+
+            if not student.teacher_id:
+                student.teacher = teacher
+
             student.save()
 
         return HttpResponseRedirect(self.get_success_url())
+
+
+class ProjectCreate(ProjectModifyMixin, CreateView):
+    template_name = 'fair_projects/project_create.html'
+    permission_required = 'fair_projects.add_project'
 
     def get_student_formset(self, request):
         if request.method == 'POST':
@@ -82,6 +96,21 @@ class ProjectCreate(PermissionRequiredMixin, CreateView):
                                   queryset=Project.objects.none())
         else:
             return StudentFormset(prefix='Students', queryset=Project.objects.none())
+
+    def get_object(self, queryset=None):
+        return None
+
+
+class ProjectUpdate(ProjectModifyMixin, UpdateView):
+    template_name = 'fair_projects/project_update.html'
+    permission_required = 'fair_projects.change_project'
+
+    def get_student_formset(self, request):
+        if request.method == 'POST':
+            return StudentFormset(self.request.POST, self.request.FILES, prefix='Students',
+                                  instance=self.object)
+        else:
+            return StudentFormset(prefix='Students', instance=self.object)
 
 
 class ProjectDetail(DetailView):

@@ -7,33 +7,6 @@
 {% block title %}Create New Project{% endblock %}
 
 {% block content %}
-<form action="{% url 'fair_projects:project_create' %}"
-      method="post"
-      class="form-horizontal">
-        {% csrf_token %}
-        {% for field in form %}
-    {% include "horizontal_field.html" %}
-        {% endfor %}
-
-    <h2>Students</h2>
-    <span class="help-block">
-            {% for error in  student_formset.non_form_errors %}{{ error }}{% endfor %}
-        </span>
-    {{ student_formset.management_form }}
-    {% for form in student_formset %}
-    <h3>Student {{ forloop.counter }}</h3>
-    {% for field in form.visible_fields %}
-    {% include "horizontal_field.html" %}
-    {% endfor %}
-    {% for field in form.hidden_fields %}
-    {{ field }}
-    {% endfor %}
-    {% endfor %}
-
-        <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-                <button type="submit" class="btn btn-primary">{% trans "Submit" %}</button>
-            </div>
-        </div>
-    </form>
+    {% url 'fair_projects:project_create' as submission_url %}
+    {% include "fair_projects/project_student_form.html" with submission_url=submission_url %}
 {% endblock %}
