@@ -1,0 +1,21 @@
+{% load i18n %}
+
+<form method="post" class="form-horizontal">
+    {% csrf_token %}
+
+    {% for field in form.visible_fields %}
+        {% include 'horizontal_field.html' %}
+    {% endfor %}
+
+    {% for field in form.hidden_fields %}
+        {{ field }}
+    {% endfor %}
+
+    <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+            <input type="submit"
+                   value="{% blocktrans %}{{ submit_text }}{% endblocktrans %}"
+                   class="btn btn-default" />
+        </div>
+    </div>
+</form>

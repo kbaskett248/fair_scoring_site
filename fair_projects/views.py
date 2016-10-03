@@ -2,6 +2,7 @@ import functools
 import logging
 from collections import defaultdict
 
+from django.contrib import messages
 from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
@@ -198,7 +199,9 @@ def notify_teachers(request):
     domain = current_site.domain
 
     email_teachers(site_name, domain)
-    return HttpResponseRedirect('/admin/auth/user/')
+
+    messages.add_message(request, messages.INFO, 'Notifications sent')
+    return HttpResponseRedirect(reverse('admin:auth_user_changelist'))
 
 
 class SpecificUserRequiredMixin(AccessMixin):
