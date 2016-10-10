@@ -19,9 +19,9 @@ from django.views.generic.edit import UpdateView, CreateView, DeleteView
 from judges.models import Judge
 from rubrics.forms import rubric_form_factory
 from rubrics.models import Question
-from .forms import UploadFileForm
+from .forms import UploadFileForm, StudentFormset
 from .logic import handle_project_import, email_teachers
-from .models import Project, Student, JudgingInstance, Teacher, StudentFormset
+from .models import Project, Student, JudgingInstance, Teacher
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +63,16 @@ class ProjectModifyMixin(PermissionRequiredMixin):
         raise NotImplementedError(
             'Implement get_student_formset().')
 
+    def get_formset_form_kwargs(self, request):
+        try:
+            Teacher.objects.get(user=request.user)
+        except ObjectDoesNotExist:
+            user_is_teacher = False
+        else:
+            user_is_teacher = True
+        finally:
+            return {'user_is_teacher': user_is_teacher}
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         fs = self.get_student_formset(request)
@@ -76,13 +86,13 @@ class ProjectModifyMixin(PermissionRequiredMixin):
     def form_valid(self, form):
         project = form.save()
         self.object = project
-        teacher = Teacher.objects.get(user=self.request.user)
 
         for student in self.student_formset.save(commit=False):
             if not student.project_id:
                 student.project = project
 
             if not student.teacher_id:
+                teacher = Teacher.objects.get(user=self.request.user)
                 student.teacher = teacher
 
             student.save()
@@ -97,9 +107,10 @@ class ProjectCreate(ProjectModifyMixin, CreateView):
     def get_student_formset(self, request):
         if request.method == 'POST':
             return StudentFormset(self.request.POST, self.request.FILES, prefix='Students',
-                                  queryset=Project.objects.none())
+                                  queryset=Project.objects.none(), form_kwargs=self.get_formset_form_kwargs(request))
         else:
-            return StudentFormset(prefix='Students', queryset=Project.objects.none())
+            return StudentFormset(prefix='Students', queryset=Project.objects.none(),
+                                  form_kwargs=self.get_formset_form_kwargs(request))
 
     def get_object(self, queryset=None):
         return None
@@ -112,9 +123,10 @@ class ProjectUpdate(ProjectModifyMixin, UpdateView):
     def get_student_formset(self, request):
         if request.method == 'POST':
             return StudentFormset(self.request.POST, self.request.FILES, prefix='Students',
-                                  instance=self.object)
+                                  instance=self.object, form_kwargs=self.get_formset_form_kwargs(request))
         else:
-            return StudentFormset(prefix='Students', instance=self.object)
+            return StudentFormset(prefix='Students', instance=self.object,
+                                  form_kwargs=self.get_formset_form_kwargs(request))
 
 
 class ProjectDelete(PermissionRequiredMixin, DeleteView):
