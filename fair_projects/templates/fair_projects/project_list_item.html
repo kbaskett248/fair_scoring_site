@@ -1,16 +1,12 @@
 <a href="{% url 'fair_projects:detail' project.number %}" class="row list-group-item">
-    <div class="col-xs-1">{{ project.number }}</div>
-    <div class="col-xs-11 col-sm-11 col-md-7 col-lg-5 truncated">
+    <div class="col-xs-2 col-sm-1 small">{{ project.number }}</div>
+    <div class="col-xs-10 col-sm-11 col-md-3 col-lg-5 col-md-push-8 col-lg-push-6 small truncated">
+        <span style="float:left">{{ project.category.short_description }} </span>
+        <span class="visible-sm visible-lg" style="float:left">&nbsp- {{ project.subcategory.short_description }}</span>
+        <span style="float:right">{{ project.division.short_description }}</span>
+    </div>
+    <div class="col-xs-12 col-md-8 col-lg-6 col-md-pull-3 col-lg-pull-5"><strong>
         {{ project.title }}
-    </div>
-    <div class="col-xs-1 col-sm-1 hidden-md hidden-lg" ></div>
-    <div class="hidden-xs col-sm-8 hidden-md col-lg-4 truncated">
-        {{ project.category.short_description }} - {{ project.subcategory.short_description }}
-    </div>
-    <div class="col-xs-4 hidden-sm col-md-2 hidden-lg truncated">
-        {{ project.category.short_description }}
-    </div>
-    <div class="col-xs-4 col-sm-2">
-        {{ project.division.short_description }}
-    </div>
+    </strong></div>
+
 </a>
