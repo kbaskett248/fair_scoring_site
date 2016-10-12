@@ -1,14 +1,14 @@
 from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
 
+from fair_projects.models import create_teachers_group
+
 GROUPS = [
     ('Fair runners',
      ['Can add group', 'Can add user', 'Can change user', 'Can delete user',
       'Can add judge', 'Can change judge', 'Can delete judge']),
     ('Judges',
-     ['Designates this user as a judge']),
-    ('Teachers',
-     ['Designate this user as a teacher', 'Can add project', 'Can change project', 'Can delete project'])
+     ['Designates this user as a judge'])
 ]
 
 
@@ -17,6 +17,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.init_groups(GROUPS)
+        create_teachers_group(output_stream=self.stdout, styler=self.style)
 
     def init_groups(self, groups):
         self.stdout.write('\nInitializing Groups')

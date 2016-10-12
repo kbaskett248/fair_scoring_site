@@ -1,7 +1,9 @@
 from collections import OrderedDict
 
 from django.contrib.auth.models import User, Group
+from django.core.management import call_command
 from django.test import TestCase
+from django.utils.six import StringIO
 
 from fair_projects.models import School, create_teacher, Teacher, create_teachers_group
 
@@ -95,3 +97,35 @@ class TeacherTests(TestCase):
                                  ['<School: {school}>'.format(**data_dict)])
 
         self.create_and_test_teacher(data_dict)
+
+
+class InitGroupsTest(TestCase):
+    def test_init_groups(self):
+        out = StringIO()
+        call_command('initgroups', stdout=out)
+
+        fair_runners_group = Group.objects.get(name='Fair runners')
+        self.assertIsNotNone(fair_runners_group)
+        self.assertQuerysetEqual(fair_runners_group.permissions.all(),
+                                 ['<Permission: auth | group | Can add group>',
+                                  '<Permission: auth | user | Can add user>',
+                                  '<Permission: auth | user | Can change user>',
+                                  '<Permission: auth | user | Can delete user>',
+                                  '<Permission: judges | judge | Can add judge>',
+                                  '<Permission: judges | judge | Can change judge>',
+                                  '<Permission: judges | judge | Can delete judge>']
+                                 )
+
+        judges_group = Group.objects.get(name='Judges')
+        self.assertIsNotNone(judges_group)
+        self.assertQuerysetEqual(judges_group.permissions.all(),
+                                 ['<Permission: judges | judge | Designates this user as a judge>'])
+
+        teachers_group = Group.objects.get(name='Teachers')
+        self.assertIsNotNone(teachers_group)
+        self.assertQuerysetEqual(teachers_group.permissions.all(),
+                                 ['<Permission: fair_projects | project | Can add project>',
+                                  '<Permission: fair_projects | project | Can change project>',
+                                  '<Permission: fair_projects | project | Can delete project>',
+                                  '<Permission: fair_projects | teacher | Designate this user as a teacher>']
+                                 )
