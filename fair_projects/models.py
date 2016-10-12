@@ -1,7 +1,8 @@
 import itertools
 
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.management.color import Style
 from django.db import models
 from django.db import transaction
 
@@ -73,6 +74,37 @@ def create_teacher(username, email, first_name, last_name, school_name, password
             return teacher
         else:
             return teacher
+
+
+def create_teachers_group(name: str ='Teachers',
+                          permissions=('Designate this user as a teacher',
+                                       'Can add project',
+                                       'Can change project',
+                                       'Can delete project'),
+                          output_stream=None,
+                          styler: Style = None):
+
+    def write_output(message: str, style: str=None):
+        if output_stream:
+            if styler and style:
+                message = getattr(styler, style)(message)
+            output_stream.write(message)
+
+    group, created = Group.objects.get_or_create(name=name)
+    if created:
+        write_output('Successfully created Group "%s"' % group, 'SUCCESS')
+    else:
+        write_output('Group "%s" already exists' % group, 'NOTICE')
+
+    for perm in permissions:
+        permission = Permission.objects.get(name=perm)
+        if permission:
+            group.permissions.add(permission)
+            write_output('\tAdded Permission "%s" to Group "%s"' % (permission, group),
+                         'SUCCESS')
+        else:
+            write_output('\tNo Permission named %s' % perm,
+                         'NOTICE')
 
 
 class Student(models.Model):
