@@ -1,5 +1,5 @@
-from collections import namedtuple
 import json
+
 from django.db import models
 from django.db import transaction
 
@@ -10,6 +10,40 @@ class Rubric(models.Model):
 
     def __str__(self):
         return self.name
+
+    def add_question(self, question_type, short_description, weight=0.0,
+                     order=None, long_description=None, help_text=None,
+                     choice_sort=None, required=True):
+
+        if question_type in Question.CHOICE_TYPES:
+            if not choice_sort:
+                choice_sort = Question.AUTO_SORT
+        else:
+            if choice_sort:
+                raise ValueError(
+                    'choice_sort should only be specified for the following choice types: %s' %
+                    Question.CHOICE_TYPES)
+
+        question = Question(rubric=self,
+                            question_type=question_type,
+                            short_description=short_description,
+                            weight=weight,
+                            required=required)
+
+        if order:
+            question.order = order
+
+        if long_description:
+            question.long_description = long_description
+
+        if help_text:
+            question.help_text = help_text
+
+        if choice_sort:
+            question.choice_sort = choice_sort
+
+        question.save()
+        return question
 
 
 class Question(models.Model):
@@ -43,7 +77,7 @@ class Question(models.Model):
     long_description = models.TextField(null=True, blank=True)
     help_text = models.TextField(null=True, blank=True)
     weight = models.DecimalField(
-        max_digits=3,
+        max_digits=4,
         decimal_places=3,
         null=True
     )
@@ -67,8 +101,24 @@ class Question(models.Model):
         super(Question, self).__init__(*args, **kwargs)
         if not self.order:
             self.order = self._get_next_order()
-            if self.order:
-                self.save()
+            
+    def save(self, **kwargs):
+        if not self.is_allowed_type(self.question_type):
+            raise ValueError(
+                'question_type was %s. Should be one of %s.' %
+                (self.question_type, self.available_types()))
+
+        if not self.is_allowed_sort(self.choice_sort):
+            raise ValueError(
+                'choice_sort was %s. Should be one of %s.' %
+                (self.choice_sort, self.sort_options()))
+
+        if self.question_type not in self.CHOICE_TYPES and self.weight > 0:
+            raise ValueError(
+                'A weight greater than 0 not allowed for questions of type %s' %
+                self.question_type)
+
+        super(Question, self).save(**kwargs)
 
     def _get_next_order(self):
         try:
@@ -104,6 +154,29 @@ class Question(models.Model):
     def field_name(self):
         return 'question_%s' % self.pk
 
+    def add_choice(self, key, description, order=None):
+        choice = Choice(question=self, key=key, description=description)
+        if order:
+            choice.order = order
+        choice.save()
+        return choice
+
+    @classmethod
+    def available_types(cls):
+        return [typ[0] for typ in cls.TYPES]
+
+    @classmethod
+    def is_allowed_type(cls, question_type):
+        return question_type in cls.available_types()
+
+    @classmethod
+    def sort_options(cls):
+        return [srt[0] for srt in cls.SORT_CHOICES]
+
+    @classmethod
+    def is_allowed_sort(cls, sort_option):
+        return sort_option in cls.sort_options()
+
 
 class Choice(models.Model):
     question = models.ForeignKey(
@@ -124,6 +197,14 @@ class Choice(models.Model):
             self.order = self._get_next_order()
             if self.order:
                 self.save()
+                
+    def save(self, **kwargs):
+        if self.question.question_type not in self.question.CHOICE_TYPES:
+            raise AttributeError(
+                'Choices not permitted for questions of type %s' % 
+                self.question.question_type)
+
+        super(Choice, self).save(**kwargs)
 
     def _get_next_order(self):
         try:
