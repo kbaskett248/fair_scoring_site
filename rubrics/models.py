@@ -21,8 +21,8 @@ class Rubric(models.Model):
         else:
             if choice_sort:
                 raise ValueError(
-                    'choice_sort should only be specified for the following choice types: %s' %
-                    Question.CHOICE_TYPES)
+                    'choice_sort should only be specified for the following choice types: {0}'.format(
+                        Question.CHOICE_TYPES))
 
         question = Question(rubric=self,
                             question_type=question_type,
