@@ -113,7 +113,7 @@ class Question(models.Model):
                 'choice_sort was %s. Should be one of %s.' %
                 (self.choice_sort, self.sort_options()))
 
-        if self.question_type not in self.CHOICE_TYPES and self.weight > 0:
+        if self.question_type not in self.CHOICE_TYPES and self.weight and self.weight > 0:
             raise ValueError(
                 'A weight greater than 0 not allowed for questions of type %s' %
                 self.question_type)
@@ -195,8 +195,6 @@ class Choice(models.Model):
         super(Choice, self).__init__(*args, **kwargs)
         if not self.order:
             self.order = self._get_next_order()
-            if self.order:
-                self.save()
                 
     def save(self, **kwargs):
         if self.question.question_type not in self.question.CHOICE_TYPES:
@@ -230,7 +228,7 @@ class RubricResponse(models.Model):
 
     def save(self, **kwargs):
         super(RubricResponse, self).save(**kwargs)
-        if not self.questionresponse_set.all():
+        if not self.questionresponse_set.exists():
             for ques in self.rubric.question_set.all():
                 QuestionResponse.objects.create(rubric_response=self, question=ques)
 
