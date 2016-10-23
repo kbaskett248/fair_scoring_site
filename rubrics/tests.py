@@ -1,10 +1,9 @@
 from hypothesis import given
-from hypothesis import settings
 from hypothesis.extra.django import TestCase as HypTestCase
 from hypothesis.extra.django.models import models
 from hypothesis.searchstrategy import SearchStrategy
 from hypothesis.strategies import one_of, sampled_from, text, lists, integers, \
-    just, tuples
+    just, tuples, none
 from model_mommy import mommy
 
 from rubrics.models import Rubric, Question, Choice, RubricResponse
@@ -87,8 +86,20 @@ class QuestionTests(HypTestCase):
             else:
                 self.assertEquals(question.num_choices(), '-')
 
+    @given(question_type=sane_text())
+    def test_invalid_question_type_raises_error(self, question_type):
+        rubric = create_rubric_with_questions_and_choices()
+        with self.assertRaises(ValueError):
+            mommy.make(Question, rubric=rubric, question_type=question_type)
+
+    @given(sort_option=one_of(sane_text(), none()))
+    def test_invalid_sort_option_raises_error(self, sort_option):
+        rubric = create_rubric_with_questions_and_choices()
+        with self.assertRaises(ValueError):
+            mommy.make(Question, rubric=rubric, question_type=Question.LONG_TEXT,
+                       choice_sort=sort_option)
+
     @given(rubric_with_questions(min_questions=1))
-    @settings(max_examples=50)
     def test_add_choice(self, rubric):
         self.assertIsInstance(rubric, Rubric)
         question = rubric.question_set.first()
@@ -132,7 +143,7 @@ class RubricResponseTests(HypTestCase):
             choices = [choice[0] for choice in question.choices()]
             q_resp.update_response(choices)
         else:
-            q_resp.update_response(question.choices()[0])
+            q_resp.update_response(next(question.choices()))
 
         self.assertTrue(rubric_response.has_response)
         self.assertTrue(q_resp.question_answered)
