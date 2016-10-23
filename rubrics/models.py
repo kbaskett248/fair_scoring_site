@@ -11,40 +11,6 @@ class Rubric(models.Model):
     def __str__(self):
         return self.name
 
-    def add_question(self, question_type, short_description, weight=0.0,
-                     order=None, long_description=None, help_text=None,
-                     choice_sort=None, required=True):
-
-        if question_type in Question.CHOICE_TYPES:
-            if not choice_sort:
-                choice_sort = Question.AUTO_SORT
-        else:
-            if choice_sort:
-                raise ValueError(
-                    'choice_sort should only be specified for the following choice types: {0}'.format(
-                        Question.CHOICE_TYPES))
-
-        question = Question(rubric=self,
-                            question_type=question_type,
-                            short_description=short_description,
-                            weight=weight,
-                            required=required)
-
-        if order:
-            question.order = order
-
-        if long_description:
-            question.long_description = long_description
-
-        if help_text:
-            question.help_text = help_text
-
-        if choice_sort:
-            question.choice_sort = choice_sort
-
-        question.save()
-        return question
-
 
 class Question(models.Model):
     SCALE_TYPE = 'SCALE'
