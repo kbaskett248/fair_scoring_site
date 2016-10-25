@@ -6,11 +6,13 @@ from hypothesis.strategies import one_of, sampled_from, text, lists, integers, \
     just, tuples, none
 from model_mommy import mommy
 
-from rubrics.models import Rubric, Question, Choice, RubricResponse
+from rubrics.models import Rubric, Question, Choice, RubricResponse, QuestionResponse
 
 
-def fixed_decimals() -> SearchStrategy:
-    return integers(min_value=0, max_value=999).map(lambda x: x / 1000)
+def fixed_decimals(min_value=0, max_value=1, num_decimals=3) -> SearchStrategy:
+    power_of_ten = 10 ** num_decimals
+    return integers(min_value=(min_value*power_of_ten),
+                    max_value=(max_value*power_of_ten)).map(lambda x: x / power_of_ten)
 
 
 def sane_text(min_size=None, max_size=None, average_size=None) -> SearchStrategy:
@@ -99,6 +101,13 @@ class QuestionTests(HypTestCase):
             mommy.make(Question, rubric=rubric, question_type=Question.LONG_TEXT,
                        choice_sort=sort_option)
 
+    @given(fixed_decimals(min_value=0.001))
+    def test_unweighted_question_type_with_non_zero_weight_raises_value_error(self, weight):
+        rubric = create_rubric_with_questions_and_choices()
+        with self.assertRaises(ValueError):
+            mommy.make(Question, rubric=rubric, question_type=Question.LONG_TEXT,
+                       weight=weight)
+
     @given(rubric_with_questions(min_questions=1))
     def test_add_choice(self, rubric):
         self.assertIsInstance(rubric, Rubric)
@@ -147,4 +156,109 @@ class RubricResponseTests(HypTestCase):
 
         self.assertTrue(rubric_response.has_response)
         self.assertTrue(q_resp.question_answered)
+
+
+class QuestionResponseTests(HypTestCase):
+    def make_rubric(self):
+        rubric = mommy.make(Rubric, name="Test Rubric")
+        default_weight = float('{0:.3f}'.format(1 / len(Question.CHOICE_TYPES)))
+        for question_type in Question.available_types():
+            question_is_choice_type = question_type in Question.CHOICE_TYPES
+            weight = 0
+            if question_is_choice_type:
+                weight = default_weight
+            question = mommy.make(Question,
+                                  rubric=rubric,
+                                  short_description='Question %s' % question_type,
+                                  long_description='This is for question %s' % question_type,
+                                  help_text='This is help text for question %s' % question_type,
+                                  weight=weight,
+                                  question_type=question_type,
+                                  required=True)
+            if question_is_choice_type:
+                for key in range(1, 4):
+                    mommy.make(Choice, question=question, order=key,
+                               key=str(key), description='Choice %s' % key)
+        return rubric
+
+    def make_rubric_response(self, rubric=None):
+        if not rubric:
+            rubric = self.make_rubric()
+
+        return mommy.make(RubricResponse, rubric=rubric)
+
+    def answer_rubric_response(self, rubric_response):
+        for q_resp in rubric_response.questionresponse_set.all():
+            if q_resp.question.question_type == Question.MULTI_SELECT_TYPE:
+                q_resp.update_response(['1', '2'])
+            elif q_resp.question.question_type == Question.LONG_TEXT:
+                q_resp.update_response('This is a long text response.\nThis is a second line')
+            else:
+                q_resp.update_response('1')
+
+    def test_empty_responses(self):
+        rub_response = self.make_rubric_response()
+        for response in rub_response.questionresponse_set.select_related('question').all():
+            if response.question.question_type == Question.MULTI_SELECT_TYPE:
+                self.assertEqual(
+                    response.response, [],
+                    'Empty response not equal to %s for question type %s' %
+                    ([], response.question.question_type)
+                )
+            else:
+                self.assertEqual(
+                    response.response, None,
+                    'Empty response not equal to %s for question type %s' %
+                    (None, response.question.question_type))
+
+    def test_empty_responses_external(self):
+        rub_response = self.make_rubric_response()
+        for response in rub_response.questionresponse_set.select_related('question').all():
+            if response.question.question_type == Question.MULTI_SELECT_TYPE:
+                self.assertEqual(
+                    response.response_external(), [],
+                    'Empty external response not equal to %s for question type %s' %
+                    ([], response.question.question_type)
+                )
+            else:
+                self.assertEqual(
+                    response.response_external(), None,
+                    'Empty external response not equal to %s for question type %s' %
+                    (None, response.question.question_type))
+
+    def generic_response_test(self, check_response: callable):
+        rub_response = self.make_rubric_response()
+        self.answer_rubric_response(rub_response)
+
+        for response in rub_response.questionresponse_set.select_related('question').all():
+            check_response(response)
+
+    def test_response(self):
+        value_dict = {Question.LONG_TEXT: 'This is a long text response.\nThis is a second line',
+                      Question.MULTI_SELECT_TYPE: ['1', '2'],
+                      'default': '1'}
+
+        def check_response(response: QuestionResponse):
+            value = value_dict.get(response.question.question_type, value_dict['default'])
+            self.assertEqual(
+                response.response, value,
+                'Response not equal to %s for question type %s' %
+                (value, response.question.question_type))
+
+        self.generic_response_test(check_response)
+
+    def test_response_external(self):
+        value_dict = {Question.LONG_TEXT: 'This is a long text response.\nThis is a second line',
+                      Question.MULTI_SELECT_TYPE: ['Choice 1', 'Choice 2'],
+                      'default': 'Choice 1'}
+
+        def check_response(response: QuestionResponse):
+            value = value_dict.get(response.question.question_type, value_dict['default'])
+            self.assertEqual(
+                response.response_external(), value,
+                'Response not equal to %s for question type %s' %
+                (value, response.question.question_type))
+
+        self.generic_response_test(check_response)
+
 
