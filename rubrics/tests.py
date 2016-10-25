@@ -9,7 +9,7 @@ from model_mommy import mommy
 from rubrics.models import Rubric, Question, Choice, RubricResponse, QuestionResponse
 
 
-def fixed_decimals(min_value=0, max_value=1, num_decimals=3) -> SearchStrategy:
+def fixed_decimals(min_value: float=0, max_value: float=1, num_decimals=3) -> SearchStrategy:
     power_of_ten = 10 ** num_decimals
     return integers(min_value=(min_value*power_of_ten),
                     max_value=(max_value*power_of_ten)).map(lambda x: x / power_of_ten)
@@ -40,7 +40,7 @@ def questions(rubric: Rubric) -> SearchStrategy:
 
 
 def rubric_with_questions(min_questions: int=None, max_questions: int=None,
-                            average_questions: int=10) -> SearchStrategy:
+                          average_questions: int=10) -> SearchStrategy:
     def add_questions(rubric: Rubric) -> SearchStrategy:
         return lists(elements=questions(rubric),
                      min_size=min_questions,
@@ -158,46 +158,49 @@ class RubricResponseTests(HypTestCase):
         self.assertTrue(q_resp.question_answered)
 
 
+def make_rubric():
+    rubric = mommy.make(Rubric, name="Test Rubric")
+    default_weight = float('{0:.3f}'.format(1 / len(Question.CHOICE_TYPES)))
+    for question_type in Question.available_types():
+        question_is_choice_type = question_type in Question.CHOICE_TYPES
+        weight = 0
+        if question_is_choice_type:
+            weight = default_weight
+        question = mommy.make(Question,
+                              rubric=rubric,
+                              short_description='Question %s' % question_type,
+                              long_description='This is for question %s' % question_type,
+                              help_text='This is help text for question %s' % question_type,
+                              weight=weight,
+                              question_type=question_type,
+                              required=True)
+        if question_is_choice_type:
+            for key in range(1, 4):
+                mommy.make(Choice, question=question, order=key,
+                           key=str(key), description='Choice %s' % key)
+    return rubric
+
+
+def make_rubric_response(rubric=None):
+    if not rubric:
+        rubric = make_rubric()
+
+    return mommy.make(RubricResponse, rubric=rubric)
+
+
+def answer_rubric_response(rubric_response):
+    for q_resp in rubric_response.questionresponse_set.all():
+        if q_resp.question.question_type == Question.MULTI_SELECT_TYPE:
+            q_resp.update_response(['1', '2'])
+        elif q_resp.question.question_type == Question.LONG_TEXT:
+            q_resp.update_response('This is a long text response.\nThis is a second line')
+        else:
+            q_resp.update_response('1')
+
+
 class QuestionResponseTests(HypTestCase):
-    def make_rubric(self):
-        rubric = mommy.make(Rubric, name="Test Rubric")
-        default_weight = float('{0:.3f}'.format(1 / len(Question.CHOICE_TYPES)))
-        for question_type in Question.available_types():
-            question_is_choice_type = question_type in Question.CHOICE_TYPES
-            weight = 0
-            if question_is_choice_type:
-                weight = default_weight
-            question = mommy.make(Question,
-                                  rubric=rubric,
-                                  short_description='Question %s' % question_type,
-                                  long_description='This is for question %s' % question_type,
-                                  help_text='This is help text for question %s' % question_type,
-                                  weight=weight,
-                                  question_type=question_type,
-                                  required=True)
-            if question_is_choice_type:
-                for key in range(1, 4):
-                    mommy.make(Choice, question=question, order=key,
-                               key=str(key), description='Choice %s' % key)
-        return rubric
-
-    def make_rubric_response(self, rubric=None):
-        if not rubric:
-            rubric = self.make_rubric()
-
-        return mommy.make(RubricResponse, rubric=rubric)
-
-    def answer_rubric_response(self, rubric_response):
-        for q_resp in rubric_response.questionresponse_set.all():
-            if q_resp.question.question_type == Question.MULTI_SELECT_TYPE:
-                q_resp.update_response(['1', '2'])
-            elif q_resp.question.question_type == Question.LONG_TEXT:
-                q_resp.update_response('This is a long text response.\nThis is a second line')
-            else:
-                q_resp.update_response('1')
-
     def test_empty_responses(self):
-        rub_response = self.make_rubric_response()
+        rub_response = make_rubric_response()
         for response in rub_response.questionresponse_set.select_related('question').all():
             if response.question.question_type == Question.MULTI_SELECT_TYPE:
                 self.assertEqual(
@@ -212,7 +215,7 @@ class QuestionResponseTests(HypTestCase):
                     (None, response.question.question_type))
 
     def test_empty_responses_external(self):
-        rub_response = self.make_rubric_response()
+        rub_response = make_rubric_response()
         for response in rub_response.questionresponse_set.select_related('question').all():
             if response.question.question_type == Question.MULTI_SELECT_TYPE:
                 self.assertEqual(
@@ -227,8 +230,8 @@ class QuestionResponseTests(HypTestCase):
                     (None, response.question.question_type))
 
     def generic_response_test(self, check_response: callable):
-        rub_response = self.make_rubric_response()
-        self.answer_rubric_response(rub_response)
+        rub_response = make_rubric_response()
+        answer_rubric_response(rub_response)
 
         for response in rub_response.questionresponse_set.select_related('question').all():
             check_response(response)
