@@ -284,3 +284,12 @@ class QuestionResponse(models.Model):
         else:
             self.choice_response = value
         self.save()
+
+    def score(self):
+        q_weight = float(self.question.weight)
+        if self.question.question_type == Question.MULTI_SELECT_TYPE:
+            responses = json.loads(self.choice_response)
+            return sum([float(x) for x in responses]) * q_weight
+        else:
+            return float(self.choice_response) * q_weight
+

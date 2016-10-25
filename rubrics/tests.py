@@ -264,4 +264,17 @@ class QuestionResponseTests(HypTestCase):
 
         self.generic_response_test(check_response)
 
+    def test_score(self):
+        def check_response(response: QuestionResponse):
+            q_type = response.question.question_type
+            if q_type == Question.LONG_TEXT:
+                with self.assertRaises(TypeError):
+                    response.score()
+            elif q_type == Question.MULTI_SELECT_TYPE:
+                self.assertAlmostEqual(response.score(), 0.999, places=3)
+            else:
+                self.assertAlmostEqual(response.score(), 0.333)
+
+        self.generic_response_test(check_response)
+
 
