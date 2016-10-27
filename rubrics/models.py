@@ -79,10 +79,7 @@ class Question(models.Model):
                 'choice_sort was %s. Should be one of %s.' %
                 (self.choice_sort, self.sort_options()))
 
-        if self.question_type not in self.CHOICE_TYPES and self.weight and self.weight > 0:
-            raise ValueError(
-                'A weight greater than 0 not allowed for questions of type %s' %
-                self.question_type)
+        QuestionType.get_instance(self).perform_type_specific_save_checks()
 
         super(Question, self).save(**kwargs)
 
@@ -102,9 +99,9 @@ class Question(models.Model):
         return self.short_description
 
     def show_choices(self):
-        return self.question_type and self.question_type in self.CHOICE_TYPES
+        return QuestionType.get_instance(self).show_choices()
 
-    def num_choices(self):
+    def num_choices_display(self):
         if self.show_choices():
             return self.choice_set.count()
         else:
@@ -222,7 +219,7 @@ class RubricResponse(models.Model):
         qr_dict = self.question_response_dict
         for key, value in updated_data.items():
             resp = qr_dict[key]
-            resp.update_response(value)
+            resp.update_response()
 
 
 class QuestionResponse(models.Model):
@@ -243,53 +240,147 @@ class QuestionResponse(models.Model):
 
     @property
     def response(self):
-        if self.question.question_type == Question.LONG_TEXT:
-            return self.text_response
-        elif self.question.question_type == Question.MULTI_SELECT_TYPE:
-            resp = self.choice_response
-            if not resp:
-                return []
-            return json.loads(resp)
-        else:
-            return self.choice_response
+        return QuestionType.get_instance(self.question).response(self)
 
     @property
     def question_answered(self):
-        return self.choice_response or self.text_response
+        return QuestionType.get_instance(self.question).question_answered(self)
 
     def response_external(self):
-        if self.question.question_type == Question.LONG_TEXT:
-            return self.text_response
-        elif self.question.question_type == Question.MULTI_SELECT_TYPE:
-            resp = self.choice_response
-            if not resp:
-                return []
-            resp = json.loads(resp)
-            choices = {key: value for key, value in self.question.choices()}
-
-            return [choices[indv] for indv in resp]
-        else:
-            resp = self.choice_response
-            if resp is None:
-                return None
-            choices = {key: value for key, value in self.question.choices()}
-
-            return choices[resp]
+        return QuestionType.get_instance(self.question).response_external(self)
 
     def update_response(self, value):
-        if self.question.question_type == Question.LONG_TEXT:
-            self.text_response = value
-        elif self.question.question_type == Question.MULTI_SELECT_TYPE:
-            self.choice_response = json.dumps(value)
-        else:
-            self.choice_response = value
+        QuestionType.get_instance(self.question).update_response(self, value)
         self.save()
 
     def score(self):
-        q_weight = float(self.question.weight)
-        if self.question.question_type == Question.MULTI_SELECT_TYPE:
-            responses = json.loads(self.choice_response)
-            return sum([float(x) for x in responses]) * q_weight
-        else:
-            return float(self.choice_response) * q_weight
+        return QuestionType.get_instance(self.question).score(self)
+    
+    
+class QuestionType(object):
+    @classmethod
+    def get_instance(cls, question: Question):
+        return QUESTION_TYPE_DICT.get(question.question_type, GenericQuestionType)(question)
 
+    def __init__(self, question):
+        super(QuestionType, self).__init__()
+        self.question = question
+
+    def perform_type_specific_save_checks(self):
+        pass
+
+    def show_choices(self):
+        return False
+
+    def question_answered(self, response: QuestionResponse):
+        return self.response(response)
+
+    def response(self, response: QuestionResponse):
+        raise NotImplementedError
+
+    def response_external(self, response: QuestionResponse):
+        raise NotImplementedError
+
+    def update_response(self, response: QuestionResponse, value):
+        raise NotImplementedError
+
+    def score(self, response: QuestionResponse) -> float:
+        raise NotImplementedError
+
+
+class GenericQuestionType(QuestionType):
+    pass
+
+
+class ChoiceSelectionMixin(object):
+    def show_choices(self):
+        return True
+
+
+class SingleSelectionMixin(ChoiceSelectionMixin):
+    def response(self, response: QuestionResponse):
+        return response.choice_response
+
+    def response_external(self, response: QuestionResponse):
+        resp = response.choice_response
+        if resp is None:
+            return None
+        choices = {key: value for key, value in self.question.choices()}
+
+        return choices[resp]
+
+    def update_response(self, response: QuestionResponse, value):
+        response.choice_response = value
+
+    def score(self, response: QuestionResponse) -> float:
+        return float(response.choice_response) * float(self.question.weight)
+
+
+class SingleSelectQuestionType(SingleSelectionMixin, QuestionType):
+    internal_name = 'SINGLE SELECT'
+    external_name = 'Single Select'
+
+
+class ScaleQuestionType(SingleSelectionMixin, QuestionType):
+    internal_name = 'SCALE'
+    external_name = 'Scale'
+
+
+class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
+    internal_name = 'MULTI SELECT'
+    external_name = 'Multiple Select'
+
+    def question_answered(self, response: QuestionResponse):
+        return response.choice_response
+
+    def response(self, response: QuestionResponse):
+        resp = response.choice_response
+        if not resp:
+            return []
+        return json.loads(resp)
+
+    def response_external(self, response: QuestionResponse):
+        resp = response.choice_response
+        if not resp:
+            return []
+        resp = json.loads(resp)
+        choices = {key: value for key, value in self.question.choices()}
+
+        return [choices[indv] for indv in resp]
+
+    def update_response(self, response: QuestionResponse, value):
+        response.choice_response = json.dumps(value)
+
+    def score(self, response: QuestionResponse) -> float:
+        responses = json.loads(response.choice_response)
+        return sum([float(x) for x in responses]) * float(self.question.weight)
+
+
+class LongTextQuestionType(QuestionType):
+    internal_name = 'LONG TEXT'
+    external_name = 'Long Text'
+
+    def perform_type_specific_save_checks(self):
+        if self.question.weight and self.question.weight > 0:
+            raise ValueError(
+                'A weight greater than 0 not allowed for questions of type %s' %
+                self.internal_name)
+
+    def response(self, response: QuestionResponse):
+        return response.text_response
+
+    def response_external(self, response: QuestionResponse):
+        return self.response(response)
+
+    def update_response(self, response: QuestionResponse, value):
+        response.text_response = value
+
+    def score(self, response: QuestionResponse) -> float:
+        raise TypeError('Questions of type {0} cannot be scored'.format(
+            self.__class__.__name__))
+
+
+QUESTION_TYPE_DICT = {c.internal_name: c for c in (ScaleQuestionType,
+                                                   SingleSelectQuestionType,
+                                                   MultiSelectQuestionType,
+                                                   LongTextQuestionType)}

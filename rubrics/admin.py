@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.db.models import Count
+
 from .models import Rubric, Question, Choice
 
 
@@ -28,7 +28,7 @@ class RubricAdmin(admin.ModelAdmin):
 class QuestionAdmin(admin.ModelAdmin):
     model = Question
     inlines = (ChoiceInline, )
-    list_display = ('rubric', 'order', 'short_description', 'question_type', 'num_choices')
+    list_display = ('rubric', 'order', 'short_description', 'question_type', 'num_choices_display')
 
     ordering = ('rubric', 'order', 'short_description')
 

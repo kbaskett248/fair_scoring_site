@@ -83,10 +83,10 @@ class QuestionTests(HypTestCase):
 
         for question in rubric.question_set.all():
             if question.show_choices():
-                self.assertIsInstance(question.num_choices(), int)
-                self.assertEquals(question.num_choices(), 5)
+                self.assertIsInstance(question.num_choices_display(), int)
+                self.assertEquals(question.num_choices_display(), 5)
             else:
-                self.assertEquals(question.num_choices(), '-')
+                self.assertEquals(question.num_choices_display(), '-')
 
     @given(question_type=sane_text())
     def test_invalid_question_type_raises_error(self, question_type):
