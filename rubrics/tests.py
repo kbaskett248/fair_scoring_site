@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from django.utils import timezone
 from hypothesis import given
 from hypothesis.extra.django import TestCase as HypTestCase
 from hypothesis.extra.django.models import models
@@ -157,6 +160,18 @@ class RubricResponseTests(HypTestCase):
         self.assertTrue(rubric_response.has_response)
         self.assertTrue(q_resp.question_answered)
 
+    def test_last_submitted(self):
+        rub_response = make_rubric_response()
+
+        self.assertIsNone(rub_response.last_submitted)
+
+        answer_rubric_response(rub_response)
+
+        self.assertIsNotNone(rub_response.last_submitted)
+        self.assertIsInstance(rub_response.last_submitted, datetime)
+        elapsed_seconds = (timezone.now() - rub_response.last_submitted).seconds
+        self.assertEqual(elapsed_seconds, 0)
+
 
 def make_rubric():
     rubric = mommy.make(Rubric, name="Test Rubric")
@@ -276,5 +291,21 @@ class QuestionResponseTests(HypTestCase):
                 self.assertAlmostEqual(response.score(), 0.333)
 
         self.generic_response_test(check_response)
+
+    def test_last_saved_date(self):
+        rub_response = make_rubric_response()
+
+        for response in rub_response.questionresponse_set.select_related('question').all():
+            self.assertIsNone(response.last_submitted)
+
+        answer_rubric_response(rub_response)
+        now = timezone.now()
+
+        for response in rub_response.questionresponse_set.select_related('question').all():
+            self.assertIsNotNone(response.last_submitted)
+            self.assertIsInstance(response.last_submitted, datetime)
+            elapsed_seconds = (now - response.last_submitted).seconds
+            self.assertEqual(elapsed_seconds, 0)
+
 
 

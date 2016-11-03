@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Question, RubricResponse, Rubric
+from .models import Question
 
 
 def default_field(question):
@@ -52,7 +52,7 @@ class RubricForm(forms.Form):
     def save(self, commit=True):
         updated_data = {int(key.replace('question_','')): self.cleaned_data[key]
                         for key in self.changed_data}
-        self.instance.update_data(updated_data)
+        self.instance.update_responses(updated_data)
         return self.instance
 
 

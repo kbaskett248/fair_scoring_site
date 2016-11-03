@@ -2,6 +2,8 @@ import json
 
 from django.db import models
 from django.db import transaction
+from django.db.models import Max
+from django.utils import timezone
 
 
 class Rubric(models.Model):
@@ -205,6 +207,10 @@ class RubricResponse(models.Model):
         return {resp.question.pk: resp
                 for resp in self.questionresponse_set.select_related('question').all()}
 
+    @property
+    def last_submitted(self):
+        return self.questionresponse_set.all().aggregate(last_submitted=Max('last_submitted'))['last_submitted']
+
     def question_answer_iter(self):
         for resp in self.questionresponse_set.select_related('question').all():
             yield resp.question.question_type, resp.question.description(), resp.response_external()
@@ -213,9 +219,8 @@ class RubricResponse(models.Model):
         return {response.question.field_name(): response.response
                 for response in self.question_response_dict.values()}
 
-
     @transaction.atomic
-    def update_data(self, updated_data):
+    def update_responses(self, updated_data):
         qr_dict = self.question_response_dict
         for key, value in updated_data.items():
             resp = qr_dict[key]
@@ -237,6 +242,9 @@ class QuestionResponse(models.Model):
         blank=True
     )
     text_response = models.TextField(null=True, blank=True)
+    last_submitted = models.DateTimeField(
+        null=True, blank=True
+    )
 
     @property
     def response(self):
@@ -251,6 +259,7 @@ class QuestionResponse(models.Model):
 
     def update_response(self, value):
         QuestionType.get_instance(self.question).update_response(self, value)
+        self.last_submitted = timezone.now()
         self.save()
 
     def score(self):
