@@ -209,7 +209,17 @@ class RubricResponse(models.Model):
 
     @property
     def last_submitted(self):
-        return self.questionresponse_set.all().aggregate(last_submitted=Max('last_submitted'))['last_submitted']
+        qs = self.questionresponse_set.all()
+        return qs.aggregate(last_submitted=Max('last_submitted'))['last_submitted']
+
+    def score(self):
+        score = 0
+        for response in self.questionresponse_set.select_related('question').all():
+            try:
+                score += response.score()
+            except TypeError:
+                continue
+        return score
 
     def question_answer_iter(self):
         for resp in self.questionresponse_set.select_related('question').all():

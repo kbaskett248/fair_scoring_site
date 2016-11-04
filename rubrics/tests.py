@@ -172,6 +172,17 @@ class RubricResponseTests(HypTestCase):
         elapsed_seconds = (timezone.now() - rub_response.last_submitted).seconds
         self.assertEqual(elapsed_seconds, 0)
 
+    def test_score(self):
+        rub_response = make_rubric_response()
+
+        self.assertEqual(rub_response.score(), 0,
+                         "Score is not zero before answering the Rubric")
+
+        answer_rubric_response(rub_response)
+
+        self.assertAlmostEqual(rub_response.score(), 1.665, 3,
+                               "Score incorrect after answering the Rubric")
+
 
 def make_rubric():
     rubric = mommy.make(Rubric, name="Test Rubric")
