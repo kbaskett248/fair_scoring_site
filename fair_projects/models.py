@@ -1,10 +1,9 @@
-import itertools
-
 from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.color import Style
 from django.db import models
 from django.db import transaction
+from django.db.models import QuerySet
 
 from fair_categories.models import Ethnicity, Category, Subcategory, Division
 from judges.models import Judge
@@ -39,9 +38,13 @@ class Teacher(models.Model):
 
 
 @transaction.atomic()
-def create_teacher(username, email, first_name, last_name, school_name, password=None, output_stream=None):
-    def write_output(message):
+def create_teacher(username, email, first_name, last_name, school_name, password=None,
+                   output_stream=None, styler: Style = None):
+
+    def write_output(message: str, style: str=None):
         if output_stream:
+            if styler and style:
+                message = getattr(styler, style)(message)
             output_stream.write(message)
 
     user, save_user = User.objects.get_or_create(username=username)
@@ -143,8 +146,33 @@ class Student(models.Model):
         return self.first_name + ' ' + self.last_name
 
 
-def create_student(first_name, last_name, eth_name, gender, teacher_name, grade_level, project, email=None,
-                   output_stream=None):
+def create_student(first_name, last_name, ethnicity, gender, grade_level, project,
+                   teacher, email=None, output_stream=None, styler: Style=None):
+    def write_output(message: str, style: str=None):
+        if output_stream:
+            if styler and style:
+                message = getattr(styler, style)(message)
+            output_stream.write(message)
+
+    student = Student.objects.create(first_name=first_name,
+                                     last_name=last_name,
+                                     ethnicity=ethnicity,
+                                     gender=gender,
+                                     grade_level=grade_level,
+                                     project=project,
+                                     teacher=teacher)
+
+    if email:
+        student.email = email
+        student.save()
+
+    return student
+
+
+def create_student_from_text(
+        first_name, last_name, eth_name, gender, teacher_name, grade_level,
+        project, email=None, output_stream=None):
+
     def write_output(message):
         if output_stream:
             output_stream.write(message)
@@ -193,18 +221,19 @@ class Project(models.Model):
     )
 
     def get_next_number(self):
-        max_proj_num = Project.objects.filter(
-            division=self.division, category=self.category).aggregate(models.Max('number'))['number__max']
+        def get_max(qs: QuerySet) -> int:
+            return qs.aggregate(models.Max('number'))['number__max']
+
+        max_proj_num = get_max(
+            Project.objects.filter(division=self.division, category=self.category))
         if max_proj_num:
             return int(max_proj_num) + 1
+
+        max_proj_num = get_max(Project.objects.all())
+        if max_proj_num:
+            return int(max_proj_num) + 1001 - (int(max_proj_num) % 1000)
         else:
-            categories = sorted(Category.objects.all(), key=lambda x: x.short_description)
-            divisions = sorted(Division.objects.all(), key=lambda x: x.short_description)
-            default_min = 0
-            for div, cat in itertools.product(divisions, categories):
-                default_min += 1000
-                if div == self.division and cat == self.category:
-                    return default_min + 1
+            return 1001
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):

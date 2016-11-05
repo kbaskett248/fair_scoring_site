@@ -1,20 +1,31 @@
 from collections import OrderedDict
 
 from django.contrib.auth.models import User, Group
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import call_command
 from django.test import TestCase
 from django.utils.six import StringIO
+from model_mommy import mommy
 
-from fair_projects.models import School, create_teacher, Teacher, create_teachers_group
+from fair_categories.models import Category, Division, Subcategory
+from fair_projects.models import School, create_teacher, Teacher, create_teachers_group, Student, Project
+
+
+def make_school(name: str='Test School') -> School:
+    return mommy.make(School, name=name)
 
 
 class SchoolTests(TestCase):
     def test_create_school(self):
-        school = School.objects.create(name='Test School')
+        school = make_school('Test School')
         self.assertIsNotNone(school)
         self.assertIsInstance(school, School)
         self.assertQuerysetEqual(School.objects.all(),
                                  ['<School: Test School>'])
+
+    def test_str(self, school_name: str='Test School'):
+        school = make_school(school_name)
+        self.assertEqual(str(school), school_name)
 
 
 class TeacherTests(TestCase):
@@ -129,3 +140,60 @@ class InitGroupsTest(TestCase):
                                   '<Permission: fair_projects | project | Can delete project>',
                                   '<Permission: fair_projects | teacher | Designate this user as a teacher>']
                                  )
+
+
+def make_student(**kwargs) -> Student:
+    return mommy.make(Student, **kwargs)
+
+
+class StudentTests(TestCase):
+    def test_str(self, first_name: str='Diana', last_name: str='Prince'):
+        student = make_student(first_name=first_name, last_name=last_name)
+        self.assertEqual(str(student), '{0} {1}'.format(first_name, last_name))
+
+
+def make_project(category_name: str=None, division_name: str=None, **kwargs):
+    if category_name:
+        try:
+            kwargs['subcategory'] = Subcategory.objects.select_related('category')\
+                .get(category__short_description=category_name)
+            kwargs['category'] = kwargs['subcategory'].category
+        except ObjectDoesNotExist:
+            kwargs['category'] = mommy.make(Category, short_description=category_name)
+            kwargs['subcategory'] = mommy.make(Subcategory, short_description='Subcategory of %s' % category_name,
+                                               category=kwargs['category'])
+    if division_name:
+        try:
+            kwargs['division'] = Division.objects.get(short_description=division_name)
+        except ObjectDoesNotExist:
+            kwargs['division'] = mommy.make(Division, short_description=division_name)
+    return mommy.make(Project, number=None, **kwargs)
+
+
+class ProjectTests(TestCase):
+    def test_str(self, project_title: str='The effect of her presence on the amount of sunshine') -> None:
+        project = make_project(title=project_title)
+        self.assertEqual(str(project), project_title)
+
+    def test_get_next_number(self):
+        data = (
+            ('PH', 1001),
+            ('PH', 1002),
+            ('LM', 2001),
+            ('LH', 3001),
+            ('PM', 4001),
+            ('PH', 1003),
+            ('LH', 3002),
+            ('LM', 2002)
+        )
+        cats = {'P': 'Physical Sciences', 'L': 'Life Sciences'}
+        divs = {'H': 'High School', 'M': 'Middle School'}
+        def get_new_project(code):
+            kwargs = {}
+            kwargs['category_name'] = cats[code[0]]
+            kwargs['division_name'] = divs[code[1]]
+            return make_project(**kwargs)
+
+        for code, number in data:
+            project = get_new_project(code)
+            self.assertEqual(project.number, number)
