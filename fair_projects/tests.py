@@ -8,7 +8,11 @@ from django.utils.six import StringIO
 from model_mommy import mommy
 
 from fair_categories.models import Category, Division, Subcategory
-from fair_projects.models import School, create_teacher, Teacher, create_teachers_group, Student, Project
+from fair_projects.models import School, create_teacher, Teacher, create_teachers_group, Student, Project, \
+    JudgingInstance
+from judges.models import Judge
+from rubrics.models import Question, Choice, Rubric
+from rubrics.models import RubricResponse
 
 
 def make_school(name: str='Test School') -> School:
@@ -171,6 +175,11 @@ def make_project(category_name: str=None, division_name: str=None, **kwargs):
 
 
 class ProjectTests(TestCase):
+    def setUp(self):
+        self.rubric = make_rubric()
+        user = mommy.make(User, first_name='Dallas', last_name='Green')
+        self.judge = make_judge(user=user)
+
     def test_str(self, project_title: str='The effect of her presence on the amount of sunshine') -> None:
         project = make_project(title=project_title)
         self.assertEqual(str(project), project_title)
@@ -197,3 +206,118 @@ class ProjectTests(TestCase):
         for code, number in data:
             project = get_new_project(code)
             self.assertEqual(project.number, number)
+
+    def test_average_score_is_zero_for_project_with_no_instances(self):
+        project = make_project()
+        self.assertEqual(project.average_score(), 0,
+                         msg='average_score should be zero for project with no judging instances')
+
+    def test_average_score_is_zero_for_project_with_unanswered_responses(self):
+        project = make_project()
+        make_judging_instance(project)
+        self.assertEqual(project.average_score(), 0,
+                         msg='average_score should be zero for project with unanswered judging instances')
+
+    def test_average_score_is_equal_to_instance_score(self):
+        project = make_project()
+        ji = make_judging_instance(project)
+        answer_rubric_response(ji.response)
+        self.assertGreater(project.average_score(), 0,
+                           msg='average_score should be greater than zero for project with answered judging instances')
+        self.assertEqual(project.average_score(), ji.score(),
+                         msg='average_score should be equal to JudgingInstance score when there is only one judging instance')
+
+
+
+def make_rubric():
+    rubric = mommy.make(Rubric, name="Test Rubric")
+    default_weight = float('{0:.3f}'.format(1 / len(Question.CHOICE_TYPES)))
+    for question_type in Question.available_types():
+        question_is_choice_type = question_type in Question.CHOICE_TYPES
+        weight = 0
+        if question_is_choice_type:
+            weight = default_weight
+        question = mommy.make(Question,
+                              rubric=rubric,
+                              short_description='Question %s' % question_type,
+                              long_description='This is for question %s' % question_type,
+                              help_text='This is help text for question %s' % question_type,
+                              weight=weight,
+                              question_type=question_type,
+                              required=True)
+        if question_is_choice_type:
+            for key in range(1, 4):
+                mommy.make(Choice, question=question, order=key,
+                           key=str(key), description='Choice %s' % key)
+    return rubric
+
+
+def make_rubric_response(rubric=None):
+    if not rubric:
+        rubric = make_rubric()
+
+    return mommy.make(RubricResponse, rubric=rubric)
+
+
+def answer_rubric_response(rubric_response):
+    for q_resp in rubric_response.questionresponse_set.all():
+        if q_resp.question.question_type == Question.MULTI_SELECT_TYPE:
+            q_resp.update_response(['1', '2'])
+        elif q_resp.question.question_type == Question.LONG_TEXT:
+            q_resp.update_response('This is a long text response.\nThis is a second line')
+        else:
+            q_resp.update_response('1')
+
+
+def make_judge(phone: str='867-5309', **kwargs):
+    return mommy.make(Judge, phone=phone, **kwargs)
+
+
+def make_judging_instance(project: Project, judge: Judge=None, rubric: Rubric=None):
+    if not judge:
+        judge = make_judge()
+
+    if not rubric:
+        rubric = make_rubric()
+
+    return JudgingInstance.objects.create(project=project,
+                                          judge=judge,
+                                          rubric=rubric)
+
+
+class JudgingInstanceTests(TestCase):
+    def setUp(self):
+        self.rubric = make_rubric()
+        self.school = make_school()
+        user = mommy.make(User, first_name='Dallas', last_name='Green')
+        self.judge = make_judge(user=user)
+        self.project = make_project(title='Test Project')
+
+    def test_create_judging_instance_with_rubric(self):
+        ji = make_judging_instance(self.project, judge=self.judge, rubric=self.rubric)
+        self.assertIsInstance(ji, JudgingInstance)
+        self.assertIsNotNone(ji.response)
+        self.assertIsInstance(ji.response, RubricResponse)
+
+    def test_judging_instance_string_method(self):
+        ji = make_judging_instance(self.project, judge=self.judge, rubric=self.rubric)
+        self.assertIn(str(self.judge), str(ji))
+        self.assertIn(str(self.project), str(ji))
+        self.assertIn(str(self.rubric.name), str(ji))
+
+    def test_score_is_zero_for_unanswered_rubric(self):
+        ji = make_judging_instance(self.project, judge=self.judge, rubric=self.rubric)
+        self.assertEqual(ji.score(), 0,
+                         msg='Score is not zero for unanswered rubrics')
+        self.assertFalse(ji.has_response(),
+                         msg='has_response should be False for unanswered rubrics')
+
+    def test_score_is_non_zero_for_answered_rubrics(self):
+        ji = make_judging_instance(self.project, judge=self.judge, rubric=self.rubric)
+        answer_rubric_response(ji.response)
+        self.assertTrue(ji.has_response(),
+                        msg='has_response should be True for answered rubrics')
+        self.assertNotEqual(ji.score(), 0,
+                            msg='Score should be non-zero for answered rubrics')
+        self.assertGreater(ji.score(), 0,
+                           msg='Score should be non-zero for answered rubrics')

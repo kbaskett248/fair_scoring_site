@@ -245,6 +245,20 @@ class Project(models.Model):
     def __str__(self):
         return self.title
 
+    def average_score(self):
+        _sum = 0
+        _count = 0
+        for ji in self.judginginstance_set.all():
+            if ji.has_response():
+                _sum += ji.score()
+                _count += 1
+
+        if _count == 0:
+            return 0
+        else:
+            return _sum / _count
+
+
 
 def create_project(title, abstract, cat_name, subcat_name, division, output_stream=None):
     def write_output(message):
@@ -292,3 +306,9 @@ class JudgingInstance(models.Model):
 
     def __str__(self):
         return '{0} - {1}: {2}'.format(self.judge, self.project, self.response.rubric.name)
+
+    def score(self):
+        return self.response.score()
+
+    def has_response(self):
+        return self.response.has_response
