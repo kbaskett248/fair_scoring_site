@@ -332,7 +332,15 @@ class SingleSelectionMixin(ChoiceSelectionMixin):
         response.choice_response = value
 
     def score(self, response: QuestionResponse) -> float:
-        return float(response.choice_response) * float(self.question.weight)
+        weight = float(self.question.weight)
+        if weight == 0:
+            return 0.0
+        try:
+            value = float(response.choice_response)
+        except ValueError:
+            return 0.0
+        else:
+            return value * weight
 
 
 class SingleSelectQuestionType(SingleSelectionMixin, QuestionType):
@@ -371,8 +379,18 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
         response.choice_response = json.dumps(value)
 
     def score(self, response: QuestionResponse) -> float:
+        weight = float(self.question.weight)
+        if weight == 0:
+            return 0.0
+
         responses = json.loads(response.choice_response)
-        return sum([float(x) for x in responses]) * float(self.question.weight)
+        value = 0
+        for x in responses:
+            try:
+                value += float(x)
+            except ValueError:
+                continue
+        return value * float(self.question.weight)
 
 
 class LongTextQuestionType(QuestionType):

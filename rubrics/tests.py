@@ -303,6 +303,45 @@ class QuestionResponseTests(HypTestCase):
 
         self.generic_response_test(check_response)
 
+    def test_score_for_non_numeric_choices(self):
+        rubric = mommy.make(Rubric, name="Test Rubric")
+        rub_response = make_rubric_response(rubric)
+
+        question_type = Question.SINGLE_SELECT_TYPE
+        question = mommy.make(Question,
+                              rubric=rubric,
+                              short_description='Question %s' % question_type,
+                              long_description='This is for question %s' % question_type,
+                              help_text='This is help text for question %s' % question_type,
+                              weight=1,
+                              question_type=question_type,
+                              required=True)
+        choices = mommy.make(Choice, _quantity=4, question=question)
+        q_resp = mommy.make(QuestionResponse,
+                            rubric_response=rub_response,
+                            question=question)
+        q_resp.update_response(choices[0].key)
+        self.assertEqual(q_resp.score(), 0,
+                         msg='Score should be zero for questions with non-numeric choices')
+
+        question_type = Question.MULTI_SELECT_TYPE
+        question = mommy.make(Question,
+                              rubric=rubric,
+                              short_description='Question %s' % question_type,
+                              long_description='This is for question %s' % question_type,
+                              help_text='This is help text for question %s' % question_type,
+                              weight=1,
+                              question_type=question_type,
+                              required=True)
+        choices = mommy.make(Choice, _quantity=4, question=question)
+        q_resp = mommy.make(QuestionResponse,
+                            rubric_response=rub_response,
+                            question=question)
+        q_resp.update_response([choices[0].key, choices[1].key])
+        self.assertEqual(q_resp.score(), 0,
+                         msg='Score should be zero for questions with non-numeric choices')
+
+
     def test_last_saved_date(self):
         rub_response = make_rubric_response()
 
