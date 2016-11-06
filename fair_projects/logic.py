@@ -287,3 +287,10 @@ def get_teachers():
             continue
 
         yield teacher.user
+
+def get_projects_sorted_by_score() -> list:
+    def sort_func(project: Project):
+        return ((project.average_score() * -1, project.num_scores() * -1), project.number)
+    project_list = list(Project.objects.all())
+    project_list.sort(key=sort_func)
+    return project_list

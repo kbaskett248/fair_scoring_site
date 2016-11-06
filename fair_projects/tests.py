@@ -8,7 +8,7 @@ from django.utils.six import StringIO
 from model_mommy import mommy
 
 from fair_categories.models import Category, Division, Subcategory
-from fair_projects.logic import assign_judges
+from fair_projects.logic import assign_judges, get_projects_sorted_by_score
 from fair_projects.models import School, create_teacher, Teacher, create_teachers_group, Student, Project, \
     JudgingInstance
 from judges.models import Judge
@@ -228,6 +228,20 @@ class ProjectTests(TestCase):
         self.assertEqual(project.average_score(), ji.score(),
                          msg='average_score should be equal to JudgingInstance score when there is only one judging instance')
 
+    def test_num_scores_is_zero_for_project_with_no_rubrics(self):
+        project = make_project()
+        self.assertEqual(project.num_scores(), 0,
+                         msg='Project with no scores has non-zero num_scores')
+
+    def test_num_scores_is_equal_to_the_number_of_answered_rubrics(self):
+        project = make_project()
+        judging_instances = [make_judging_instance(project) for _ in range(1, 10)]
+        self.assertEqual(project.num_scores(), 0,
+                         msg='Project with no scores has non-zero num_scores')
+
+        for count, ji in enumerate(judging_instances, start=1):
+            answer_rubric_response(ji.response)
+            self.assertEqual(project.num_scores(), count)
 
 
 def make_rubric():
@@ -324,7 +338,7 @@ class JudgingInstanceTests(TestCase):
                            msg='Score should be non-zero for answered rubrics')
 
 
-class TestJudgeAssignment(TestCase):
+class TestJudgeAssignmentAndProjectScoring(TestCase):
     fixtures = ['divisions_categories.json',
                 'ethnicities.json',
                 'schools.json',
@@ -346,3 +360,49 @@ class TestJudgeAssignment(TestCase):
         assign_judges()
         self.assertQuerysetEqual(qs.all(), existing_instances,
                                  msg='Judge assignment is not steady. Assigning again without changed inputs results in changed assignments.')
+
+    def test_unanswered_projects_are_sorted_by_project_number(self):
+        project_list = get_projects_sorted_by_score()
+        for project1, project2 in zip(project_list[:-1], project_list[1:]):
+            self.assertLess(project1.number, project2.number,
+                            msg='Unanswered Projects are not sorted by project number')
+
+    def test_answered_projects_come_first(self):
+        project1 = Project.objects.last()
+        ji = project1.judginginstance_set.first()
+        answer_rubric_response(ji.response)
+
+        project_list = get_projects_sorted_by_score()
+        self.assertEqual(project_list[0], project1,
+                         msg='First project in list is not the project that was scored')
+
+        project2 = project_list[-1]
+        ji = project2.judginginstance_set.first()
+        answer_rubric_response(ji.response)
+
+        project_list = get_projects_sorted_by_score()
+        if project_list[0].average_score() == project_list[1].average_score():
+            self.assertLessEqual(project_list[0].number, project_list[1].number,
+                                 msg='Projects with equal scores are not sorted by number')
+        else:
+            self.assertGreater(project_list[0].average_score(), project_list[1].average_score(),
+                               msg='Score of 2nd project is greater than score of 1st project')
+
+    def test_projects_with_more_answers_come_first(self):
+        self.test_answered_projects_come_first()
+
+        project_list = get_projects_sorted_by_score()
+        self.assertEqual(project_list[0].average_score(), project_list[1].average_score(),
+                         msg='This test requires 2 projects with equal scores')
+
+        def get_unanswered_response(project: Project) -> RubricResponse:
+            for ji in project.judginginstance_set.all():
+                if not ji.has_response():
+                    return ji.response
+
+        project = project_list[1]
+        answer_rubric_response(get_unanswered_response(project))
+
+        project_list = get_projects_sorted_by_score()
+        self.assertEqual(project_list[0], project,
+                         msg='If scores are equal, projects with more responses should come first')

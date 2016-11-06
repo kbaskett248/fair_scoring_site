@@ -245,7 +245,7 @@ class Project(models.Model):
     def __str__(self):
         return self.title
 
-    def average_score(self):
+    def average_score(self) -> float:
         _sum = 0
         _count = 0
         for ji in self.judginginstance_set.all():
@@ -257,6 +257,9 @@ class Project(models.Model):
             return 0
         else:
             return _sum / _count
+
+    def num_scores(self) -> int:
+        return len([ji for ji in self.judginginstance_set.all() if ji.has_response()])
 
 
 
