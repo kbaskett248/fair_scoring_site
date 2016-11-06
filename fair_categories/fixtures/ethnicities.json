@@ -1,0 +1,8 @@
+[
+	{"model": "fair_categories.ethnicity", "pk": 1, "fields": {"active": true, "short_description": "Hispanic"}}, 
+	{"model": "fair_categories.ethnicity", "pk": 2, "fields": {"active": true, "short_description": "Black"}}, 
+	{"model": "fair_categories.ethnicity", "pk": 3, "fields": {"active": true, "short_description": "Caucasian"}}, 
+	{"model": "fair_categories.ethnicity", "pk": 4, "fields": {"active": true, "short_description": "White"}}, 
+	{"model": "fair_categories.ethnicity", "pk": 5, "fields": {"active": true, "short_description": "Asian"}}, 
+	{"model": "fair_categories.ethnicity", "pk": 6, "fields": {"active": true, "short_description": "Other"}}
+]

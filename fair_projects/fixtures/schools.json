@@ -1,0 +1,9 @@
+[
+	{"model": "fair_projects.school", "pk": 1, "fields": {"name": "Coral Coast High School"}}, 
+	{"model": "fair_projects.school", "pk": 2, "fields": {"name": "Oak Grove Middle School"}}, 
+	{"model": "fair_projects.school", "pk": 3, "fields": {"name": "Littlerock Middle School"}}, 
+	{"model": "fair_projects.school", "pk": 4, "fields": {"name": "Seaside Middle School"}}, 
+	{"model": "fair_projects.school", "pk": 5, "fields": {"name": "Whale Gulch High School"}}, 
+	{"model": "fair_projects.school", "pk": 6, "fields": {"name": "Deer River High School"}}, 
+	{"model": "fair_projects.school", "pk": 7, "fields": {"name": "Elk Grove Middle School"}}
+]

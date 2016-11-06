@@ -120,7 +120,7 @@ def assign_new_projects(rubric):
             if project in judge_projects:
                 continue
             else:
-                print('Assigning {0} to {1}'.format(project, judge))
+                # print('Assigning {0} to {1}'.format(project, judge))
                 create_judging_instance(judge, project, rubric)
                 num_judges -= 1
 
@@ -178,11 +178,11 @@ def build_quotient_array():
 
 def get_project_balancing_lower_bound(judge_set):
     median = get_median_projects_per_judge(judge_set)
-    print('Median: ', median)
+    # print('Median: ', median)
     minimum = get_minimum_projects_per_judge()
-    print('Minimum: ', minimum)
+    # print('Minimum: ', minimum)
     average = judge_set.aggregate(avg_projects=Avg('num_projects'))['avg_projects']
-    print('Average: ', average)
+    # print('Average: ', average)
     return max(median, minimum, average)
 
 
@@ -200,11 +200,11 @@ def median_value(queryset, term):
 
 
 def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
-    print(judge)
+    # print(judge)
     num_to_reassign = judge.num_projects - lower_bound
     cat_Q = reduce(ior, (Q(categories=cat) for cat in judge.categories.all()))
     div_Q = reduce(ior, (Q(divisions=div) for div in judge.divisions.all()))
-    print(num_to_reassign)
+    # print(num_to_reassign)
 
     def sort_value(judging_instance):
         project = judging_instance.project
@@ -217,8 +217,8 @@ def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
             if reassign_project(ji, avail_judge):
                 num_to_reassign -= 1
 
-                for j in possible_judges.filter(cat_Q, div_Q):
-                    print(j, j.num_projects)
+                # for j in possible_judges.filter(cat_Q, div_Q):
+                    # print(j, j.num_projects)
 
                 if num_to_reassign <= 0:
                     break
@@ -244,7 +244,7 @@ def get_available_judge(project, rubric, possible_judges):
 
 @transaction.atomic()
 def reassign_project(judging_instance, to_judge):
-    print("Reassigning {0} from {1} to {2}".format(judging_instance.project.number, judging_instance.judge, to_judge))
+    # print("Reassigning {0} from {1} to {2}".format(judging_instance.project.number, judging_instance.judge, to_judge))
     new_instance = create_judging_instance(to_judge, judging_instance.project, judging_instance.response.rubric)
     judging_instance.delete()
     return new_instance

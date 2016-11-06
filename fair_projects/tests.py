@@ -8,6 +8,7 @@ from django.utils.six import StringIO
 from model_mommy import mommy
 
 from fair_categories.models import Category, Division, Subcategory
+from fair_projects.logic import assign_judges
 from fair_projects.models import School, create_teacher, Teacher, create_teachers_group, Student, Project, \
     JudgingInstance
 from judges.models import Judge
@@ -321,3 +322,27 @@ class JudgingInstanceTests(TestCase):
                             msg='Score should be non-zero for answered rubrics')
         self.assertGreater(ji.score(), 0,
                            msg='Score should be non-zero for answered rubrics')
+
+
+class TestJudgeAssignment(TestCase):
+    fixtures = ['divisions_categories.json',
+                'ethnicities.json',
+                'schools.json',
+                'teachers.json',
+                'projects_small.json',
+                'judges.json',
+                'rubric.json']
+
+    def setUp(self):
+        assign_judges()
+
+    def test_judge_assignment_creates_judging_instances(self):
+        self.assertGreater(JudgingInstance.objects.all().count(), 0,
+                           msg='Judge assignment produced no judging instances.')
+
+    def test_judge_assignment_is_steady(self):
+        qs = JudgingInstance.objects.order_by('pk')
+        existing_instances = map(repr, qs.all())
+        assign_judges()
+        self.assertQuerysetEqual(qs.all(), existing_instances,
+                                 msg='Judge assignment is not steady. Assigning again without changed inputs results in changed assignments.')
