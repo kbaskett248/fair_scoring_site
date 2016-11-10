@@ -234,7 +234,7 @@ class RubricResponse(models.Model):
         qr_dict = self.question_response_dict
         for key, value in updated_data.items():
             resp = qr_dict[key]
-            resp.update_response()
+            resp.update_response(value)
 
 
 class QuestionResponse(models.Model):
