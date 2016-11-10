@@ -220,6 +220,11 @@ class Project(models.Model):
         on_delete=models.PROTECT
     )
 
+    class Meta:
+        permissions = (
+            ('can_view_results', 'Can view project results'),
+        )
+
     def get_next_number(self):
         def get_max(qs: QuerySet) -> int:
             return qs.aggregate(models.Max('number'))['number__max']

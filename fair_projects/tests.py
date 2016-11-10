@@ -1,9 +1,11 @@
 from collections import OrderedDict
 
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import call_command
+from django.test import Client
 from django.test import TestCase
+from django.urls import reverse
 from django.utils.six import StringIO
 from model_mommy import mommy
 
@@ -406,3 +408,46 @@ class TestJudgeAssignmentAndProjectScoring(TestCase):
         project_list = get_projects_sorted_by_score()
         self.assertEqual(project_list[0], project,
                          msg='If scores are equal, projects with more responses should come first')
+
+
+class TestResultsPage(TestCase):
+    fixtures = ['divisions_categories.json',
+                'ethnicities.json',
+                'schools.json',
+                'teachers.json',
+                'projects_small.json',
+                'judges.json',
+                'rubric.json']
+
+    def setUp(self):
+        assign_judges()
+        self.client = Client()
+        self.user_without_permission = User.objects.create_user(
+            'user_without_permission', password='user_without_permission')
+        self.user_with_permission = User.objects.create_user(
+            'user_with_permission', password='user_with_permission')
+
+        permission = Permission.objects.get(codename='can_view_results')
+        self.user_with_permission.user_permissions.add(permission)
+
+    def test_results_view_redirects_anonymous(self):
+        response = self.client.get(reverse('fair_projects:project_results'), follow=True)
+        self.assertRedirects(response, reverse('login') + '?next=/projects/results',
+                             msg_prefix='View did not redirect anonymous user')
+        
+    def test_results_view_redirects_user_without_permission(self):
+        self.client.login(username='user_without_permission', password='user_without_permission')
+        response = self.client.get(reverse('fair_projects:project_results'), follow=True)
+        self.assertRedirects(response, reverse('login') + '?next=/projects/results',
+                             msg_prefix='View did not redirect user without permission')
+
+    def test_results_view_permits_user_with_permission(self):
+        self.client.login(username='user_with_permission', password='user_with_permission')
+        response = self.client.get(reverse('fair_projects:project_results'), follow=True)
+        self.assertEqual(response.status_code, 200,
+                         msg='Results page returned invalid status code')
+        self.assertIsNotNone(response.context['project_list'],
+                             msg='Results page does not contain project list')
+        self.assertTemplateUsed(response, 'fair_projects/results.html',
+                                msg_prefix='Results page did not use the appropriate template')
+

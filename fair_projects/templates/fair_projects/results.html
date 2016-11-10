@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block html-title %}Results - RRSEF{% endblock %}
+
+{% block title %}Results{% endblock %}
+
+{% block content %}
+    {% if project_list %}
+        <div class="list-group">
+            <div class="row list-group-item">
+                <div class="col-xs-4 col-sm-1 col-sm-push-2">#</div>
+                <div class="col-xs-4 col-sm-1 col-sm-pull-1">Score</div>
+                <div class="col-xs-4 col-sm-1 col-sm-pull-1">Count</div>
+                <div class="hidden-xs col-sm-9 col-md-5">Title</div>
+                <div class="hidden-xs hidden-sm col-md-4">Awards</div>
+            </div>
+            {% for project in project_list %}
+                {% include 'fair_projects/result_list_item.html' %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No projects are available.</p>
+    {% endif %}
+{% endblock %}

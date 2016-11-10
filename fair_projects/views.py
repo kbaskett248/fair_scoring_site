@@ -14,13 +14,14 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import DetailView, ListView
+from django.views.generic import TemplateView
 from django.views.generic.edit import UpdateView, CreateView, DeleteView
 
 from judges.models import Judge
 from rubrics.forms import rubric_form_factory
 from rubrics.models import Question
 from .forms import UploadFileForm, StudentFormset
-from .logic import handle_project_import, email_teachers
+from .logic import handle_project_import, email_teachers, get_projects_sorted_by_score
 from .models import Project, Student, JudgingInstance, Teacher
 
 logger = logging.getLogger(__name__)
@@ -171,6 +172,18 @@ class ProjectDetail(DetailView):
                 if [student for student in context['student_list']
                         if student.teacher == teacher]:
                     context['is_submitting_teacher'] = True
+
+        return context
+
+
+class ResultsIndex(PermissionRequiredMixin, TemplateView):
+    template_name = 'fair_projects/results.html'
+    permission_required = 'fair_projects.can_view_results'
+
+    def get_context_data(self, **kwargs):
+        context = super(ResultsIndex, self).get_context_data(**kwargs)
+
+        context['project_list'] = get_projects_sorted_by_score()
 
         return context
 
