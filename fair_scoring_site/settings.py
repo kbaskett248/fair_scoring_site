@@ -53,6 +53,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'awards.apps.AwardsConfig',
     'judges.apps.JudgesConfig',
     'fair_categories.apps.FairCategoriesConfig',
     'fair_projects.apps.FairProjectsConfig',
