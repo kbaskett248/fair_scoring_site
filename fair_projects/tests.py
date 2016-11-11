@@ -430,20 +430,23 @@ class TestResultsPage(TestCase):
         permission = Permission.objects.get(codename='can_view_results')
         self.user_with_permission.user_permissions.add(permission)
 
+        self.results_url = reverse('fair_projects:project_results')
+        self.results_link = '<a href="%s">Results</a>' % self.results_url
+
     def test_results_view_redirects_anonymous(self):
-        response = self.client.get(reverse('fair_projects:project_results'), follow=True)
+        response = self.client.get(self.results_url, follow=True)
         self.assertRedirects(response, reverse('login') + '?next=/projects/results',
                              msg_prefix='View did not redirect anonymous user')
         
     def test_results_view_redirects_user_without_permission(self):
         self.client.login(username='user_without_permission', password='user_without_permission')
-        response = self.client.get(reverse('fair_projects:project_results'), follow=True)
+        response = self.client.get(self.results_url, follow=True)
         self.assertRedirects(response, reverse('login') + '?next=/projects/results',
                              msg_prefix='View did not redirect user without permission')
 
     def test_results_view_permits_user_with_permission(self):
         self.client.login(username='user_with_permission', password='user_with_permission')
-        response = self.client.get(reverse('fair_projects:project_results'), follow=True)
+        response = self.client.get(self.results_url, follow=True)
         self.assertEqual(response.status_code, 200,
                          msg='Results page returned invalid status code')
         self.assertIsNotNone(response.context['project_list'],
@@ -451,3 +454,19 @@ class TestResultsPage(TestCase):
         self.assertTemplateUsed(response, 'fair_projects/results.html',
                                 msg_prefix='Results page did not use the appropriate template')
 
+    def test_no_link_to_results_for_anonymous(self):
+        response = self.client.get(reverse('fair_projects:index'), follow=True)
+        self.assertNotContains(response, self.results_link, html=True,
+                               msg_prefix='Results link appears for anonymous users')
+
+    def test_no_link_to_results_for_user_without_permission(self):
+        self.client.login(username='user_without_permission', password='user_without_permission')
+        response = self.client.get(reverse('fair_projects:index'), follow=True)
+        self.assertNotContains(response, self.results_link, html=True,
+                               msg_prefix='Results link appears for anonymous users')
+
+    def test_link_to_results_present_for_user_with_permissions(self):
+        self.client.login(username='user_with_permission', password='user_with_permission')
+        response = self.client.get(reverse('fair_projects:index'), follow=True)
+        self.assertContains(response, self.results_link, html=True,
+                            msg_prefix='Results link does not appear for user with correct permissions')
