@@ -96,7 +96,7 @@ def create_judge(username, email, first_name, last_name, phone, education, fair_
         if output_stream:
             output_stream.write(message)
 
-    user, save_user = User.objects.get_or_create(username=username)
+    user, save_user = User.objects.get_or_create(email=email)
     if save_user:
         if not password:
             password = User.objects.make_random_password()

@@ -2,10 +2,76 @@ import csv
 import os
 
 from django.core.management.base import BaseCommand, CommandError
-from django.core.exceptions import ObjectDoesNotExist
 
 from fair_categories.models import Category, Division
 from judges.models import JudgeEducation, JudgeFairExperience, create_judge
+
+
+class DefaultDictReader(csv.DictReader):
+    def __init__(self, *args, defaults=None, **kwargs):
+        super(DefaultDictReader, self).__init__(*args, **kwargs)
+        self.defaults = defaults
+
+    def __next__(self):
+        result = super(DefaultDictReader, self).__next__()
+        if self.defaults:
+            for key, value in self.defaults.items():
+                if key not in result:
+                    result[key] = value
+        return result
+
+
+class JudgeData:
+    def __init__(self, **kwargs):
+        self.row_data = kwargs
+        self.email = self.row_data['Email']
+        self.first_name = self.row_data['First Name']
+        self.last_name = self.row_data['Last Name']
+
+    def items_from_list(self, key):
+        return [item.strip() for item in self.row_data[key].split(',')]
+
+    @property
+    def categories(self) -> list:
+        return [Category.objects.get_or_create(short_description=cat)[0]
+                for cat in self.items_from_list('Categories')]
+
+    @property
+    def divisions(self) -> list:
+        return [Division.objects.get_or_create(short_description=div)[0]
+                for div in self.items_from_list('Divisions')]
+
+    @property
+    def username(self) -> str:
+        if 'Username' in self.row_data:
+            return self.row_data['Username']
+        else:
+            return (self.first_name[0] + self.last_name).lower()
+
+    @property
+    def password(self):
+        if 'Password' in self.row_data:
+            return self.row_data['Password']
+        else:
+            return None
+
+    @property
+    def phone(self) -> str:
+        if 'Phone' in self.row_data:
+            return self.row_data['Phone']
+        else:
+            return None
+
+    @property
+    def education(self) -> JudgeEducation:
+        return JudgeEducation.objects.get_or_create(short_description=self.row_data['Education'])[0]
+
+    @property
+    def experience(self) -> JudgeFairExperience:
+        return JudgeFairExperience.objects.get_or_create(short_description=self.row_data['Fair Experience'])[0]
+
+    def __str__(self) -> str:
+        return '{0} {1} ({2})'.format(self.first_name, self.last_name, self.username)
 
 
 class Command(BaseCommand):
@@ -26,57 +92,42 @@ class Command(BaseCommand):
                                   'input file. Useful for setting up test judges.'))
 
     def handle(self, *args, **options):
-        tsv_path = options['tsv_path']
+        tsv_path = options.pop('tsv_path')
         if not os.path.isfile(tsv_path):
             raise CommandError('File "%s" does not exist' % tsv_path)
 
-        password = options.get('password', None)
-        email = options.get('email', None)
-        phone = options.get('phone', None)
+        defaults = {}
+        def set_if_present(arg: str, default: str) -> None:
+            val = options[arg]
+            if val:
+                defaults[default] = val
+
+        set_if_present('password', 'Password')
+        set_if_present('email', 'Email')
+        set_if_present('phone', 'Phone')
 
         with open(tsv_path, newline='') as tsv_file:
-            self.read_file(tsv_file, global_password=password, global_email=email, global_phone=phone)
+            self.read_file(tsv_file, defaults=defaults)
 
-    def read_file(self, csv_file, global_password=None, global_email=None, global_phone=None):
+    def read_file(self, csv_file, defaults={}):
         dialect = csv.Sniffer().sniff(csv_file.read(1024))
         csv_file.seek(0)
-        reader = csv.DictReader(csv_file, dialect=dialect)
-        has_password = 'Password' in reader.fieldnames
-        has_email = 'Email' in reader.fieldnames
-        has_phone = 'Phone Number' in reader.fieldnames
+        reader = DefaultDictReader(csv_file, dialect=dialect, defaults=defaults)
 
         for row in reader:
-            categories = []
-            for cat in row['Categories'].split(sep=','):
-                categories.append(Category.objects.get_or_create(short_description=cat.strip())[0])
+            self.process_row(row)
 
-            divisions = []
-            for div in row['Divisions'].split(sep=','):
-                divisions.append(Division.objects.get_or_create(short_description=div.strip())[0])
+    def process_row(self, row_data):
+        judge_data = JudgeData(**row_data)
 
-            education, _ = JudgeEducation.objects.get_or_create(short_description=row['Education'])
-            fair_exp, _ = JudgeFairExperience.objects.get_or_create(short_description=row['Fair Experience'])
-
-            password = global_password
-            if not password and has_password:
-                password = row['Password']
-
-            email = global_email
-            if not email and has_email:
-                email = row['Email']
-
-            phone = global_phone
-            if not phone and has_phone:
-                phone = row['Phone Number']
-
-            create_judge(row['Username'],
-                         email,
-                         row['First Name'],
-                         row['Last Name'],
-                         phone,
-                         education,
-                         fair_exp,
-                         categories,
-                         divisions,
-                         password=password,
-                         output_stream=self.stdout)
+        create_judge(judge_data.username,
+                     judge_data.email,
+                     judge_data.first_name,
+                     judge_data.last_name,
+                     judge_data.phone,
+                     judge_data.education,
+                     judge_data.experience,
+                     judge_data.categories,
+                     judge_data.divisions,
+                     password=judge_data.password,
+                     output_stream=self.stdout)
