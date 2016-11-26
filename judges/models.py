@@ -105,7 +105,7 @@ def create_judge(username, email, first_name, last_name, phone, education, fair_
     if save_user:
         if not password:
             password = User.objects.make_random_password()
-        user.password = password
+        user.set_password(password)
     else:
         write_output('Judge user %s already exists' % username)
 
