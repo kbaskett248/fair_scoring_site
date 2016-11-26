@@ -9,6 +9,7 @@ urlpatterns = [
     url(r'^(?P<project_number>[0-9]+)/?$', views.ProjectDetail.as_view(), name='detail'),
     url(r'^(?P<project_number>[0-9]+)/update/?$', views.ProjectUpdate.as_view(), name='project_update'),
     url(r'^(?P<project_number>[0-9]+)/delete/?$', views.ProjectDelete.as_view(), name='project_delete'),
+    url(r'^(?P<project_number>[0-9]+)/feedback/(?P<student_id>[0-9]+)/?$', views.myview, name='student_feedback_form'),
     url(r'^judges/?$', views.JudgeIndex.as_view(), name='judge_index'),
     url(r'^judge/(?P<judge_username>[A-Za-z._0-9]+)/?$', views.JudgeDetail.as_view(), name='judge_detail'),
     url(r'^judgingresponse/(?P<judginginstance_key>[0-9]+)/?$',
