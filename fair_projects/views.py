@@ -176,6 +176,13 @@ class ProjectDetail(DetailView):
         return context
 
 
+def myview(request, **kwargs):
+    context = {}
+    context['project'] = get_object_or_404(Project, number=kwargs['project_number'])
+    context['student'] = get_object_or_404(Student, pk=kwargs['student_id'])
+    return None
+
+
 class ResultsIndex(PermissionRequiredMixin, TemplateView):
     template_name = 'fair_projects/results.html'
     permission_required = 'fair_projects.can_view_results'
