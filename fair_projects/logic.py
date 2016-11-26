@@ -288,9 +288,29 @@ def get_teachers():
 
         yield teacher.user
 
+
 def get_projects_sorted_by_score() -> list:
     def sort_func(project: Project):
         return ((project.average_score() * -1, project.num_scores() * -1), project.number)
     project_list = list(Project.objects.all())
     project_list.sort(key=sort_func)
     return project_list
+
+
+def mass_email(targets: list, subject_template: str, text_template: str, html_template: str):
+    messages = []
+    for email, context in targets:
+        subject = render_to_string(subject_template, context)
+        # Email subject *must not* contain newlines
+        subject = ''.join(subject.splitlines())
+
+        body = render_to_string(text_template, context)
+        html_email = render_to_string(html_template, context)
+
+        email_message = EmailMultiAlternatives(subject, body, to=[email])
+        email_message.attach_alternative(html_email, 'text/html')
+
+        messages.append(email_message)
+
+    with get_connection() as connection:
+        connection.send_messages(messages)
