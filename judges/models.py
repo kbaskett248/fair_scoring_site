@@ -96,13 +96,15 @@ def create_judge(username, email, first_name, last_name, phone, education, fair_
         if output_stream:
             output_stream.write(message)
 
-    user, save_user = User.objects.get_or_create(email=email)
+    user, save_user = User.objects.get_or_create(username=username,
+                                                 defaults={
+                                                     'email': email,
+                                                     'first_name': first_name,
+                                                     'last_name': last_name
+                                                 })
     if save_user:
         if not password:
             password = User.objects.make_random_password()
-        user.first_name = first_name
-        user.last_name = last_name
-        user.email = email
         user.password = password
     else:
         write_output('Judge user %s already exists' % username)
