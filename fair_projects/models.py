@@ -267,25 +267,16 @@ class Project(models.Model):
         return len([ji for ji in self.judginginstance_set.all() if ji.has_response()])
 
 
-
-def create_project(title, abstract, cat_name, subcat_name, division, output_stream=None):
+def create_project(title, abstract, category, subcategory, division, output_stream=None):
     def write_output(message):
         if output_stream:
             output_stream.write(message)
 
-    cat = Category.objects.get(short_description__icontains=cat_name)
-    try:
-        subcat = Subcategory.objects.get(category=cat,
-                                         short_description__icontains=subcat_name)
-    except ObjectDoesNotExist:
-        return None
-
-    project = Project(title=title,
-                      abstract=abstract,
-                      category=cat,
-                      subcategory=subcat,
-                      division=division)
-    project.save()
+    project = Project.objects.create(title=title,
+                                     abstract=abstract,
+                                     category=category,
+                                     subcategory=subcategory,
+                                     division=division)
     write_output('Created project: %s' % project)
 
     return project

@@ -3,6 +3,7 @@ from collections import defaultdict
 from functools import reduce
 from itertools import product, filterfalse
 from operator import ior
+from typing import Generator
 
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
@@ -13,19 +14,95 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from fair_categories.models import Category, Division
+from fair_categories.models import Category, Division, Subcategory, Ethnicity
 from judges.models import Judge
 from rubrics.models import Rubric
 from .models import Project, JudgingInstance, create_student, create_project, Teacher
 
-IMPORT_DICT_KEYS = ('Timestamp', 'Project Title', 'Project Abstract',
-                    'Project Category', 'Project Subcategory', 'Unused1',
-                    'Team or Individual', 'S1 First Name', 'S1 Last Name',
-                    'S1 Gender', 'S1 Ethnicity', 'S1 Teacher', 'S1 Grade Level',
-                    'S2 First Name', 'S2 Last Name', 'S2 Gender',
-                    'S2 Ethnicity', 'S2 Teacher', 'S2 Grade Level', 'Unused2',
-                    'S3 First Name', 'S3 Last Name', 'S3 Gender',
-                    'S3 Ethnicity', 'S3 Teacher', 'S3 Grade Level')
+
+class StudentData:
+    def __init__(self, **kwargs):
+        self.row_data = kwargs
+        self.set_if_contains('first_name', 'First Name')
+        self.set_if_contains('last_name', 'Last Name')
+        self.set_if_contains('grade_level', 'Grade')
+        self.set_if_contains('email', 'Email')
+        self.set_if_contains('_ethnicity', 'Ethnicity')
+        self.set_if_contains('_gender', 'Gender')
+        self.set_if_contains('_teacher', 'Teacher')
+
+    def set_if_contains(self, attr: str, label: str):
+        for key, value in self.row_data.items():
+            if label.lower() in key.lower():
+                actual_value = value
+                break
+        else:
+            actual_value = None
+
+        setattr(self, attr, actual_value)
+
+    @property
+    def ethnicity(self):
+        return Ethnicity.objects.get(short_description=self._ethnicity)
+
+    @property
+    def gender(self):
+        if self._gender[0].lower() == 'm':
+            return 'M'
+        else:
+            return 'F'
+
+    @property
+    def teacher(self):
+        return Teacher.objects.get(user__last_name=self._teacher)
+
+
+class ProjectData:
+    STUDENT_FIELDS = ('first name', 'last name', 'ethnicity', 'gender', 'teacher', 'grade', 'email')
+    def __init__(self, **kwargs):
+        self.row_data = kwargs
+        print(self.row_data)
+        self.title = self.row_data['Title']
+        self.abstract = self.row_data.get('Abstract', '')
+
+    @property
+    def category(self):
+        if 'Category' in self.row_data:
+            return self.row_data['Category']
+        else:
+            return self.subcategory.category
+
+    @property
+    def subcategory(self):
+        return Subcategory.objects.get(short_description__contains=self.row_data['Subcategory'])
+
+    @property
+    def division(self):
+        return Division.objects.get(short_description=self.row_data['Division'])
+
+    @property
+    def students(self) -> Generator[StudentData, None, None]:
+        student_list = [None for x in range(0, 4)]
+        for key in filter(self.is_student_field, self.row_data):
+            number = self.get_student_number_from_key(key)
+            try:
+                student_list[number][key] = self.row_data[key]
+            except TypeError:
+                student_list[number] = {key: self.row_data[key]}
+        for student_data in student_list:
+            if student_data and next(filter(None, student_data.values()), None):
+                yield StudentData(**student_data)
+
+    def is_student_field(self, key):
+        for label in self.STUDENT_FIELDS:
+            if label in key.lower():
+                return True
+        else:
+            return False
+
+    @staticmethod
+    def get_student_number_from_key(key):
+        return int(list(filter(str.isdigit, key))[0])
 
 
 def handle_project_import(file_):
@@ -35,35 +112,33 @@ def handle_project_import(file_):
     contents = ''.join(contents).split('\r\n')
 
     dialect = csv.Sniffer().sniff(contents[0])
-    reader = csv.DictReader(contents[1:], fieldnames=IMPORT_DICT_KEYS, dialect=dialect)
+    reader = csv.DictReader(contents[1:], dialect=dialect)
 
     process_project_import(reader)
 
 
+@transaction.atomic()
 def process_project_import(reader, output_stream=None):
-    div_dict = Division.get_grade_div_dict()
+
     for row in reader:
-        try:
-            grade = int(row['S1 Grade Level'])
-        except ValueError:
-            continue
-        else:
-            div = div_dict[grade]
-
-        project = create_project(row['Project Title'], row['Project Abstract'], row['Project Category'],
-                                 row['Project Subcategory'], div, output_stream=output_stream)
-
+        project_data = ProjectData(**row)
+        project = create_project(project_data.title,
+                                 project_data.abstract,
+                                 project_data.category,
+                                 project_data.subcategory,
+                                 project_data.division,
+                                 output_stream=output_stream)
         if not project:
             continue
 
-        for sn in range(1, 3):
-            create_student(row['S%s First Name' % sn],
-                           row['S%s Last Name' % sn],
-                           row['S%s Ethnicity' % sn],
-                           row['S%s Gender' % sn],
-                           row['S%s Teacher' % sn],
-                           row['S%s Grade Level' % sn],
+        for student_data in project_data.students:
+            create_student(student_data.first_name,
+                           student_data.last_name,
+                           student_data.ethnicity,
+                           student_data.gender,
+                           student_data.grade_level,
                            project,
+                           student_data.teacher,
                            output_stream=output_stream)
 
 
