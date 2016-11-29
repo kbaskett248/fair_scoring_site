@@ -204,11 +204,11 @@ def assign_new_projects(rubric):
 
 
 def get_minimum_judges_per_project():
-    return 2
+    return 3
 
 
 def get_minimum_projects_per_judge():
-    return 5
+    return 2
 
 
 def balance_judges(rubric):
@@ -246,7 +246,17 @@ def build_quotient_array():
 
     quotient_array = defaultdict(dict)
     for cat, div in product(Category.objects.all(), Division.objects.all()):
-        quotient_array[cat][div] = Quotient(proj_counts[(cat.pk, div.pk)], judge_counts[(cat.pk, div.pk)])
+        try:
+            num_projects = proj_counts[(cat.pk, div.pk)]
+        except KeyError:
+            num_projects = 0
+
+        try:
+            num_judges = judge_counts[(cat.pk, div.pk)]
+        except KeyError:
+            num_judges = 0
+
+        quotient_array[cat][div] = Quotient(num_projects, num_judges)
 
     return quotient_array
 
