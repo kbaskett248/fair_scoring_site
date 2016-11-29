@@ -62,7 +62,7 @@ def rubric_form_factory(rubric, field_dict=RubricForm.DEFAULT_FIELD_DICT,
     form_bases = (RubricForm,)
     form_dict = {'title': rubric.name,
                  'rubric': rubric}
-    for question in rubric.question_set.all():
+    for question in rubric.ordered_question_set.all():
         name = 'question_%s' % question.pk
         field = field_dict.get(question.question_type, default_field)(question)
         field.question_type = question.question_type

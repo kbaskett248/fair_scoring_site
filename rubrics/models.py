@@ -13,6 +13,10 @@ class Rubric(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def ordered_question_set(self):
+        return self.question_set.order_by('order')
+
 
 class Question(models.Model):
     SCALE_TYPE = 'SCALE'
@@ -198,6 +202,10 @@ class RubricResponse(models.Model):
                 QuestionResponse.objects.create(rubric_response=self, question=ques)
 
     @property
+    def ordered_questionresponse_set(self):
+        return self.questionresponse_set.order_by('question__order')
+
+    @property
     def has_response(self):
         return self.questionresponse_set.exclude(
             choice_response__isnull=True, text_response__isnull=True).exists()
@@ -222,7 +230,7 @@ class RubricResponse(models.Model):
         return score
 
     def question_answer_iter(self):
-        for resp in self.questionresponse_set.select_related('question').all():
+        for resp in self.ordered_questionresponse_set.select_related('question').all():
             yield resp.question.question_type, resp.question.description(), resp.response_external()
 
     def get_form_data(self):
