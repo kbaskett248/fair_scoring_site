@@ -176,11 +176,27 @@ class ProjectDetail(DetailView):
         return context
 
 
-def myview(request, **kwargs):
-    context = {}
-    context['project'] = get_object_or_404(Project, number=kwargs['project_number'])
-    context['student'] = get_object_or_404(Student, pk=kwargs['student_id'])
-    return None
+class StudentFeedbackForm(DetailView):
+    template_name = 'fair_projects/student_feedback.html'
+    model = Project
+    context_object_name = 'project'
+    queryset = Project.objects.select_related(
+        'category', 'subcategory', 'division')
+
+    def get_object(self, queryset=None):
+        if not queryset:
+            queryset = self.queryset
+
+        try:
+            return queryset.get(number=self.kwargs['project_number'])
+        except ObjectDoesNotExist:
+            raise Http404()
+
+    def get_context_data(self, **kwargs):
+        context = super(StudentFeedbackForm, self).get_context_data(**kwargs)
+        context['student'] = Student.objects.get(pk=self.kwargs['student_id'])
+
+        return context
 
 
 class ResultsIndex(PermissionRequiredMixin, TemplateView):

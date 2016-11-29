@@ -27,7 +27,7 @@
                 <li class="list-group-item">
                     {{ student.first_name }} {{ student.last_name }} - {{ student.teacher.school.name }}
                     {% if perms.fair_projects.can_view_results %}
-                        <a href="#">Feedback Form</a>
+                        <a href="{% url 'fair_projects:student_feedback_form' project.number student.pk %}">Feedback Form</a>
                     {% endif %}
                 </li>
                 {% endfor %}
