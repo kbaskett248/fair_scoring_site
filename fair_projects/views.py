@@ -10,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.db import transaction
 from django.http import Http404
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import DetailView, ListView
@@ -21,7 +21,7 @@ from judges.models import Judge
 from rubrics.forms import rubric_form_factory
 from rubrics.models import Question
 from .forms import UploadFileForm, StudentFormset
-from .logic import handle_project_import, email_teachers, get_projects_sorted_by_score
+from .logic import handle_project_import, email_teachers, get_projects_sorted_by_score, assign_judges
 from .models import Project, Student, JudgingInstance, Teacher
 
 logger = logging.getLogger(__name__)
@@ -189,16 +189,9 @@ class ResultsIndex(PermissionRequiredMixin, TemplateView):
 
 
 def judge_assignment(request):
-    num_deleted = JudgingInstance.objects.all().delete()
-    added = []
-    for proj in Project.objects.all():
-        for judge in Judge.objects.all():
-            ji = JudgingInstance(judge=judge, project=proj)
-            ji.save()
-            added.append('Judge: {0}    Project: {1}'.format(judge, proj))
-    return HttpResponse(
-        "Assigning Judges<br />{0}<br />{1}".format(
-            str(num_deleted), "<br />".join(added)))
+    assign_judges()
+    messages.add_message(request, messages.INFO, 'Judge assignment complete')
+    return HttpResponseRedirect('/admin/fair_projects/project/')
 
 
 @csrf_protect
