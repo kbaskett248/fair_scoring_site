@@ -20,6 +20,9 @@
                 {% if perms.fair_projects.can_view_results %}
                     <li><a href="{% url 'fair_projects:project_results' %}">Results</a></li>
                 {% endif %}
+                {% if request.user.is_active and request.user.is_staff %}
+                    <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 {% if request.user.is_authenticated %}
