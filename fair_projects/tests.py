@@ -10,7 +10,7 @@ from django.utils.six import StringIO
 from model_mommy import mommy
 
 from fair_categories.models import Category, Division, Subcategory
-from fair_projects.logic import assign_judges, get_projects_sorted_by_score
+from fair_projects.logic import assign_judges, get_projects_sorted_by_score, get_question_feedback_dict
 from fair_projects.models import School, create_teacher, Teacher, create_teachers_group, Student, Project, \
     JudgingInstance
 from judges.models import Judge
@@ -470,3 +470,26 @@ class TestResultsPage(TestCase):
         response = self.client.get(reverse('fair_projects:index'), follow=True)
         self.assertContains(response, self.results_link, html=True,
                             msg_prefix='Results link does not appear for user with correct permissions')
+
+
+class TestQuestionFeedbackDict(TestCase):
+    fixtures = ['divisions_categories.json',
+                'ethnicities.json',
+                'schools.json',
+                'teachers.json',
+                'projects_small.json',
+                'judges.json',
+                'rubric.json']
+
+    def setUp(self):
+        assign_judges()
+
+    def test_question_feedback_dict_includes_all_questions(self):
+        project = Project.objects.last()
+        ji = project.judginginstance_set.first()
+        answer_rubric_response(ji.response)
+        question_feedback_dict = get_question_feedback_dict(project)
+        print(question_feedback_dict)
+        self.assertFalse(True)
+
+

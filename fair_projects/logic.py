@@ -1,7 +1,7 @@
 import csv
 from collections import defaultdict
 from functools import reduce
-from itertools import product, filterfalse
+from itertools import product, filterfalse, groupby
 from operator import ior
 from typing import Generator
 
@@ -16,7 +16,7 @@ from django.utils.http import urlsafe_base64_encode
 
 from fair_categories.models import Category, Division, Subcategory, Ethnicity
 from judges.models import Judge
-from rubrics.models import Rubric
+from rubrics.models import Rubric, QuestionResponse
 from .models import Project, JudgingInstance, create_student, create_project, Teacher
 
 
@@ -399,3 +399,28 @@ def mass_email(targets: list, subject_template: str, text_template: str, html_te
 
     with get_connection() as connection:
         connection.send_messages(messages)
+
+
+def get_question_feedback_dict(project: Project) -> dict:
+    judging_instances = JudgingInstance.objects.filter(project=project).select_related('response').all()
+    rubric_responses = [instance.response for instance in judging_instances]
+    question_responses = QuestionResponse.objects\
+        .filter(rubric_response__in=rubric_responses)\
+        .select_related('question')\
+        .order_by('question__short_description')\
+        .all()
+    question_responses = filter(lambda x: x.rubric_response.has_response, question_responses)
+    question_responses = groupby(question_responses, lambda x: x.question.short_description)
+    question_dict = {key: FeedbackQuestion(list(responses)) for key, responses in
+                     question_responses}
+
+    return question_dict
+
+
+class FeedbackQuestion:
+    def __init__(self, responses):
+        self.question = responses[0].question
+        self.responses = responses
+
+    def __str__(self):
+        return '{0} responses'.format(len(self.responses))

@@ -1,3 +1,4 @@
+{% load dictkey %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,52 +6,64 @@
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'print.css' %}" />
 </head>
-<body class="c18"><p class="c6"><span class="c13">&laquo;Team_Leaders_Last_Name&raquo;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&laquo;Who_is_the_students_research_teacher&raquo;</span>
+<body>
+<p>{{ student.last_name}}, {{student.first_name }}</p>
+<p>{{ student.teacher.user.last_name }}</p>
+
+<h1>Science Fair Feedback and Final Exam</h1>
+<p>
+    20% of your final exam grade will be the edits you make to your display board based on the feedback you received
+    from the school&rsquo;s science fair. These edits and reflections are not optional and must be completed by all students.
+    The expectation is that all students will "meet the standard" for all sections of the science fair rubric. If you
+    receive a score below 3; you must write a reflection and/or document that your display has been edited. Your edited
+    boards and accompanying reflections should be submitted to your research teacher non the day of your exam.
 </p>
-<p class="c6"><span class="c13">Science Fair Feedback and Final Exam</span></p>
-<p class="c6" id="h.gjdgxs"><span>20% of your final exam grade will be the edits you make to your display board based on the feedback you received from the school&rsquo;s science fair. &nbsp;These edits and reflections are not optional and must be completed by all students. &nbsp;The expectation is that all students will &ldquo;meet the standard&rdquo;
-    for all sections of the science fair rubric. If you receive a score below 3; you must write a reflection and/or document that your display has been edited. &nbsp;Your edited boards and accompanying reflections should be submitted to your research teacher non the day of your exam.</span>
+
+<h2>Scientific Thought and Process Component and Score (10% Final Exam)</h2>
+<p>
+    All projects were judged on a 1-4 scale with 1 being low and 4 being exceptional. For these areas, if your score is
+    a 2 or below you must write a reflection, no shorter than 2 sentences that details 1) why you were unable to meet
+    expectations (&lt;3), and 2) what changes you need to make so that you do meet expectations in the future. Make sure
+    that each edited section is clearly labeled so that you will receive full credit on your exam.
 </p>
-<p class="c6"><span class="c8">Scientific Thought and Process Component and Score (10% Final Exam)</span><span>&nbsp;- All projects were judged on a 1-4 scale with 1 being low and 4 being exceptional. &nbsp;</span><span
-        class="c10 c4">For these areas, if your score is a 2 or below you must write a reflection, no shorter than 2 sentences&rdquo;
-    that details 1) why you were unable to meet expectations (&lt;3), and 2) what changes you need to make so that you do meet expectations in the future.</span><span
-        class="c10">&nbsp;Make sure that each edited section is clearly labeled so that you will receive full credit on your exam.</span>
-</p><a id="t.d75c7b2e533962caaa0f7d39e7583f992bd98874"></a><a id="t.0"></a>
-<table class="c17">
+
+<table>
+    <thead>
+        <tr>
+            <td>Component</td>
+            <td>Score</td>
+        </tr>
+    </thead>
     <tbody>
-    <tr class="c7">
-        <td class="c1" colspan="1" rowspan="1"><p class="c5"><span class="c15 c13">Component</span></p></td>
-        <td class="c2" colspan="1" rowspan="1"><p class="c5"><span class="c15 c13">Score</span></p></td>
-    </tr>
-    <tr class="c7">
-        <td class="c1" colspan="1" rowspan="1"><p class="c3"><span class="c0">The project demonstrates creativity in the originality of the topic, new methods, construction, design, or conclusions.</span>
-        </p></td>
-        <td class="c2" colspan="1" rowspan="1"><p class="c5"><span class="c0">&laquo;The_project_demonstrates_creativity_in_t&raquo;</span>
-        </p></td>
-    </tr>
-    <tr class="c7">
-        <td class="c1" colspan="1" rowspan="1"><p class="c3"><span class="c0">The project has a clear rationale.</span>
-        </p></td>
-        <td class="c2" colspan="1" rowspan="1"><p class="c5"><span
-                class="c0">&laquo;The_project_has_a_clear_rationale&raquo;</span></p></td>
-    </tr>
-    <tr class="c7">
-        <td class="c1" colspan="1" rowspan="1"><p class="c3"><span class="c0">Scientific habits of mind</span></p></td>
-        <td class="c2" colspan="1" rowspan="1"><p class="c5"><span class="c0">&laquo;The_project_demonstrates_scientific_habi&raquo;</span>
-        </p></td>
-    </tr>
-    <tr class="c7">
-        <td class="c1" colspan="1" rowspan="1"><p class="c3"><span class="c0">The logbook thoroughly documents all phases of the research project.</span>
-        </p></td>
-        <td class="c2" colspan="1" rowspan="1"><p class="c5"><span class="c0">&laquo;The_logbook_thoroughly_documents_all_pha&raquo;</span>
-        </p></td>
-    </tr>
-    <tr class="c7">
-        <td class="c1" colspan="1" rowspan="1"><p class="c3"><span class="c0">The student demonstrates professionalism in his or her presentation and is able to discuss the research and respond to questions.</span>
-        </p></td>
-        <td class="c2" colspan="1" rowspan="1"><p class="c5"><span class="c0">&laquo;The_student_demonstrates_professionalism&raquo;</span>
-        </p></td>
-    </tr>
+        {% with questions|dictkey:"Originality" as question %}
+        <tr>
+            <td>{{ question.long_description }}</td>
+            <td>{{ question.score }}</td>
+        </tr>
+        {% endwith %}
+        <tr class="c7">
+            <td class="c1" colspan="1" rowspan="1"><p class="c3"><span class="c0">The project has a clear rationale.</span>
+            </p></td>
+            <td class="c2" colspan="1" rowspan="1"><p class="c5"><span
+                    class="c0">&laquo;The_project_has_a_clear_rationale&raquo;</span></p></td>
+        </tr>
+        <tr class="c7">
+            <td class="c1" colspan="1" rowspan="1"><p class="c3"><span class="c0">Scientific habits of mind</span></p></td>
+            <td class="c2" colspan="1" rowspan="1"><p class="c5"><span class="c0">&laquo;The_project_demonstrates_scientific_habi&raquo;</span>
+            </p></td>
+        </tr>
+        <tr class="c7">
+            <td class="c1" colspan="1" rowspan="1"><p class="c3"><span class="c0">The logbook thoroughly documents all phases of the research project.</span>
+            </p></td>
+            <td class="c2" colspan="1" rowspan="1"><p class="c5"><span class="c0">&laquo;The_logbook_thoroughly_documents_all_pha&raquo;</span>
+            </p></td>
+        </tr>
+        <tr class="c7">
+            <td class="c1" colspan="1" rowspan="1"><p class="c3"><span class="c0">The student demonstrates professionalism in his or her presentation and is able to discuss the research and respond to questions.</span>
+            </p></td>
+            <td class="c2" colspan="1" rowspan="1"><p class="c5"><span class="c0">&laquo;The_student_demonstrates_professionalism&raquo;</span>
+            </p></td>
+        </tr>
     </tbody>
 </table>
 <p class="c6 c9"><span></span></p>

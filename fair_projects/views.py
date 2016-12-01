@@ -1,6 +1,6 @@
 import functools
 import logging
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from django.contrib import messages
 from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin, UserPassesTestMixin
@@ -195,6 +195,13 @@ class StudentFeedbackForm(DetailView):
     def get_context_data(self, **kwargs):
         context = super(StudentFeedbackForm, self).get_context_data(**kwargs)
         context['student'] = Student.objects.get(pk=self.kwargs['student_id'])
+        context['project'] = context['student'].project
+
+        FeedbackQuestion = namedtuple('FeedbackQuestion', ('long_description', 'score'))
+
+        question_dict = {'Originality': FeedbackQuestion('The project demonstrates creativity in the originality of the topic, new methods, construction, design, or conclusions',
+                                                         3)}
+        context['questions'] = question_dict
 
         return context
 

@@ -264,6 +264,10 @@ class QuestionResponse(models.Model):
         null=True, blank=True
     )
 
+    def __str__(self):
+        return '{question}: {answer}'.format(question=self.question.short_description,
+                                             answer=self.response_external)
+
     @property
     def response(self):
         return QuestionType.get_instance(self.question).response(self)
