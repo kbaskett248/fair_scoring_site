@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block html-title %}Judges - RRSEF{% endblock %}
+
+{% block title %}Judges <small>{{ judge_list|length }}</small>{% endblock %}
+
+{% block content %}
+    {% if judge_list %}
+        <div class="list-group">
+            {% for judge in judge_list %}
+                {% url 'fair_projects:judge_detail' judge.user.username as item_url %}
+                <a href="{{ item_url }}" class="row list-group-item">
+                    <div class="col-xs-7 col-sm-5">
+                        {{ judge.user.get_username }}
+                    </div>
+                    <div class="col-xs-5 col-sm-2 col-sm-push-5">
+                        {% with judge.judginginstance_set.count as count %}
+                        {{ count }} project{{ count|pluralize }}
+                        {% endwith %}
+                    </div>
+                    <div class="col-xs-12 col-sm-5 col-sm-pull-2">
+                        {{ judge.user.last_name }}, {{ judge.user.first_name }}
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No judges exist</p>
+    {% endif %}
+{% endblock %}

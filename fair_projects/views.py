@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 
 from django.contrib import messages
-from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
@@ -244,6 +244,19 @@ class SpecificUserRequiredMixin(AccessMixin):
             return self.handle_no_permission()
 
         return super(SpecificUserRequiredMixin, self).dispatch(request, *args, **kwargs)
+
+
+class JudgeIndex(UserPassesTestMixin, ListView):
+    template_name = 'fair_projects/judge_index.html'
+    model = Judge
+    queryset = Judge.objects.select_related('user') \
+        .order_by('user__last_name', 'user__first_name')
+    context_object_name = 'judge_list'
+
+    def user_is_staff(self):
+        return self.request.user.is_active and self.request.user.is_staff
+
+    test_func = user_is_staff
 
 
 class JudgeDetail(SpecificUserRequiredMixin, ListView):

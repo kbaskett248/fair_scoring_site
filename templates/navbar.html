@@ -24,6 +24,7 @@
                     <li><a href="{% url 'fair_projects:project_results' %}">Results</a></li>
                 {% endif %}
                 {% if request.user.is_active and request.user.is_staff %}
+                    <li><a href="{% url 'fair_projects:judge_index' %}">Judges</a></li>
                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
                 {% endif %}
             </ul>
