@@ -10,16 +10,22 @@
             {% for judge in judge_list %}
                 {% url 'fair_projects:judge_detail' judge.user.username as item_url %}
                 <a href="{{ item_url }}" class="row list-group-item">
-                    <div class="col-xs-7 col-sm-5">
+                    <div class="col-xs-10 col-sm-5 col-md-2">
                         {{ judge.user.get_username }}
                     </div>
-                    <div class="col-xs-5 col-sm-2 col-sm-push-5">
+                    <div class="col-xs-2 col-sm-1 col-sm-push-6 col-md-1 col-md-push-9">
                         {% with judge.judginginstance_set.count as count %}
-                        {{ count }} project{{ count|pluralize }}
+                        {{ count }}
                         {% endwith %}
                     </div>
-                    <div class="col-xs-12 col-sm-5 col-sm-pull-2">
-                        {{ judge.user.last_name }}, {{ judge.user.first_name }}
+                    <div class="col-xs-12 col-sm-6 col-sm-pull-1 col-md-3 col-md-pull-1">
+                        <strong>{{ judge.user.last_name }}, {{ judge.user.first_name }}</strong>
+                    </div>
+                    <div class="col-xs-12 col-sm-5 hidden-xs hidden-sm col-md-3 col-md-pull-1">
+                        <small>{{ judge.categories.all|join:', ' }}</small>
+                    </div>
+                    <div class="col-xs-12 col-sm-5 hidden-xs hidden-sm col-md-3 col-md-pull-1">
+                        <small>{{ judge.divisions.all|join:', ' }}</small>
                     </div>
                 </a>
             {% endfor %}
