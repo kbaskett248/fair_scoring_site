@@ -366,16 +366,16 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
     external_name = 'Multiple Select'
 
     def question_answered(self, response: QuestionResponse):
-        return response.choice_response
+        return response.text_response
 
     def response(self, response: QuestionResponse):
-        resp = response.choice_response
+        resp = response.text_response
         if not resp:
             return []
         return json.loads(resp)
 
     def response_external(self, response: QuestionResponse):
-        resp = response.choice_response
+        resp = response.text_response
         if not resp:
             return []
         resp = json.loads(resp)
@@ -384,14 +384,14 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
         return [choices[indv] for indv in resp]
 
     def update_response(self, response: QuestionResponse, value):
-        response.choice_response = json.dumps(value)
+        response.text_response = json.dumps(value)
 
     def score(self, response: QuestionResponse) -> float:
         weight = float(self.question.weight)
         if weight == 0:
             return 0.0
 
-        responses = json.loads(response.choice_response)
+        responses = json.loads(response.text_response)
         value = 0
         for x in responses:
             try:
