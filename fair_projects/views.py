@@ -341,7 +341,7 @@ class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
 
     def get_success_url(self):
         return reverse('fair_projects:judging_instance_detail',
-                       args=(self.object.pk,))
+                       args=(self.judging_instance.pk,))
 
 
 class TeacherDetail(SpecificUserRequiredMixin, ListView):
