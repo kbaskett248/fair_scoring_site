@@ -188,6 +188,14 @@ class ResultsIndex(PermissionRequiredMixin, TemplateView):
         return context
 
 
+def delete_judge_assignments(request):
+    _, deletion_dict = JudgingInstance.objects.all().delete()
+    msg = '\n'.join(
+        ['Deleted {0} {1} objects'.format(count, obj) for obj, count in deletion_dict.items()])
+    messages.add_message(request, messages.INFO, msg)
+    return HttpResponseRedirect('/admin/fair_projects/project/')
+
+
 def judge_assignment(request):
     assign_judges()
     messages.add_message(request, messages.INFO, 'Judge assignment complete')
