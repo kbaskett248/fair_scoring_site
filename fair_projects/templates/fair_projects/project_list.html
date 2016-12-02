@@ -1,6 +1,7 @@
 {% if project_list %}
     <div class="list-group">
         {% for project in project_list %}
+            {% url 'fair_projects:detail' project.number as item_url %}
             {% include 'fair_projects/project_list_item.html' %}
         {% endfor %}
     </div>

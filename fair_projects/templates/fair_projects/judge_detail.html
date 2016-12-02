@@ -6,7 +6,7 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>
+        <li><a href="{% url 'fair_projects:judge_detail' judge.user.get_username %}">My Projects</a></li>
     </ol>
 {% endblock %}
 
@@ -14,27 +14,13 @@
     {% if judginginstance_list %}
         <h2>Assigned Projects <small>{{ judginginstance_list|length }}</small></h2>
 
-        <div class="table-responsive">
-            <table class="table table-striped table-condensed">
-                <thead>
-                    <tr>
-                        <td>#</td>
-                        <td>Title</td>
-                        <td>Category</td>
-                        <td>Division</td>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ji in judginginstance_list %}
-                        <tr>
-                            <td><a href="{% url 'fair_projects:judging_instance_detail' ji.pk %}" >{{ ji.project.number }}</a></td>
-                            <td><a href="{% url 'fair_projects:judging_instance_detail' ji.pk %}" >{{ ji.project.title }}</a></td>
-                            <td>{{ ji.project.subcategory.short_description }} ({{ ji.project.category.short_description }})</td>
-                            <td>{{ ji.project.division.short_description }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="list-group">
+            {% for ji in judginginstance_list %}
+                {% url 'fair_projects:judging_instance_detail' ji.pk as item_url %}
+                {% with ji.project as project %}
+                    {% include 'fair_projects/project_list_item.html' %}
+                {% endwith %}
+            {% endfor %}
         </div>
     {% endif %}
 {% endblock %}

@@ -17,6 +17,9 @@
             <ul class="nav navbar-nav">
                 <!--<li class="active"><a href="#">Link <span class="sr-only">(current)</span></a></li>-->
                 <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>
+                {% if perms.judges.is_judge and request.user.judge %}
+                    <li><a href="{% url 'fair_projects:judge_detail' request.user.get_username %}">My Projects</a></li>
+                {% endif %}
                 {% if perms.fair_projects.can_view_results %}
                     <li><a href="{% url 'fair_projects:project_results' %}">Results</a></li>
                 {% endif %}
