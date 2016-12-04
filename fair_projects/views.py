@@ -1,6 +1,6 @@
 import functools
 import logging
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 
 from django.contrib import messages
 from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin, UserPassesTestMixin
@@ -21,7 +21,7 @@ from judges.models import Judge
 from rubrics.forms import rubric_form_factory
 from rubrics.models import Question
 from .forms import UploadFileForm, StudentFormset
-from .logic import handle_project_import, email_teachers, get_projects_sorted_by_score, assign_judges
+from .logic import handle_project_import, email_teachers, get_projects_sorted_by_score, assign_judges, get_question_feedback_dict
 from .models import Project, Student, JudgingInstance, Teacher
 
 logger = logging.getLogger(__name__)
@@ -196,12 +196,7 @@ class StudentFeedbackForm(DetailView):
         context = super(StudentFeedbackForm, self).get_context_data(**kwargs)
         context['student'] = Student.objects.get(pk=self.kwargs['student_id'])
         context['project'] = context['student'].project
-
-        FeedbackQuestion = namedtuple('FeedbackQuestion', ('long_description', 'score'))
-
-        question_dict = {'Originality': FeedbackQuestion('The project demonstrates creativity in the originality of the topic, new methods, construction, design, or conclusions',
-                                                         3)}
-        context['questions'] = question_dict
+        context['questions'] = get_question_feedback_dict(context['project'])
 
         return context
 

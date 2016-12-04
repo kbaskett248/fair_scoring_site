@@ -422,5 +422,61 @@ class FeedbackQuestion:
         self.question = responses[0].question
         self.responses = responses
 
+    def short_description(self):
+        return self.question.short_description
+
+    def long_description(self):
+        return self.question.long_description
+
+    def description(self):
+        return self.question.description()
+
+    def response_list(self):
+        return [resp.response for resp in self.responses]
+
+    def response_list_remove_empty(self):
+        return list(filter(None, self.response_list()))
+
+    def combined_response_set(self):
+        return self._combine_responses(self.response_list())
+
+    @staticmethod
+    def _combine_responses(list_to_combine):
+        combined_set = set()
+        for resp in list_to_combine:
+            if not resp:
+                continue
+            elif hasattr(resp, '__iter__'):
+                combined_set.update(resp)
+            else:
+                combined_set.add(resp)
+        return combined_set
+
+    def response_list_external(self):
+        return [resp.response_external() for resp in self.responses]
+
+    def combined_response_set_external(self):
+        return self._combine_responses(self.response_list_external())
+
+    def score_list(self):
+        return [resp.score() for resp in self.responses]
+
+    def score_list_remove_empty(self):
+        return list(filter(None, self.score_list()))
+
+    def average_score(self):
+        return self._compute_average(self.score_list())
+
+    def average_score_remove_empty(self):
+        return self._compute_average(self.score_list_remove_empty())
+
+    @staticmethod
+    def _compute_average(scores):
+        print(scores)
+        try:
+            return sum(scores) / len(scores)
+        except TypeError:
+            return None
+
     def __str__(self):
         return '{0} responses'.format(len(self.responses))
