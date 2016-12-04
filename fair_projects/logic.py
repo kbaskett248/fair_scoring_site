@@ -472,7 +472,6 @@ class FeedbackQuestion:
 
     @staticmethod
     def _compute_average(scores):
-        print(scores)
         try:
             return sum(scores) / len(scores)
         except TypeError:
