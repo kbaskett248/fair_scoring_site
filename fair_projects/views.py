@@ -1,6 +1,6 @@
 import functools
 import logging
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from django.contrib import messages
 from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin, UserPassesTestMixin
@@ -176,31 +176,6 @@ class ProjectDetail(DetailView):
         return context
 
 
-class StudentFeedbackForm(DetailView):
-    template_name = 'fair_projects/student_feedback.html'
-    model = Project
-    context_object_name = 'project'
-    queryset = Project.objects.select_related(
-        'category', 'subcategory', 'division')
-
-    def get_object(self, queryset=None):
-        if not queryset:
-            queryset = self.queryset
-
-        try:
-            return queryset.get(number=self.kwargs['project_number'])
-        except ObjectDoesNotExist:
-            raise Http404()
-
-    def get_context_data(self, **kwargs):
-        context = super(StudentFeedbackForm, self).get_context_data(**kwargs)
-        context['student'] = Student.objects.get(pk=self.kwargs['student_id'])
-        context['project'] = context['student'].project
-        context['questions'] = get_question_feedback_dict(context['project'])
-
-        return context
-
-
 class ResultsIndex(PermissionRequiredMixin, TemplateView):
     template_name = 'fair_projects/results.html'
     permission_required = 'fair_projects.can_view_results'
@@ -257,6 +232,7 @@ def notify_teachers(request):
 
 class SpecificUserRequiredMixin(AccessMixin):
     allow_superuser = False
+    allow_staff = False
 
     def get_required_user(self, *args, **kwargs):
         raise NotImplementedError(
@@ -271,6 +247,9 @@ class SpecificUserRequiredMixin(AccessMixin):
             return self.handle_no_permission()
 
         if self.allow_superuser and current_user.is_superuser:
+            return super(SpecificUserRequiredMixin, self).dispatch(request, *args, **kwargs)
+
+        if self.allow_staff and current_user.is_staff:
             return super(SpecificUserRequiredMixin, self).dispatch(request, *args, **kwargs)
 
         if current_user != required_user:
@@ -294,6 +273,7 @@ class JudgeIndex(UserPassesTestMixin, ListView):
 
 class JudgeDetail(SpecificUserRequiredMixin, ListView):
     allow_superuser = True
+    allow_staff = True
     template_name = 'fair_projects/judge_detail.html'
     context_object_name = 'judginginstance_list'
 
@@ -315,6 +295,7 @@ class JudgeDetail(SpecificUserRequiredMixin, ListView):
 
 class JudgingInstanceMixin(SpecificUserRequiredMixin):
     allow_superuser = True
+    allow_staff = True
     template_name = 'fair_projects/judging_instance_detail.html'
     pk_url_kwarg = 'judginginstance_key'
     model = JudgingInstance
@@ -392,6 +373,7 @@ class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
 
 class TeacherDetail(SpecificUserRequiredMixin, ListView):
     allow_superuser = True
+    allow_staff = True
     template_name = 'fair_projects/teacher_detail.html'
     context_object_name = 'project_list'
 
@@ -413,4 +395,65 @@ class TeacherDetail(SpecificUserRequiredMixin, ListView):
         if request_user.is_authenticated():
             if request_user.has_perm('fair_projects.add_project'):
                 context['allow_create'] = True
+        return context
+
+
+class StudentFeedbackForm(SpecificUserRequiredMixin, DetailView):
+    allow_staff = True
+    allow_superuser = True
+    template_name = 'fair_projects/student_feedback.html'
+    model = Project
+    context_object_name = 'project'
+    queryset = Project.objects.select_related(
+        'category', 'subcategory', 'division')
+
+    def get_required_user(self, *args, **kwargs):
+        student = get_object_or_404(Student, pk=kwargs['student_id'])
+        return student.teacher.user
+
+    def get_object(self, queryset=None):
+        if not queryset:
+            queryset = self.queryset
+
+        try:
+            return queryset.get(number=self.kwargs['project_number'])
+        except ObjectDoesNotExist:
+            raise Http404()
+
+    def get_context_data(self, **kwargs):
+        context = super(StudentFeedbackForm, self).get_context_data(**kwargs)
+        context['student'] = Student.objects.get(pk=self.kwargs['student_id'])
+        context['project'] = context['student'].project
+        context['questions'] = get_question_feedback_dict(context['project'])
+
+        return context
+
+
+class TeacherStudentsFeedbackForm(SpecificUserRequiredMixin, ListView):
+    allow_superuser = True
+    allow_staff = True
+    model = Student
+    template_name = 'fair_projects/student_feedback_multi.html'
+    context_object_name = 'student_list'
+
+    def get_required_user(self, *args, **kwargs):
+        return get_object_or_404(User, username=kwargs['username'])
+
+    def get_queryset(self):
+        self.teacher = get_object_or_404(Teacher, user__username=self.kwargs['username'])
+        return Student.objects.filter(teacher=self.teacher, project__isnull=False)\
+            .select_related('project')\
+            .order_by('last_name', 'first_name')
+
+    def get_context_data(self, **kwargs):
+        context = super(TeacherStudentsFeedbackForm, self).get_context_data(**kwargs)
+        context['teacher'] = self.teacher
+
+        Feedback = namedtuple('Feedback', ('student', 'project', 'questions'))
+        feedback_list = []
+        for student in context['student_list']:
+            feedback_list.append(
+                Feedback(student, student.project, get_question_feedback_dict(student.project)))
+        context['feedback_list'] = feedback_list
+
         return context

@@ -20,6 +20,9 @@
                 {% if perms.judges.is_judge and request.user.judge %}
                     <li><a href="{% url 'fair_projects:judge_detail' request.user.get_username %}">My Projects</a></li>
                 {% endif %}
+                {% if perms.fair_projects.is_teacher and request.user.teacher %}
+                    <li><a href="{% url 'fair_projects:teacher_detail' request.user.get_username %}">My Students</a></li>
+                {% endif %}
                 {% if perms.fair_projects.can_view_results %}
                     <li><a href="{% url 'fair_projects:project_results' %}">Results</a></li>
                 {% endif %}

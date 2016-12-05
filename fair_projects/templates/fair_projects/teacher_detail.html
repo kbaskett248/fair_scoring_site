@@ -11,10 +11,20 @@
 {% endblock %}
 
 {% block content %}
-{% if allow_create %}
-<a href="{% url 'fair_projects:project_create' %}" class="btn btn-primary">
-    Add Project
-</a>
-{% endif %}
+<div class="row">
+    <h2 class="col-xs-12 col-sm-6">
+        Student Projects <small>{{ project_list|length }}</small>
+    </h2>
+    <div class="col-xs-12 col-sm-6 text-right">
+        {% if allow_create %}
+        <a href="{% url 'fair_projects:project_create' %}" class="btn btn-primary">
+            Add Project
+        </a>
+        {% endif %}
+        <a href="{% url 'fair_projects:teacher_feedback' teacher.user.get_username %}" class="btn">
+            Student Feedback
+        </a>
+    </div>
+</div>
     {% include 'fair_projects/project_list.html' %}
 {% endblock %}

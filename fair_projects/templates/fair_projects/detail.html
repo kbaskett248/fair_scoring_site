@@ -26,7 +26,7 @@
                 {% for student in student_list %}
                 <li class="list-group-item">
                     {{ student.first_name }} {{ student.last_name }} - {{ student.teacher.school.name }}
-                    {% if perms.fair_projects.can_view_results %}
+                    {% if perms.fair_projects.can_view_results or student.teacher == request.user.teacher %}
                         <a href="{% url 'fair_projects:student_feedback_form' project.number student.pk %}">Feedback Form</a>
                     {% endif %}
                 </li>

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block html-title %}Science Fair Feedback{% endblock %}
+
+{% block title %}Science Fair Feedback and Final Exam{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li><a href="{% url 'fair_projects:index' %}">Projects</a></li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-break"></div>
+
+{% for student, project, questions in feedback_list %}
+
+    <div class="row">
+        <p class="col-xs-8 text-left" style="font-size: 120%;"><strong>{{ student.last_name}}, {{student.first_name }}</strong></p>
+        <p class="col-xs-4 text-right" style="font-size: 120%;"><strong>{{ student.teacher.user.last_name }}</strong></p>
+        <p class="col-xs-12 text-left" style="font-size: 120%;"><strong>{{ project.title }}</strong></p>
+    </div>
+
+    <h1>Science Fair Feedback and Final Exam</h1>
+
+    {% include 'fair_projects/student_feedback_common.HTML' %}
+
+    <div class="noprint" style="border-bottom: 1px solid;margin: 20px"></div>
+    <div class="page-break"></div>
+
+{% endfor %}
+
+{% endblock %}

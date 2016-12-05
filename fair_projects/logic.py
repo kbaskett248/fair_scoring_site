@@ -455,6 +455,9 @@ class FeedbackQuestion:
     def response_list_external(self):
         return [resp.response_external() for resp in self.responses]
 
+    def response_list_external_remove_empty(self):
+        return list(filter(None, self.response_list_external()))
+
     def combined_response_set_external(self):
         return self._combine_responses(self.response_list_external())
 
