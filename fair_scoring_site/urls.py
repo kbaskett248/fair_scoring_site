@@ -17,6 +17,7 @@ import django.contrib.admin
 from django.conf.urls import url, include
 
 from fair_projects.views import import_projects, judge_assignment, notify_teachers, delete_judge_assignments
+from . import admin  # This is needed to load the Awards admin
 from .views import *
 
 urlpatterns = [
