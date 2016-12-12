@@ -32,6 +32,9 @@ class Division(models.Model):
 
 
 class Category(models.Model):
+    class Meta:
+        verbose_name_plural = 'categories'
+
     active = models.BooleanField(
         help_text=('Inactivate the category instead of deleting it'),
         default=True
@@ -46,6 +49,9 @@ class Category(models.Model):
 
 
 class Subcategory(models.Model):
+    class Meta:
+        verbose_name_plural = 'subcategories'
+
     active = models.BooleanField(
         help_text=('Inactivate the subcategory instead of deleting it'),
         default=True
@@ -65,6 +71,9 @@ class Subcategory(models.Model):
 
 
 class Ethnicity(models.Model):
+    class Meta:
+        verbose_name_plural = 'ethnicities'
+
     active = models.BooleanField(
         help_text=('Inactivate the ethnicity instead of deleting it'),
         default=True
