@@ -85,7 +85,7 @@ class NotIn(Operator):
     def operate(cls, value1, value2) -> bool:
         if not value2:
             return True
-        value_2_list = str(value2).split(',')
+        value_2_list = value2.split(',')
         return str(value1) not in value_2_list
 
 
