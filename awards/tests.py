@@ -2,6 +2,7 @@ from collections import namedtuple
 
 from django.test import TestCase
 from hypothesis import assume
+from hypothesis import example
 from hypothesis import given
 from hypothesis.extra.django import TestCase as HypTestCase
 from hypothesis.searchstrategy import SearchStrategy
@@ -150,16 +151,20 @@ class AwardRuleTests(HypTestCase):
         self.generic_operator_test('IS_NOT', rule_value, rule_value, False)
         self.generic_operator_test('IS_NOT', str(instance_value), instance_value, False)
 
-    @given(sane_text(max_size=300, average_size=10), instance_values())
+    @given(sane_text(max_size=300, average_size=10, min_size=1), instance_values())
     def test_allow_instance_Greater_string(self, rule_value: str, instance_value):
-        try:
-            test_value = float(instance_value) > float(rule_value)
-        except ValueError:
-            test_value = str(instance_value) > rule_value
+        if isinstance(instance_value, bool):
+            test_value = instance_value > bool(rule_value)
+        else:
+            try:
+                test_value = float(instance_value) > float(rule_value)
+            except ValueError:
+                test_value = str(instance_value) > rule_value
 
         self.generic_operator_test('GREATER', rule_value, instance_value, test_value)
         self.generic_operator_test('GREATER', rule_value, rule_value, False)
-        self.generic_operator_test('GREATER', str(instance_value), instance_value, False)
+        if not isinstance(instance_value, bool):
+            self.generic_operator_test('GREATER', str(instance_value), instance_value, False)
 
     @given(numeric_strings(min_value=-40000, max_value=40000), floats(min_value=-40000, max_value=40000))
     def test_allow_instance_Greater_numeric(self, rule_value: str, instance_value: float):
@@ -168,16 +173,20 @@ class AwardRuleTests(HypTestCase):
         self.generic_operator_test('GREATER', str(instance_value), instance_value, False)
         self.generic_operator_test('GREATER', rule_value, '1' + rule_value, True)
 
-    @given(sane_text(max_size=300, average_size=10), instance_values())
+    @given(sane_text(max_size=300, average_size=10, min_size=1), instance_values())
     def test_allow_instance_Less_string(self, rule_value: str, instance_value):
-        try:
-            test_value = float(instance_value) < float(rule_value)
-        except ValueError:
-            test_value = str(instance_value) < rule_value
+        if isinstance(instance_value, bool):
+            test_value = instance_value < bool(rule_value)
+        else:
+            try:
+                test_value = float(instance_value) < float(rule_value)
+            except ValueError:
+                test_value = str(instance_value) < rule_value
 
         self.generic_operator_test('LESS', rule_value, instance_value, test_value)
         self.generic_operator_test('LESS', rule_value, rule_value, False)
-        self.generic_operator_test('LESS', str(instance_value), instance_value, False)
+        if not isinstance(instance_value, bool):
+            self.generic_operator_test('LESS', str(instance_value), instance_value, False)
 
     @given(numeric_strings(min_value=-40000, max_value=40000), floats(min_value=-40000, max_value=40000))
     def test_allow_instance_Less_numeric(self, rule_value: str, instance_value: float):
@@ -187,8 +196,12 @@ class AwardRuleTests(HypTestCase):
         self.generic_operator_test('LESS', '1' + rule_value, rule_value, True)
 
     @given(text_lists(max_size=50, average_size=10), instance_values())
+    @example([], "")
     def test_allow_instance_In(self, rule_value: list, instance_value):
-        assume([x for x in rule_value if x != ''])
+        assume(not (len(rule_value) == 1 and rule_value[0] == ''))
+        assume(',' not in str(instance_value))
+        assume(',' not in ''.join(rule_value))
+
         formatted_rule_value = ','.join(rule_value)
         self.generic_operator_test('IN', formatted_rule_value, instance_value, instance_value in rule_value)
 
@@ -201,7 +214,10 @@ class AwardRuleTests(HypTestCase):
 
     @given(text_lists(max_size=50, average_size=10), instance_values())
     def test_allow_instance_NotIn(self, rule_value: list, instance_value):
-        assume([x for x in rule_value if x != ''])
+        assume(not (len(rule_value) == 1 and rule_value[0] == ''))
+        assume(',' not in str(instance_value))
+        assume(',' not in ''.join(rule_value))
+
         formatted_rule_value = ','.join(rule_value)
         self.generic_operator_test('NOT_IN', formatted_rule_value, instance_value, instance_value not in rule_value)
 

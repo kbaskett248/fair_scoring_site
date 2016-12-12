@@ -10,19 +10,29 @@ class Award(models.Model):
     award_order = models.PositiveSmallIntegerField(blank=True, default=32767)
     award_count = models.PositiveIntegerField(default=1)
     percentage_count = models.BooleanField(default=False)
-    exclude_awards = models.ManyToManyField('self', symmetrical=True)
+    exclude_awards = models.ManyToManyField('self', symmetrical=True, blank=True)
 
     def __str__(self) -> str:
         return self.name
 
-    def assign(self, instances, award_attr='awards'):
+    def assign(self, instances):
+        matching_instances = [instance for instance in instances
+                              if self.instance_passes_all_rules(instance)]
+        print(matching_instances)
+        if not matching_instances:
+            return
+
         exclude_awards = set(self.exclude_awards.all())
-        for instance in instances:
-            if set(getattr(instance, award_attr, set())) & exclude_awards:
+        num_to_assign = self.get_number_to_assign(len(matching_instances))
+
+        for instance in matching_instances:
+            if set(instance.get_awards()) & exclude_awards:
                 continue
 
-            if self.instance_passes_all_rules(instance):
-                getattr(instance, award_attr).append(self)
+            instance.assign_award(self)
+            num_to_assign -= 1
+
+            if num_to_assign <= 0:
                 return
 
     def instance_passes_all_rules(self, instance):
@@ -32,13 +42,26 @@ class Award(models.Model):
 
         return True
 
+    def num_awards_str(self):
+        if self.percentage_count:
+            return '{0}%'.format(self.award_count)
+        else:
+            return str(self.award_count)
+    num_awards_str.short_description = 'Award Count'
+
+    def get_number_to_assign(self, num_instances):
+        if self.percentage_count:
+            return round(num_instances * self.award_count / 100)
+        else:
+            return self.award_count
+
 
 class Operator(ABC):
     internal = None
     display = None
 
     @abstractclassmethod
-    def operate(cls, value1, value2):
+    def operate(cls, value1, value2) -> bool:
         pass
 
 
@@ -47,10 +70,10 @@ class In(Operator):
     display = 'in'
 
     @classmethod
-    def operate(cls, value1, value2):
+    def operate(cls, value1, value2) -> bool:
         if not value2:
             return False
-        value_2_list = value2.split(',')
+        value_2_list = str(value2).split(',')
         return str(value1) in value_2_list
 
 
@@ -59,10 +82,10 @@ class NotIn(Operator):
     display = 'not in'
 
     @classmethod
-    def operate(cls, value1, value2):
+    def operate(cls, value1, value2) -> bool:
         if not value2:
             return True
-        value_2_list = value2.split(',')
+        value_2_list = str(value2).split(',')
         return str(value1) not in value_2_list
 
 
@@ -71,8 +94,8 @@ class Is(Operator):
     display = 'is'
 
     @classmethod
-    def operate(cls, value1, value2):
-        return value1 == value2
+    def operate(cls, value1, value2) -> bool:
+        return str(value1) == str(value2)
 
 
 class IsNot(Operator):
@@ -80,8 +103,8 @@ class IsNot(Operator):
     display = 'is not'
 
     @classmethod
-    def operate(cls, value1, value2):
-        return value1 != value2
+    def operate(cls, value1, value2) -> bool:
+        return str(value1) != str(value2)
 
 
 class Greater(Operator):
@@ -89,11 +112,13 @@ class Greater(Operator):
     display = 'is greater than'
 
     @classmethod
-    def operate(cls, value1, value2):
+    def operate(cls, value1, value2) -> bool:
+        if isinstance(value1, bool) or isinstance(value2, bool):
+            return bool(value1) > bool(value2)
         try:
             return float(value1) > float(value2)
         except ValueError:
-            return value1 > value2
+            return str(value1) > str(value2)
 
 
 class Less(Operator):
@@ -101,11 +126,13 @@ class Less(Operator):
     display = 'is less than'
 
     @classmethod
-    def operate(cls, value1, value2):
+    def operate(cls, value1, value2) -> bool:
+        if isinstance(value1, bool) or isinstance(value2, bool):
+            return bool(value1) < bool(value2)
         try:
             return float(value1) < float(value2)
         except ValueError:
-            return value1 < value2
+            return str(value1) < str(value2)
 
 
 class AwardRule(models.Model):
@@ -120,7 +147,8 @@ class AwardRule(models.Model):
     def __init__(self, *args, **kwargs):
         super(AwardRule, self).__init__(*args, **kwargs)
         self._operator = None
-        self.set_operator()
+        if self.operator_name:
+            self.set_operator()
 
     def __str__(self):
         return '{0} {1} {2}'.format(self.trait, self.operator.display, self.value)
@@ -148,7 +176,7 @@ class AwardRule(models.Model):
             raise ValueError('%s is not a valid operator. Must be one of %s' % (self.operator_name, self.OPERATORS))
 
     def allow_instance(self, instance) -> bool:
-        instance_value = str(getattr(instance, self.trait))
+        instance_value = getattr(instance, self.trait)
         return self.operator.operate(instance_value, self.value)
 
 
