@@ -22,7 +22,8 @@ class ProjectAdmin(admin.ModelAdmin):
     list_filter = ('category', 'division')
     ordering = ('number', 'title')
     inlines = (StudentInline, )
-
+    view_on_site = True
+    save_on_top = True
 
 
 class TeacherInline(admin.StackedInline):
