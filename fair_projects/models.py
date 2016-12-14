@@ -4,6 +4,7 @@ from django.core.management.color import Style
 from django.db import models
 from django.db import transaction
 from django.db.models import QuerySet
+from django.urls.base import reverse
 
 from fair_categories.models import Ethnicity, Category, Subcategory, Division
 from judges.models import Judge
@@ -265,6 +266,9 @@ class Project(models.Model):
 
     def num_scores(self) -> int:
         return len([ji for ji in self.judginginstance_set.all() if ji.has_response()])
+
+    def get_absolute_url(self):
+        return reverse('fair_projects:detail', args=(self.number, ))
 
 
 def create_project(title, abstract, category, subcategory, division, output_stream=None):
