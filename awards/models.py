@@ -1,5 +1,7 @@
 from abc import ABC, abstractclassmethod
 
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 
@@ -16,9 +18,10 @@ class Award(models.Model):
         return self.name
 
     def assign(self, instances):
+        self.delete_award_instances()
+
         matching_instances = [instance for instance in instances
                               if self.instance_passes_all_rules(instance)]
-        print(matching_instances)
         if not matching_instances:
             return
 
@@ -54,6 +57,9 @@ class Award(models.Model):
             return round(num_instances * self.award_count / 100)
         else:
             return self.award_count
+
+    def delete_award_instances(self):
+        self.awardinstance_set.delete()
 
 
 class Operator(ABC):
@@ -178,6 +184,21 @@ class AwardRule(models.Model):
     def allow_instance(self, instance) -> bool:
         instance_value = getattr(instance, self.trait)
         return self.operator.operate(instance_value, self.value)
+
+
+class AwardInstance(models.Model):
+    award = models.ForeignKey(Award, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.CharField(max_length=50)
+    content_object = GenericForeignKey()
+
+    def __str__(self):
+        return '{0} - {1}'.format(self.content_object, self.award)
+
+    def content_object_str(self):
+        return str(self.content_object)
+    content_object_str.short_description = 'Item'
+
 
 
 

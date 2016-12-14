@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import admin
 
-from awards.models import Award, AwardRule
+from awards.models import Award, AwardRule, AwardInstance
 
 
 def capitalize_first(string):
@@ -56,20 +56,19 @@ class AwardRuleInline(admin.TabularInline):
     verbose_name_plural = 'Rules'
 
 
-# @admin.register(Award)
+class AwardInstanceInline(admin.TabularInline):
+    model = AwardInstance
+    can_delete = True
+    exclude = ('content_type', 'object_id')
+    readonly_fields = ('content_object_str', )
+
+    def has_add_permission(self, request):
+        return False
+
+
 class AwardAdmin(admin.ModelAdmin):
     model = Award
-    inlines = (AwardRuleInline, )
+    inlines = (AwardRuleInline, AwardInstanceInline)
     list_display = ('name', 'award_order', 'num_awards_str')
     ordering = ('award_order', 'name')
-
-    @property
-    def assign_attr(self):
-        raise NotImplementedError('No value specified for assign_attr on class {0}'.format(
-            self.__class__.__name__))
-
-    @classmethod
-    def get_instances(cls):
-        raise NotImplementedError('No implementation for get_instances on class {0}'.format(
-            cls.__name__))
 
