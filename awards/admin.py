@@ -1,5 +1,7 @@
 from django import forms
 from django.contrib import admin
+from django.core.exceptions import FieldError
+from django.utils.translation import gettext as _
 
 from awards.models import Award, AwardRule, AwardInstance
 
@@ -66,9 +68,62 @@ class AwardInstanceInline(admin.TabularInline):
         return False
 
 
+@admin.register(Award)
 class AwardAdmin(admin.ModelAdmin):
     model = Award
     inlines = (AwardRuleInline, AwardInstanceInline)
     list_display = ('name', 'award_order', 'num_awards_str')
     ordering = ('award_order', 'name')
+    list_filter = ('awardrule__trait', )
 
+
+@admin.register(AwardInstance)
+class AwardInstanceAdmin(admin.ModelAdmin):
+    model = AwardInstance
+    fields = ('award', 'content_object')
+    readonly_fields = ('award', 'content_object')
+    list_display = ('award', 'content_object')
+    ordering = ('award', )
+    list_filter = ('award', 'award__awardrule__trait')
+
+    def has_add_permission(self, request):
+        return False
+
+
+class TraitListFilter(admin.SimpleListFilter):
+    # Human-readable title which will be displayed in the
+    # right admin sidebar just above the filter options.
+    title = _('rule trait')
+
+    # Parameter for the filter that will be used in the URL query.
+    parameter_name = 'trait'
+
+    award_rule_form_class = AwardRuleForm
+
+    def lookups(self, request, model_admin):
+        """
+        Returns a list of tuples. The first element in each
+        tuple is the coded value for the option that will
+        appear in the URL query. The second element is the
+        human-readable name for the option that will appear
+        in the right sidebar.
+        """
+        traits = self.award_rule_form_class.get_possible_traits()
+        if traits:
+            return filter(lambda x: x[0] is not None, traits)
+        else:
+            return []
+
+    def queryset(self, request, queryset):
+        """
+        Returns the filtered queryset based on the value
+        provided in the query string and retrievable via
+        `self.value()`.
+        """
+        # Compare the requested value (either '80s' or '90s')
+        # to decide how to filter the queryset.
+        if self.value():
+            try:
+                return queryset.filter(award__awardrule__trait=self.value())
+            except FieldError:
+                return queryset.filter(awardrule__trait=self.value())

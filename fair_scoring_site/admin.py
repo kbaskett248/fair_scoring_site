@@ -1,8 +1,11 @@
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.contenttypes.admin import GenericTabularInline
+from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
+from django.core.exceptions import ValidationError
 from django.urls.base import reverse
 from django.utils.html import format_html
+from django.utils.translation import gettext as _
 
 import awards.admin
 import fair_projects
@@ -10,6 +13,11 @@ from awards.logic import InstanceBase, assign_awards
 from awards.models import Award, AwardInstance
 from fair_projects.logic import get_projects_sorted_by_score
 from fair_projects.models import Project
+
+
+admin.site.unregister(Project)
+admin.site.unregister(Award)
+admin.site.unregister(AwardInstance)
 
 
 def assign_awards_to_projects(modeladmin, request, queryset):
@@ -74,26 +82,51 @@ class AwardInstanceInline(awards.admin.AwardInstanceInline):
         return reverse('fair_projects:detail', args=(instance.content_object.number, ))
 
 
+class TraitListFilter(awards.admin.TraitListFilter):
+    award_rule_form_class = AwardRuleForm
+
+
 @admin.register(Award)
 class AwardAdmin(awards.admin.AwardAdmin):
     actions = (assign_awards_to_projects, )
     inlines = (AwardRuleInline, AwardInstanceInline)
+    list_filter = (TraitListFilter, )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
 @admin.register(AwardInstance)
-class AwardInstanceAdmin(admin.ModelAdmin):
+class AwardInstanceAdmin(awards.admin.AwardInstanceAdmin):
+    list_filter = ('award', TraitListFilter)
+
+
+class ProjectAwardFormset(BaseGenericInlineFormSet):
     model = AwardInstance
-    list_display = ('award', 'content_object')
+
+    def clean(self):
+        super(ProjectAwardFormset, self).clean()
+
+        project_instance = ProjectInstance(self.instance)
+        for form in self.forms:
+            if not form.cleaned_data:
+                continue
+            elif form.cleaned_data['DELETE']:
+                continue
+            self.clean_award(project_instance, form.cleaned_data['award'])
+
+    def clean_award(self, instance, award):
+        if not award.instance_passes_all_rules(instance):
+            raise ValidationError(
+                _('%(award)s is not valid for this project'),
+                code='invalid award for project',
+                params={'award': award}
+            )
 
 
 class ProjectAwardInline(GenericTabularInline):
     model = AwardInstance
-
-
-admin.site.unregister(Project)
+    formset = ProjectAwardFormset
 
 
 @admin.register(Project)

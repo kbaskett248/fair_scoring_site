@@ -2,6 +2,7 @@ from abc import ABC, abstractclassmethod
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 
@@ -193,7 +194,10 @@ class AwardInstance(models.Model):
     content_object = GenericForeignKey()
 
     def __str__(self):
-        return '{0} - {1}'.format(self.content_object, self.award)
+        try:
+            return '{0} - {1}'.format(self.content_object, self.award)
+        except ObjectDoesNotExist:
+            return self.content_object_str()
 
     def content_object_str(self):
         return str(self.content_object)

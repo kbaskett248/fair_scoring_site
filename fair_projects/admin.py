@@ -12,6 +12,8 @@ from .models import School, Teacher, Student, Project
 
 class StudentInline(admin.StackedInline):
     model = Student
+    min_num = 1
+    extra = 1
 
 
 @admin.register(Project)
