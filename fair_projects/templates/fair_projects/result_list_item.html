@@ -15,7 +15,7 @@
         <!--{{ project.title }}-->
     <!--</strong></div>-->
     <div class="col-xs-4 col-sm-1 col-sm-push-2">{{ project.number }}</div>
-    <div class="col-xs-4 col-sm-1 col-sm-pull-1">{{ project.average_score }}</div>
+    <div class="col-xs-4 col-sm-1 col-sm-pull-1">{{ project.average_score|floatformat }}</div>
     <div class="col-xs-4 col-sm-1 col-sm-pull-1">{{ project.num_scores }}</div>
     <div class="row col-xs-12 col-sm-9 col-md-5">
         <div class="col-xs-12">
@@ -26,5 +26,12 @@
             <div class="col-xs-6 hidden-xs">{{ ji.judge }}</div>
             <div class="col-xs-2 hidden-xs">{{ ji.response.score }}</div>
         {% endfor %}
+    </div>
+    <div class="hidden-xs hidden-sm col-md-4">
+        <ul>
+        {% for award in project.awards %}
+            <li>{{ award }}</li>
+        {% endfor %}
+        </ul>
     </div>
 </a>

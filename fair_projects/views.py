@@ -17,6 +17,7 @@ from django.views.generic import DetailView, ListView
 from django.views.generic import TemplateView
 from django.views.generic.edit import UpdateView, CreateView, DeleteView
 
+from awards.models import Award
 from judges.models import Judge
 from rubrics.forms import rubric_form_factory
 from rubrics.models import Question
@@ -184,6 +185,8 @@ class ResultsIndex(PermissionRequiredMixin, TemplateView):
         context = super(ResultsIndex, self).get_context_data(**kwargs)
 
         context['project_list'] = get_projects_sorted_by_score()
+        for project in context['project_list']:
+            project.awards = Award.get_awards_for_object(project)
 
         return context
 
