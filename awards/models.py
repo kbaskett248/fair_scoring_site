@@ -39,12 +39,21 @@ class Award(models.Model):
             if num_to_assign <= 0:
                 return
 
+    def is_valid_for_instance(self, instance):
+        if self.exclude_from_instance(instance):
+            return self.instance_passes_all_rules(instance)
+        else:
+            return False
+
     def instance_passes_all_rules(self, instance):
         for rule in self.awardrule_set.all():
             if not rule.allow_instance(instance):
                 return False
 
         return True
+
+    def exclude_from_instance(self, instance):
+        return set(instance.get_awards()) & set(self.exclude_awards.all())
 
     def num_awards_str(self):
         if self.percentage_count:
@@ -60,7 +69,11 @@ class Award(models.Model):
             return self.award_count
 
     def delete_award_instances(self):
-        self.awardinstance_set.delete()
+        self.awardinstance_set.all().delete()
+
+    @classmethod
+    def get_awards_for_object(cls, object_):
+        return AwardInstance.get_awards_for_object(object_)
 
 
 class Operator(ABC):
@@ -203,6 +216,21 @@ class AwardInstance(models.Model):
         return str(self.content_object)
     content_object_str.short_description = 'Item'
 
+    @classmethod
+    def get_award_instance_queryset_for_object(cls, object_):
+        cont_type = ContentType.objects.get_for_model(object_)
+        return AwardInstance.objects \
+            .filter(content_type=cont_type, object_id=object_.pk) \
+            .select_related('award') \
+            .all()
 
+    @classmethod
+    def get_award_instances_for_object(cls, object_):
+        return list(cls.get_award_instance_queryset_for_object(object_))
+
+    @classmethod
+    def get_awards_for_object(cls, object_):
+        return [instance.award for instance in
+                cls.get_award_instance_queryset_for_object(object_)]
 
 

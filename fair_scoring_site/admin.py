@@ -43,6 +43,8 @@ class ProjectInstance(InstanceBase):
         self.division = self.project.division
         self.number = self.project.number
 
+        self.awards.extend(Award.get_awards_for_object(self.project))
+
     def __str__(self):
         return self.project.__str__()
 
@@ -120,6 +122,12 @@ class ProjectAwardFormset(BaseGenericInlineFormSet):
             raise ValidationError(
                 _('%(award)s is not valid for this project'),
                 code='invalid award for project',
+                params={'award': award}
+            )
+        elif award.exclude_from_instance(instance):
+            raise ValidationError(
+                _('Cannot assign %(award)s to this project due to excluded awards'),
+                code='excluded award for project',
                 params={'award': award}
             )
 
