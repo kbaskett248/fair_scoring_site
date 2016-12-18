@@ -3,15 +3,21 @@
 {% if rubric_form %}
     <form action="{{ post_url }}" method="post">
         {% csrf_token %}
-        <div class="panel panel-default">
+        <div class="panel {% if rubric_form.errors %}panel-danger{% else %}panel-default{% endif %}">
             <!-- Default panel contents -->
-            <div class="panel-heading">
-                <h3 class="panel-title">{{ rubric_form.title }}</h3>
+            <div class="panel-heading clearfix">
+                <div style="float:left">
+                    <h3 class="panel-title">{{ rubric_form.title }}</h3>
+                    {% if rubric_form.errors %}
+                    Submission not saved. Correct the errors below.
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary" style="float:right">{% trans "Submit" %}</button>
             </div>
 
             <div class="list-group">
                 {% for field in rubric_form %}
-                    <div class="list-group-item">
+                    <div class="list-group-item {% if field.errors %}has-error{% endif %}">
                         {% include field.field.template %}
                     </div>
                 {% endfor %}
