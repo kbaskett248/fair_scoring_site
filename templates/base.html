@@ -4,7 +4,10 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block html-title %}{{ title_string | default:"Science Fair" }}{% endblock %}</title>
+    <title>
+        {% block html-title %}{{ config.FAIR_NAME | default:"Science Fair" }}{% endblock %}
+        - {{ config.FAIR_ABBR }}
+    </title>
     {% load bootstrap3 static %}
     {% bootstrap_css %}
     {% bootstrap_javascript %}
@@ -17,7 +20,7 @@
             <div class="page-header">
                 {% include "navbar.html" %}
 
-                <h1>{% block title %}{{ title_string | default:"Science Fair" }}{% endblock %}</h1>
+                <h1>{% block title %}{{ config.FAIR_NAME | default:"Science Fair" }}{% endblock %}</h1>
 
                 {% block breadcrumbs %}
                     {% if breadcrumbs %}
