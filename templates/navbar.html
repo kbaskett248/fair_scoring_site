@@ -9,7 +9,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="#">RRSEF 2016</a>
+            <a class="navbar-brand" href="{% url 'fair_projects:index' %}">{{ config.FAIR_ABBR | default:"Fair" }}</a>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
