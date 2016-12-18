@@ -5,6 +5,7 @@ from itertools import product, filterfalse, groupby
 from operator import ior
 from typing import Generator
 
+from constance import config
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
 from django.core.mail import get_connection
@@ -204,11 +205,11 @@ def assign_new_projects(rubric):
 
 
 def get_minimum_judges_per_project():
-    return 3
+    return config.JUDGES_PER_PROJECT
 
 
 def get_minimum_projects_per_judge():
-    return 2
+    return config.PROJECTS_PER_JUDGE
 
 
 def balance_judges(rubric):
