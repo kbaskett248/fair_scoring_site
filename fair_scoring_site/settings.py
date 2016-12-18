@@ -65,6 +65,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bootstrap3',
+    'constance',
+    'constance.backends.database',
     'widget_tweaks'
 ]
 
@@ -88,6 +90,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'constance.context_processors.config',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -164,9 +167,23 @@ BOOTSTRAP3 = {
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'app-messages') # change this to a proper location
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'app-messages')
+
+CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
+CONSTANCE_CONFIG = {
+    'FAIR_NAME': ('Science Fair', 'The name of the science fair'),
+    'FAIR_ABBR': ('SF', 'Abbreviation for the name of the science fair'),
+    'JUDGES_PER_PROJECT': (3, 'The number of judges that should be assigned to judge each project'),
+    'PROJECTS_PER_JUDGE': (5, 'The minimum number of projects that should be assigned to each judge'),
+    'JUDGING_ACTIVE': (False, 'Check this box during judging')
+}
+CONSTANCE_CONFIG_FIELDSETS = {
+    'Fair Name': ('FAIR_NAME', 'FAIR_ABBR'),
+    'Judging': ('JUDGES_PER_PROJECT', 'PROJECTS_PER_JUDGE', 'JUDGING_ACTIVE')
+}
+CONSTANCE_DATABASE_PREFIX = 'constance:fair_scoring_site:'
 
 settings.register_profile("ci", settings(max_examples=1000))
-settings.register_profile("dev", settings(max_examples=10))
+settings.register_profile("dev", settings(max_examples=20))
 settings.register_profile("debug", settings(max_examples=10, verbosity=Verbosity.verbose))
 settings.load_profile('dev')
