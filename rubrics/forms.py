@@ -47,7 +47,6 @@ class RubricForm(forms.Form):
         super(RubricForm, self).__init__(**kwargs)
         self.instance = instance
         d = self.__dict__
-        # raise Exception
 
     def save(self, commit=True):
         updated_data = {int(key.replace('question_','')): self.cleaned_data[key]

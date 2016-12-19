@@ -9,10 +9,13 @@
                 <div style="float:left">
                     <h3 class="panel-title">{{ rubric_form.title }}</h3>
                     {% if rubric_form.errors %}
+                    <span class="glyphicon glyphicon-exclamation-sign"></span>
                     Submission not saved. Correct the errors below.
                     {% endif %}
                 </div>
-                <button type="submit" class="btn btn-primary" style="float:right">{% trans "Submit" %}</button>
+                <button type="submit" class="btn btn-primary" style="float:right">
+                    {% trans "Submit" %}
+                </button>
             </div>
 
             <div class="list-group">
