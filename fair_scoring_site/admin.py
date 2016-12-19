@@ -101,6 +101,22 @@ class AwardAdmin(awards.admin.AwardAdmin):
 @admin.register(AwardInstance)
 class AwardInstanceAdmin(awards.admin.AwardInstanceAdmin):
     list_filter = ('award', TraitListFilter)
+    list_display = ('award', 'project', 'students', 'category', 'division')
+    fields = ('award', 'project', 'students', 'category', 'division')
+    readonly_fields = ('award', 'project', 'students', 'category', 'division')
+
+    def project(self, instance):
+        return instance.content_object
+
+    def students(self, instance):
+        return ', '.join(str(student) for student in
+                         instance.content_object.student_set.all())
+
+    def category(self, instance):
+        return instance.content_object.category
+
+    def division(self, instance):
+        return instance.content_object.division
 
 
 class ProjectAwardFormset(BaseGenericInlineFormSet):
