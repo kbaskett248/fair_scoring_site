@@ -61,7 +61,7 @@ class AwardRuleInline(awards.admin.AwardRuleInline):
 
 
 class AwardInstanceInline(awards.admin.AwardInstanceInline):
-    readonly_fields = ('project_number', 'project_title', 'project_students')
+    readonly_fields = ('project_number', 'project_title', 'project_students', 'project_category', 'project_division')
 
     def admin_link(self, instance, text):
         return format_html(
@@ -79,6 +79,12 @@ class AwardInstanceInline(awards.admin.AwardInstanceInline):
     def project_students(self, instance):
         return ', '.join(str(student) for student in
                          instance.content_object.student_set.all())
+
+    def project_category(self, instance):
+        return instance.content_object.category
+
+    def project_division(self, instance):
+        return instance.content_object.division
 
     def view_on_site(self, instance):
         return reverse('fair_projects:detail', args=(instance.content_object.number, ))
