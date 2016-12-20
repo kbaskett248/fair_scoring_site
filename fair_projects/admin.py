@@ -1,12 +1,17 @@
 import django.contrib.auth.admin
+from django import forms
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
+from django.db import transaction
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from fair_projects.logic import mass_email
+from fair_projects.models import JudgingInstance
+from fair_scoring_site.logic import get_judging_rubric
+from rubrics.models import RubricResponse
 from .models import School, Teacher, Student, Project
 
 
@@ -16,6 +21,31 @@ class StudentInline(admin.StackedInline):
     extra = 1
 
 
+class JudgingInstanceForm(forms.ModelForm):
+    class Meta:
+        model = JudgingInstance
+        fields = ('judge', )
+
+    @transaction.atomic()
+    def save(self, commit=True):
+        instance = super(JudgingInstanceForm, self).save(commit=False)
+        response = RubricResponse.objects.create(rubric=get_judging_rubric())
+        instance.response = response
+        if commit:
+            instance.save()
+        return instance
+
+
+class JudgingInstanceInline(admin.TabularInline):
+    model = JudgingInstance
+    form = JudgingInstanceForm
+    fields = ('judge', 'rubric')
+    readonly_fields = ('rubric', )
+
+    def rubric(self, instance):
+        return instance.response.rubric
+
+
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     model = Project
@@ -23,7 +53,7 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display_links = ('number', 'title')
     list_filter = ('category', 'division')
     ordering = ('number', 'title')
-    inlines = (StudentInline, )
+    inlines = (StudentInline, JudgingInstanceInline)
     view_on_site = True
     save_on_top = True
 

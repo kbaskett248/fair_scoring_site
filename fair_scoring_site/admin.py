@@ -161,4 +161,6 @@ class ProjectAwardInline(GenericTabularInline):
 
 @admin.register(Project)
 class ProjectAdmin(fair_projects.admin.ProjectAdmin):
-    inlines = (fair_projects.admin.StudentInline, ProjectAwardInline)
+    inlines = (fair_projects.admin.StudentInline,
+               fair_projects.admin.JudgingInstanceInline,
+               ProjectAwardInline)
