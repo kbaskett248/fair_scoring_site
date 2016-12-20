@@ -175,11 +175,12 @@ CONSTANCE_CONFIG = {
     'FAIR_ABBR': ('SF', 'Abbreviation for the name of the science fair'),
     'JUDGES_PER_PROJECT': (3, 'The number of judges that should be assigned to judge each project'),
     'PROJECTS_PER_JUDGE': (5, 'The minimum number of projects that should be assigned to each judge'),
-    'JUDGING_ACTIVE': (False, 'Check this box during judging')
+    'JUDGING_ACTIVE': (False, 'Check this box during judging'),
+    'RUBRIC_NAME': ('Judging Form', 'The name of the rubric judges will use to assess projects')
 }
 CONSTANCE_CONFIG_FIELDSETS = {
     'Fair Name': ('FAIR_NAME', 'FAIR_ABBR'),
-    'Judging': ('JUDGES_PER_PROJECT', 'PROJECTS_PER_JUDGE', 'JUDGING_ACTIVE')
+    'Judging': ('JUDGES_PER_PROJECT', 'PROJECTS_PER_JUDGE', 'JUDGING_ACTIVE', 'RUBRIC_NAME')
 }
 CONSTANCE_DATABASE_PREFIX = 'constance:fair_scoring_site:'
 

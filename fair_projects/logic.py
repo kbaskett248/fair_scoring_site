@@ -16,6 +16,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from fair_categories.models import Category, Division, Subcategory, Ethnicity
+from fair_scoring_site.logic import get_judging_rubric
 from judges.models import Judge
 from rubrics.models import Rubric, QuestionResponse
 from .models import Project, JudgingInstance, create_student, create_project, Teacher
@@ -168,7 +169,7 @@ def assign_judges():
     #             judges that have fewer than the number computed above.
     #          2. Remove the project from the first judge and assign it to the new judge.
 
-    rubric = Rubric.objects.get(name='Judging Form')
+    rubric = get_judging_rubric()
     assign_new_projects(rubric)
     balance_judges(rubric)
 
