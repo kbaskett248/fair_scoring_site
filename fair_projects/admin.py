@@ -39,8 +39,8 @@ class JudgingInstanceForm(forms.ModelForm):
 class JudgingInstanceInline(admin.TabularInline):
     model = JudgingInstance
     form = JudgingInstanceForm
-    fields = ('judge', 'rubric')
-    readonly_fields = ('rubric', )
+    fields = ('judge', 'rubric', 'score')
+    readonly_fields = ('rubric', 'score')
 
     def rubric(self, instance):
         return instance.response.rubric

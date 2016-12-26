@@ -7,7 +7,7 @@ from django.urls.base import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from import_export import resources, fields
-from import_export.admin import ExportMixin
+from import_export.admin import ExportMixin, ImportExportMixin
 
 import awards.admin
 import fair_projects
@@ -77,6 +77,14 @@ class AwardInstanceResource(resources.ModelResource):
 
     def dehydrate_division(self, instance):
         return instance.content_object.division
+
+
+class ProjectResource(resources.ModelResource):
+    class Meta:
+        model = Project
+        fields = ('number', 'title', 'category__short_description', 'subcategory__short_description', 'division__short_description')
+        export_order = ('number', 'title', 'category__short_description', 'subcategory__short_description', 'division__short_description')
+        import_id_fields = ('title', )
 
 
 class AwardRuleForm(awards.admin.AwardRuleForm):
@@ -190,7 +198,9 @@ class ProjectAwardInline(GenericTabularInline):
 
 
 @admin.register(Project)
-class ProjectAdmin(fair_projects.admin.ProjectAdmin):
+class ProjectAdmin(ImportExportMixin, fair_projects.admin.ProjectAdmin):
     inlines = (fair_projects.admin.StudentInline,
                fair_projects.admin.JudgingInstanceInline,
                ProjectAwardInline)
+
+    resource_class = ProjectResource
