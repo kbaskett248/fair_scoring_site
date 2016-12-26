@@ -6,6 +6,8 @@ from django.core.exceptions import ValidationError
 from django.urls.base import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
+from import_export import resources, fields
+from import_export.admin import ExportMixin
 
 import awards.admin
 import fair_projects
@@ -49,6 +51,34 @@ class ProjectInstance(InstanceBase):
         return self.project.__str__()
 
 
+class AwardInstanceResource(resources.ModelResource):
+    award = fields.Field()
+    project = fields.Field()
+    students = fields.Field()
+    category = fields.Field()
+    division = fields.Field()
+
+    class Meta:
+        model = AwardInstance
+        fields = ('award', 'project', 'students', 'category', 'division')
+        export_order = ('award', 'project', 'students', 'category', 'division')
+
+    def dehydrate_award(self, instance):
+        return instance.award.name
+
+    def dehydrate_project(self, instance):
+        return instance.content_object.title
+
+    def dehydrate_students(self, instance):
+        return instance.content_object.student_str()
+
+    def dehydrate_category(self, instance):
+        return instance.content_object.category
+
+    def dehydrate_division(self, instance):
+        return instance.content_object.division
+
+
 class AwardRuleForm(awards.admin.AwardRuleForm):
     traits = ('category',
               'subcategory',
@@ -77,8 +107,7 @@ class AwardInstanceInline(awards.admin.AwardInstanceInline):
         return self.admin_link(instance, instance.content_object.number)
 
     def project_students(self, instance):
-        return ', '.join(str(student) for student in
-                         instance.content_object.student_set.all())
+        return instance.content_object.student_str()
 
     def project_category(self, instance):
         return instance.content_object.category
@@ -105,18 +134,19 @@ class AwardAdmin(awards.admin.AwardAdmin):
 
 
 @admin.register(AwardInstance)
-class AwardInstanceAdmin(awards.admin.AwardInstanceAdmin):
+class AwardInstanceAdmin(ExportMixin, awards.admin.AwardInstanceAdmin):
     list_filter = ('award', TraitListFilter)
     list_display = ('award', 'project', 'students', 'category', 'division')
     fields = ('award', 'project', 'students', 'category', 'division')
     readonly_fields = ('award', 'project', 'students', 'category', 'division')
 
+    resource_class = AwardInstanceResource
+
     def project(self, instance):
         return instance.content_object
 
     def students(self, instance):
-        return ', '.join(str(student) for student in
-                         instance.content_object.student_set.all())
+        return instance.content_object.student_str()
 
     def category(self, instance):
         return instance.content_object.category
