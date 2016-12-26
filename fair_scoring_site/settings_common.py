@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'bootstrap3',
     'constance',
     'constance.backends.database',
+    'import_export',
     'widget_tweaks'
 ]
 
