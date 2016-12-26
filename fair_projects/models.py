@@ -270,6 +270,9 @@ class Project(models.Model):
     def get_absolute_url(self):
         return reverse('fair_projects:detail', args=(self.number, ))
 
+    def student_str(self):
+        return ', '.join(str(student) for student in self.student_set.all())
+
 
 def create_project(title, abstract, category, subcategory, division, output_stream=None):
     def write_output(message):
