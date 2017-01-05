@@ -3,10 +3,11 @@ import types
 import functools
 
 from functools import singledispatch, reduce
-from itertools import groupby
+from itertools import groupby, permutations, product
 
 from django.contrib import admin
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
 from django.core.exceptions import ValidationError
@@ -22,7 +23,7 @@ import awards.admin
 import fair_projects
 from awards.logic import InstanceBase, assign_awards
 from awards.models import Award, AwardInstance
-from fair_categories.models import Category, Subcategory, Division
+from fair_categories.models import Category, Subcategory, Division, Ethnicity
 from fair_projects.logic import get_projects_sorted_by_score
 from fair_projects.models import Project, Student
 
@@ -39,6 +40,7 @@ def assign_awards_to_projects(modeladmin, request, queryset):
             messages.add_message(request, messages.INFO,
                                  'Assigned {0} to {1}'.format(instance.awards_str, instance.project))
     messages.add_message(request, messages.INFO, 'Awards assigned')
+
 
 assign_awards_to_projects.short_description = 'Assign selected awards to projects'
 
@@ -91,18 +93,72 @@ class AwardInstanceResource(resources.ModelResource):
 def convert_field_name_to_column_name(field_name: str) -> str:
     return field_name.replace("_", " ").title()
 
+
 @singledispatch
 def tuplify(_object):
     return _object, _object
+
 
 @tuplify.register(tuple)
 def _(_object):
     return _object
 
+
 @tuplify.register(list)
 @tuplify.register(set)
 def _(_object):
     return tuple(_object)
+
+
+class StudentResource(resources.ModelResource):
+    class Meta:
+        model = Student
+        fields = ('number', 'title', 'category', 'subcategory', 'division',
+                  'first_name', 'last_name', 'gender', 'ethnicity', 'grade_level', 'teacher', 'email')
+        export_order = fields
+        import_id_fields = ('first_name', 'last_name')
+
+    number = fields.Field(attribute='project', column_name='Number',
+                          widget=ForeignKeyWidget(Project, 'number'))
+
+    title = fields.Field(attribute='project', column_name='Title',
+                         widget=ForeignKeyWidget(Project, 'title'))
+
+    category = fields.Field(attribute='project__category', column_name='Category',
+                            widget=ForeignKeyWidget(Category, 'short_description'))
+
+    subcategory = fields.Field(attribute='project__subcategory', column_name='Subcategory',
+                               widget=ForeignKeyWidget(Subcategory, 'short_description'))
+
+    division = fields.Field(attribute='project__division', column_name='Division',
+                            widget=ForeignKeyWidget(Division, 'short_description'))
+
+    first_name = fields.Field(attribute='first_name', column_name='Student First Name')
+    last_name = fields.Field(attribute='last_name', column_name='Student Last Name')
+    gender = fields.Field(attribute='gender', column_name='Student Gender')
+    grade_level = fields.Field(attribute='grade_level', column_name='Student Grade Level')
+    email = fields.Field(attribute='email', column_name='Student Email')
+    ethnicity = fields.Field(attribute='ethnicity', column_name='Ethnicity',
+                             widget=ForeignKeyWidget(Ethnicity, 'short_description'))
+    teacher = fields.Field(attribute='teacher__user', column_name='Teacher',
+                           widget=ForeignKeyWidget(User, 'last_name'))
+
+    def export(self, queryset=None, *args, **kwargs):
+        if queryset:
+            project_keys = [values['pk'] for values in queryset.values('pk')]
+            queryset = Student.objects.filter(project__in=project_keys)
+        else:
+            queryset = Student.objects.all()
+
+        queryset = queryset.select_related('project', 'ethnicity').order_by('project__number')
+
+        return super(StudentResource, self).export(queryset, *args, **kwargs)
+
+    def before_import_row(self, row, **kwargs):
+        pass
+
+    def after_import_row(self, row, row_result, **kwargs):
+        pass
 
 
 class ProjectResource(resources.ModelResource):
@@ -119,15 +175,17 @@ class ProjectResource(resources.ModelResource):
     division = fields.Field(attribute='division',
                             column_name='division',
                             widget=ForeignKeyWidget(Division, 'short_description'))
+
     class Meta:
         model = Project
         fields = ('number', 'title', 'category', 'subcategory', 'division')
         export_order = ('number', 'title', 'category', 'subcategory', 'division')
-        import_id_fields = ('title', )
+        import_id_fields = ('title', 'number')
 
     def __init__(self):
         super(ProjectResource, self).__init__()
         self.student_values = []
+        self.create_student_fields(4)
 
     @classmethod
     def get_student_attribute_names(cls):
@@ -140,13 +198,15 @@ class ProjectResource(resources.ModelResource):
     def before_export(self, queryset: QuerySet, *args, **kwargs):
         self.student_values = self.compile_student_values(Student.objects.all())
         max_num_students = reduce(lambda x, y: max(x, len(y)), self.student_values.values(), 0)
-        self.create_student_fields(max_num_students)
+        # self.create_student_fields(max_num_students)
+        self.create_dehydrate_methods(max_num_students)
+        pass
 
     def compile_student_values(self, queryset):
         value_list = ['project__pk']
         value_list.extend(self.get_student_attribute_names())
-        return {k: tuple(g) for k, g in  groupby(queryset.order_by('project__pk').values(*value_list),
-                                                 lambda x: x['project__pk'])}
+        return {k: tuple(g) for k, g in groupby(queryset.order_by('project__pk').values(*value_list),
+                                                lambda x: x['project__pk'])}
 
     def create_student_fields(self, number):
         for index in range(1, number + 1):
@@ -160,17 +220,36 @@ class ProjectResource(resources.ModelResource):
                                                widget=CharWidget(),
                                                default=None)
 
+    def create_dehydrate_methods(self, number):
+        for index, field_tuple in product(range(1, number + 1), self.iterate_student_tuples()):
+            self.add_dehydrate_method(index, *field_tuple)
+
+    def add_dehydrate_method(self, index, field, attribute):
+        field_name = 's%s_%s' % (index, field)
+
         def dehydrate_student_value(self, instance):
             project_data = self.student_values[instance.pk]
             try:
-                return project_data[index-1][attribute]
+                return project_data[index - 1][attribute]
             except IndexError:
                 return ''
 
         setattr(self, 'dehydrate_%s' % field_name, functools.partial(dehydrate_student_value, self))
 
+    def before_import(self, dataset, using_transactions, dry_run, **kwargs):
+        pass
+
     def before_import_row(self, row, **kwargs):
         super(ProjectResource, self).before_import_row(row, **kwargs)
+        pass
+
+    def after_import_row(self, row, row_result, **kwargs):
+        pass
+
+    def after_import_instance(self, instance, new, **kwargs):
+        pass
+
+    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
         pass
 
 
@@ -211,7 +290,7 @@ class AwardInstanceInline(awards.admin.AwardInstanceInline):
         return instance.content_object.division
 
     def view_on_site(self, instance):
-        return reverse('fair_projects:detail', args=(instance.content_object.number, ))
+        return reverse('fair_projects:detail', args=(instance.content_object.number,))
 
 
 class TraitListFilter(awards.admin.TraitListFilter):
@@ -220,9 +299,9 @@ class TraitListFilter(awards.admin.TraitListFilter):
 
 @admin.register(Award)
 class AwardAdmin(awards.admin.AwardAdmin):
-    actions = (assign_awards_to_projects, )
+    actions = (assign_awards_to_projects,)
     inlines = (AwardRuleInline, AwardInstanceInline)
-    list_filter = (TraitListFilter, )
+    list_filter = (TraitListFilter,)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -290,4 +369,4 @@ class ProjectAdmin(ImportExportMixin, fair_projects.admin.ProjectAdmin):
                fair_projects.admin.JudgingInstanceInline,
                ProjectAwardInline)
 
-    resource_class = ProjectResource
+    resource_class = StudentResource
