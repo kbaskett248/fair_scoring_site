@@ -21,7 +21,7 @@ from . import admin  # This is needed to load the Awards admin
 from .views import *
 
 urlpatterns = [
-    url(r'^admin/fair_projects/project/import', import_projects, name='import_projects'),
+    # url(r'^admin/fair_projects/project/import', import_projects, name='import_projects'),
     url(r'^admin/fair_projects/project/assign', judge_assignment, name='assign_projects'),
     url(r'^admin/fair_projects/project/delete', delete_judge_assignments, name='delete_instances'),
     url(r'^admin/auth/user/teacher-notify', notify_teachers, name='teacher_notify'),
