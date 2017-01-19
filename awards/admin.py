@@ -6,8 +6,8 @@ from django.utils.translation import gettext as _
 from awards.models import Award, AwardRule, AwardInstance
 
 
-def capitalize_first(string):
-    return string[0].upper() + string[1:]
+def format_external_name(string: str):
+    return string.replace("_", " ").title()
 
 
 def build_trait_list(traits):
@@ -17,7 +17,7 @@ def build_trait_list(traits):
         try:
             internal, external = t
         except ValueError:
-            internal, external = t, capitalize_first(t)
+            internal, external = t, format_external_name(t)
         finally:
             if internal is None:
                 insert_none = False

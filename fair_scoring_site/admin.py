@@ -42,18 +42,23 @@ class ProjectInstance(InstanceBase):
         self.subcategory = self.project.subcategory
         self.division = self.project.division
         self.number = self.project.number
+        self.grade_level = self.calculate_grade_level()
 
         self.awards.extend(Award.get_awards_for_object(self.project))
 
     def __str__(self):
         return self.project.__str__()
 
+    def calculate_grade_level(self):
+        return max((student.grade_level for student in self.project.student_set.all()), default=None)
+
 
 class AwardRuleForm(awards.admin.AwardRuleForm):
     traits = ('category',
               'subcategory',
               'division',
-              'number')
+              'number',
+              'grade_level')
 
 
 class AwardRuleInline(awards.admin.AwardRuleInline):
