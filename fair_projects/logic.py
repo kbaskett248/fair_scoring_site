@@ -22,6 +22,9 @@ from rubrics.models import Rubric, QuestionResponse
 from .models import Project, JudgingInstance, create_student, create_project, Teacher
 
 
+def get_rubric_name():
+    return config.RUBRIC_NAME
+
 class StudentData:
     def __init__(self, **kwargs):
         self.row_data = kwargs

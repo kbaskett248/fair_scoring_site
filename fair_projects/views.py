@@ -18,6 +18,7 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import UpdateView, CreateView, DeleteView
 
 from awards.models import Award
+from fair_projects.logic import get_rubric_name
 from judges.models import Judge
 from rubrics.forms import rubric_form_factory
 from rubrics.models import Question
@@ -286,7 +287,7 @@ class JudgeDetail(SpecificUserRequiredMixin, ListView):
     def get_queryset(self):
         self.judge = get_object_or_404(Judge, user__username=self.kwargs['judge_username'])
         return JudgingInstance.objects.filter(judge=self.judge,
-                                              response__rubric__name="Judging Form") \
+                                              response__rubric__name=get_rubric_name()) \
             .order_by('project__number') \
             .select_related('project', 'project__category', 'project__division')
 
