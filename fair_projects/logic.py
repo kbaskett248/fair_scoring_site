@@ -173,19 +173,25 @@ def assign_judges():
     #          2. Remove the project from the first judge and assign it to the new judge.
 
     rubric = get_judging_rubric()
-    assign_new_projects(rubric)
-    balance_judges(rubric)
+    delete_instances_for_inactive_judges(rubric)
+    judge_queryset = Judge.objects.filter(user__is_active=True)
+    assign_new_projects(rubric, judge_queryset)
+    balance_judges(rubric, judge_queryset)
 
 
 def create_judging_instance(judge, project, rubric):
     return JudgingInstance.objects.create(judge=judge, project=project, rubric=rubric)
 
 
-def assign_new_projects(rubric):
+def delete_instances_for_inactive_judges(rubric):
+    JudgingInstance.objects.filter(judge__user__is_active=False, response__rubric=rubric).delete()
+
+
+def assign_new_projects(rubric, judge_set):
     project_set = Project.objects.annotate(num_judges=Count('judginginstance')) \
         .order_by('num_judges')
 
-    judge_set = Judge.objects.annotate(num_projects=Count('judginginstance'),
+    judge_set = judge_set.annotate(num_projects=Count('judginginstance'),
                                        num_categories=Count('categories'),
                                        num_divisions=Count('divisions')) \
         .order_by('num_projects', 'num_categories', 'num_divisions')
@@ -216,17 +222,17 @@ def get_minimum_projects_per_judge():
     return config.PROJECTS_PER_JUDGE
 
 
-def balance_judges(rubric):
-    quotients = build_quotient_array()
+def balance_judges(rubric, judge_queryset):
+    quotients = build_quotient_array(judge_queryset)
 
-    judge_set = Judge.objects.annotate(num_projects=Count('judginginstance', distinct=True))
+    judge_set = judge_queryset.annotate(num_projects=Count('judginginstance', distinct=True))
     lower_bound = get_project_balancing_lower_bound(judge_set)
 
     for judge in judge_set.filter(num_projects__gt=lower_bound).order_by('-num_projects'):
         balance_judge(judge, rubric, judge_set.filter(num_projects__lt=lower_bound).order_by('num_projects'), lower_bound, quotients)
 
 
-def build_quotient_array():
+def build_quotient_array(judge_queryset):
     class Quotient(object):
         def __init__(self, num_projects, num_judges):
             self.num_projects = num_projects
@@ -247,7 +253,7 @@ def build_quotient_array():
     proj_counts = {(d['category'], d['division']): d['count'] for d in
                    Project.objects.values('category', 'division').annotate(count=Count('category'))}
     judge_counts = {(d['categories'], d['divisions']): d['count'] for d in
-                    Judge.objects.values('categories', 'divisions').annotate(count=Count('categories'))}
+                    judge_queryset.values('categories', 'divisions').annotate(count=Count('categories'))}
 
     quotient_array = defaultdict(dict)
     for cat, div in product(Category.objects.all(), Division.objects.all()):
