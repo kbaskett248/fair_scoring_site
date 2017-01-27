@@ -402,7 +402,7 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
                 value += float(x)
             except ValueError:
                 continue
-        return value * float(self.question.weight)
+        return value * weight
 
 
 class LongTextQuestionType(QuestionType):
