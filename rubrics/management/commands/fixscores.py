@@ -17,6 +17,8 @@ def fix_scores():
 
     for question_response in qr_queryset.all():
         from_ = question_response.choice_response
+        if from_ is None:
+            continue
         to_ = scale_type_dict[question_response.choice_response]
         print("changing response from %s to %s" % (from_, to_))
         question_response.choice_response = scale_type_dict[question_response.choice_response]
