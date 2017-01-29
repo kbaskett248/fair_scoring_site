@@ -1,5 +1,7 @@
+from contextlib import contextmanager
 from datetime import datetime
 
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from hypothesis import given
 from hypothesis.extra.django import TestCase as HypTestCase
@@ -128,6 +130,84 @@ class QuestionTests(HypTestCase):
         else:
             with self.assertRaises(AttributeError):
                 add_questions()
+
+
+class ChoiceTests(HypTestCase):
+    @contextmanager
+    def assertNoException(self, exception_type):
+        try:
+            yield
+        except exception_type:
+            self.fail('%s exception type raised' % exception_type)
+
+    def setUp(self):
+        self.question = mommy.make(Question)  # type: Question
+
+    def choice_test_with_positive_weight(self, key):
+        self.question.weight = 1.000
+        kwargs = {'question': self.question, 'order': 1, 'key': key, 'description': 'description'}
+        if not Choice.key_is_numeric(key):
+            with self.assertRaises(ValidationError):
+                Choice.validate(**kwargs)
+            c = Choice(**kwargs)
+            with self.assertRaises(ValidationError):
+                c.save()
+        else:
+            with self.assertNoException(ValidationError):
+                Choice.validate(question=self.question, order=1, key=key, description='description')
+            c = Choice(**kwargs)
+            with self.assertNoException(ValidationError):
+                c.save()
+
+    def choice_test_with_zero_weight(self, key):
+        self.question.weight = 0
+        kwargs = {'question': self.question, 'order': 1, 'key': key, 'description': 'description'}
+        with self.assertNoException(ValidationError):
+            Choice.validate(**kwargs)
+        c = Choice(**kwargs)
+        with self.assertNoException(ValidationError):
+            c.save()
+
+    @given(sane_text(min_size=1))
+    def test_scale_question_with_positive_weight(self, key):
+        self.question.question_type = Question.SCALE_TYPE
+        self.choice_test_with_positive_weight(key)
+
+    @given(sane_text(min_size=1))
+    def test_scale_question_with_zero_weight(self, key):
+        self.question.question_type = Question.SCALE_TYPE
+        self.choice_test_with_zero_weight(key)
+
+    @given(sane_text(min_size=1))
+    def test_single_select_question_with_positive_weight(self, key):
+        self.question.question_type = Question.SINGLE_SELECT_TYPE
+        self.choice_test_with_positive_weight(key)
+
+    @given(sane_text(min_size=1))
+    def test_single_select_question_with_zero_weight(self, key):
+        self.question.question_type = Question.SINGLE_SELECT_TYPE
+        self.choice_test_with_zero_weight(key)
+
+    @given(sane_text(min_size=1))
+    def test_multi_select_question_with_positive_weight(self, key):
+        self.question.question_type = Question.MULTI_SELECT_TYPE
+        self.choice_test_with_positive_weight(key)
+
+    @given(sane_text(min_size=1))
+    def test_multi_select_question_with_zero_weight(self, key):
+        self.question.question_type = Question.MULTI_SELECT_TYPE
+        self.choice_test_with_zero_weight(key)
+
+    def test_long_text_question_disallows_choices(self):
+        self.question.question_type = Question.LONG_TEXT
+        self.question.weight = 0
+        kwargs = {'question': self.question, 'order': 1, 'key': 'key', 'description': 'description'}
+        with self.assertRaises(ValidationError):
+            Choice.validate(**kwargs)
+        c = Choice(**kwargs)
+        with self.assertRaises(ValidationError):
+            c.save()
+
 
 
 class RubricResponseTests(HypTestCase):
@@ -359,64 +439,3 @@ class QuestionResponseTests(HypTestCase):
             self.assertEqual(elapsed_seconds, 0)
 
 
-class FixScoreTests(HypTestCase):
-    @staticmethod
-    def make_rubric() -> Rubric:
-        rubric = mommy.make(Rubric, name="Test Rubric")
-        question_types = list(Question.available_types())
-        question_types.extend(Question.available_types())
-        for question_order, question_type in enumerate(question_types, start=1):
-            question_is_choice_type = question_type in Question.CHOICE_TYPES
-            weight = 0
-            if question_is_choice_type:
-                weight = 1.0
-            question = mommy.make(Question,
-                                  rubric=rubric,
-                                  short_description='Question %s' % question_order,
-                                  long_description='This is for question %s' % question_order,
-                                  help_text='This is help text for question %s' % question_order,
-                                  weight=weight,
-                                  question_type=question_type,
-                                  required=True)
-            if question_is_choice_type:
-                for choice_order, desc in enumerate(['Far Below', 'Fair', 'Average', 'Good', 'Excellent'], start=1):
-                    mommy.make(Choice, question=question, order=choice_order,
-                               key=desc, description=desc)
-        return rubric
-
-    @staticmethod
-    def make_rubric_response(rubric=None) -> RubricResponse:
-        if not rubric:
-            rubric = FixScoreTests.make_rubric()
-
-        return mommy.make(RubricResponse, rubric=rubric)
-
-    @staticmethod
-    def answer_rubric_response(rubric_response):
-        answers = ['Far Below', 'Fair', 'Average', 'Good', 'Excellent']
-        for num, q_resp in enumerate(rubric_response.questionresponse_set.all()):
-            if q_resp.question.question_type == Question.MULTI_SELECT_TYPE:
-                q_resp.update_response(['Far Below', 'Fair'])
-            elif q_resp.question.question_type == Question.LONG_TEXT:
-                q_resp.update_response('This is a long text response.\nThis is a second line')
-            else:
-                q_resp.update_response(answers[num % 5])
-
-    def test_fix_scores(self):
-        resp = self.make_rubric_response()
-        self.answer_rubric_response(resp)
-
-        self.assertEqual(resp.score(), 0.0, "rubric score isn't 0")
-
-        fix_scores()
-
-        print(resp.score())
-        self.assertGreater(resp.score(), 1)
-        self.assertLess(resp.score(), 11)
-        for choice in Choice.objects.filter(question__question_type=Question.SCALE_TYPE).all():
-            self.assertGreater(int(choice.key), 0)
-            self.assertLess(int(choice.key), 6)
-
-        for choice in Choice.objects.exclude(question__question_type=Question.SCALE_TYPE).all():
-            with self.assertRaises(ValueError):
-                int(choice.key)

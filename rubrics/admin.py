@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from rubrics.forms import ChoiceForm
 from .models import Rubric, Question, Choice
 
 
@@ -8,6 +9,7 @@ class ChoiceInline(admin.TabularInline):
     can_delete = True
     verbose_name_plural = 'Choices'
     ordering = ('order', )
+    form = ChoiceForm
 
 
 class QuestionInline(admin.TabularInline):

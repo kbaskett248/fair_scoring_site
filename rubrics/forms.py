@@ -1,6 +1,7 @@
 from django import forms
+from django.forms.models import ModelForm
 
-from .models import Question
+from .models import Question, Choice
 
 
 def default_field(question):
@@ -46,7 +47,6 @@ class RubricForm(forms.Form):
     def __init__(self, instance=None, **kwargs):
         super(RubricForm, self).__init__(**kwargs)
         self.instance = instance
-        d = self.__dict__
 
     def save(self, commit=True):
         updated_data = {int(key.replace('question_','')): self.cleaned_data[key]
@@ -70,3 +70,14 @@ def rubric_form_factory(rubric, field_dict=RubricForm.DEFAULT_FIELD_DICT,
         form_dict[name] = field
 
     return type(form_name, form_bases, form_dict)
+
+
+class ChoiceForm(ModelForm):
+    class Meta:
+        model = Choice
+        fields = ('question', 'order', 'key', 'description')
+
+    def clean(self):
+        cleaned_data = super(ChoiceForm, self).clean()
+        Choice.validate(**cleaned_data)
+        return cleaned_data

@@ -1,5 +1,6 @@
 import json
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db import transaction
 from django.db.models import Max
@@ -166,11 +167,7 @@ class Choice(models.Model):
             self.order = self._get_next_order()
                 
     def save(self, **kwargs):
-        if self.question.question_type not in self.question.CHOICE_TYPES:
-            raise AttributeError(
-                'Choices not permitted for questions of type %s' % 
-                self.question.question_type)
-
+        self.validate(self.question, self.order, self.key, self.description)
         super(Choice, self).save(**kwargs)
 
     def _get_next_order(self):
@@ -187,6 +184,34 @@ class Choice(models.Model):
 
     def __str__(self):
         return self.description
+
+    @staticmethod
+    def key_is_numeric(key):
+        try:
+            float(key)
+        except ValueError:
+            return False
+        else:
+            return True
+
+    @classmethod
+    def validate(cls, question=None, order=None, key=None, description=None, **kwargs):
+        if not question:
+            raise ValidationError('Question required for choice.',
+                                  code='required')
+        if not key:
+            raise ValidationError('Key required for choice.',
+                                  code='required')
+        if question.question_type and question.question_type not in Question.CHOICE_TYPES:
+            raise ValidationError('Choices not permitted for questions of type %(question_type)s.',
+                                  code='non-choice type',
+                                  params={'question_type': question.question_type})
+        if question.weight and question.weight > 0 and not cls.key_is_numeric(key):
+            raise ValidationError('The choice keys for a weighted question must be numeric. '
+                                  'The value "%(key)s" is non-numeric.',
+                                  code='non-numeric key',
+                                  params={'key': key})
+
 
 
 class RubricResponse(models.Model):
