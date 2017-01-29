@@ -1,3 +1,4 @@
+import unittest
 from contextlib import contextmanager
 from datetime import datetime
 
@@ -11,7 +12,7 @@ from hypothesis.strategies import one_of, sampled_from, text, lists, integers, \
     just, tuples, none
 from model_mommy import mommy
 
-from rubrics.management.commands.fixscores import fix_scores
+from rubrics.forms import ChoiceForm
 from rubrics.models import Rubric, Question, Choice, RubricResponse, QuestionResponse
 
 
@@ -65,6 +66,15 @@ def create_rubric_with_questions_and_choices():
                 mommy.make(Choice, question=question)
 
     return rubric
+
+
+class TestBase(HypTestCase):
+    @contextmanager
+    def assertNoException(self, exception_type):
+        try:
+            yield
+        except exception_type:
+            self.fail('%s exception type raised' % exception_type)
 
 
 class RubricTests(HypTestCase):
@@ -132,14 +142,7 @@ class QuestionTests(HypTestCase):
                 add_questions()
 
 
-class ChoiceTests(HypTestCase):
-    @contextmanager
-    def assertNoException(self, exception_type):
-        try:
-            yield
-        except exception_type:
-            self.fail('%s exception type raised' % exception_type)
-
+class ChoiceTests(TestBase):
     def setUp(self):
         self.question = mommy.make(Question)  # type: Question
 
@@ -208,6 +211,96 @@ class ChoiceTests(HypTestCase):
         with self.assertRaises(ValidationError):
             c.save()
 
+
+class ChoiceFormTests(HypTestCase):
+    def setUp(self):
+        self.question = mommy.make(Question)  # type: Question
+
+    def update_question(self, question_type, weight):
+        self.question.question_type = question_type
+        self.question.weight = weight
+        self.question.save()
+
+    def success_test(self, data):
+        form = ChoiceForm(data)
+        self.assertTrue(form.is_valid())
+        choice = form.save()
+        self.assertEqual(choice.order, data['order'])
+        self.assertEqual(choice.key, data['key'])
+        self.assertEqual(choice.description, data['description'])
+
+    def failed_test(self, data):
+        form = ChoiceForm(data)
+        self.assertFalse(form.is_valid())
+        with self.assertRaises(ValueError):
+            form.save()
+
+    def test_scale_question_with_positive_weight(self):
+        self.update_question(Question.SCALE_TYPE, 1.000)
+
+        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        self.success_test(data)
+
+        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        self.failed_test(data)
+
+    def test_scale_question_with_zero_weight(self):
+        self.update_question(Question.SCALE_TYPE, 0)
+
+        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        self.success_test(data)
+
+        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        self.success_test(data)
+
+    def test_single_select_question_with_positive_weight(self):
+        self.update_question(Question.SINGLE_SELECT_TYPE, 1.000)
+
+        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        self.success_test(data)
+
+        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        self.failed_test(data)
+
+    def test_single_select_question_with_zero_weight(self):
+        self.update_question(Question.SINGLE_SELECT_TYPE, 0)
+
+        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        self.success_test(data)
+
+        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        self.success_test(data)
+
+    def test_multi_select_question_with_positive_weight(self):
+        self.update_question(Question.MULTI_SELECT_TYPE, 1.000)
+
+        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        self.success_test(data)
+
+        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        self.failed_test(data)
+
+    def test_multi_select_question_with_zero_weight(self):
+        self.update_question(Question.MULTI_SELECT_TYPE, 0)
+
+        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        self.success_test(data)
+
+        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        self.success_test(data)
+
+    def test_long_text_question_with_positive_weight(self):
+        with self.assertRaises(ValueError):
+            self.update_question(Question.LONG_TEXT, 1.000)
+
+    def test_long_text_question_with_zero_weight(self):
+        self.update_question(Question.LONG_TEXT, 0)
+
+        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        self.failed_test(data)
+
+        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        self.failed_test(data)
 
 
 class RubricResponseTests(HypTestCase):
@@ -384,6 +477,8 @@ class QuestionResponseTests(HypTestCase):
 
         self.generic_response_test(check_response)
 
+    # Choice was updated so that non-numeric choices could not be saved for weighted questions.
+    @unittest.expectedFailure
     def test_score_for_non_numeric_choices(self):
         rubric = mommy.make(Rubric, name="Test Rubric")
         rub_response = make_rubric_response(rubric)
