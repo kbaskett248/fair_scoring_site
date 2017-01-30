@@ -7,6 +7,15 @@ from django.db.models import Max
 from django.utils import timezone
 
 
+def value_is_numeric(value) -> bool:
+    try:
+        float(value)
+    except ValueError:
+        return False
+    else:
+        return True
+
+
 class Rubric(models.Model):
     name = models.CharField(
         max_length=200)
@@ -68,6 +77,44 @@ class Question(models.Model):
 
     ordering = ('rubric', 'order', 'short_description')
 
+    @classmethod
+    def validate(cls, rubric=None, order=None, short_description=None, long_description=None,
+                 help_text=None, weight=None, question_type=None, choice_sort=None, required=None):
+        if not rubric:
+            raise ValidationError('Rubric required for question', code='required')
+
+        if not question_type:
+            raise ValidationError('Question_type required for question', code='required')
+
+        if not cls.is_allowed_type(question_type):
+            raise ValidationError('Question_type was %(question_type)s. Should be one of %(available_types)s.',
+                                  code='invalid question type',
+                                  params={'question_type': question_type,
+                                          'available_types': cls.available_types()})
+
+        if not cls.is_allowed_sort(choice_sort):
+            raise ValidationError('Choice_sort was %(choice_sort)s. Should be one of %(sort_options)s.',
+                                  code='invalid choice sort',
+                                  params={'choice_sort': choice_sort,
+                                          'sort_options': cls.SORT_CHOICES})
+
+        if weight and weight > 0:
+            if question_type not in cls.CHOICE_TYPES:
+                raise ValidationError('Weight not allowed for questions of type "%(question_type)s"',
+                                      code='weight not allowed',
+                                      params={'question_type': question_type})
+
+    def validate_instance(self):
+        if self.question_type in self.CHOICE_TYPES and self.weight and self.weight > 0:
+            keys = [item['key'] for item in self.choice_set.values('key').all()]
+            for key in keys:
+                if not value_is_numeric(key):
+                    raise ValidationError('The choice keys for a weighted question must be numeric. '
+                                          'The value "%(key)s" is non-numeric.',
+                                          code='non-numeric key',
+                                          params={'key': key})
+                break
+
     def __init__(self, *args, **kwargs):
         # __init__ is run when objects are retrieved from the database
         # in addition to when they are created.
@@ -76,15 +123,12 @@ class Question(models.Model):
             self.order = self._get_next_order()
             
     def save(self, **kwargs):
-        if not self.is_allowed_type(self.question_type):
-            raise ValueError(
-                'question_type was %s. Should be one of %s.' %
-                (self.question_type, self.available_types()))
+        self.validate(rubric=self.rubric, order=self.order, short_description=self.short_description,
+                      long_description=self.long_description, help_text=self.help_text,
+                      weight=self.weight, question_type=self.question_type,
+                      choice_sort=self.choice_sort, required=self.required)
 
-        if not self.is_allowed_sort(self.choice_sort):
-            raise ValueError(
-                'choice_sort was %s. Should be one of %s.' %
-                (self.choice_sort, self.sort_options()))
+        self.validate_instance()
 
         QuestionType.get_instance(self).perform_type_specific_save_checks()
 
@@ -185,15 +229,6 @@ class Choice(models.Model):
     def __str__(self):
         return self.description
 
-    @staticmethod
-    def key_is_numeric(key):
-        try:
-            float(key)
-        except ValueError:
-            return False
-        else:
-            return True
-
     @classmethod
     def validate(cls, question=None, order=None, key=None, description=None, **kwargs):
         if not question:
@@ -206,12 +241,11 @@ class Choice(models.Model):
             raise ValidationError('Choices not permitted for questions of type %(question_type)s.',
                                   code='non-choice type',
                                   params={'question_type': question.question_type})
-        if question.weight and question.weight > 0 and not cls.key_is_numeric(key):
+        if question.weight and question.weight > 0 and not value_is_numeric(key):
             raise ValidationError('The choice keys for a weighted question must be numeric. '
                                   'The value "%(key)s" is non-numeric.',
                                   code='non-numeric key',
                                   params={'key': key})
-
 
 
 class RubricResponse(models.Model):

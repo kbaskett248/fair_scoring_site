@@ -13,7 +13,7 @@ from hypothesis.strategies import one_of, sampled_from, text, lists, integers, \
 from model_mommy import mommy
 
 from rubrics.forms import ChoiceForm
-from rubrics.models import Rubric, Question, Choice, RubricResponse, QuestionResponse
+from rubrics.models import Rubric, Question, Choice, RubricResponse, QuestionResponse, value_is_numeric
 
 
 def fixed_decimals(min_value: float=0, max_value: float=1, num_decimals=3) -> SearchStrategy:
@@ -108,18 +108,18 @@ class QuestionTests(HypTestCase):
 
     @given(question_type=sane_text())
     def test_invalid_question_type_raises_error(self, question_type):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValidationError):
             mommy.make(Question, rubric=self.rubric, question_type=question_type)
 
     @given(sort_option=one_of(sane_text(), none()))
     def test_invalid_sort_option_raises_error(self, sort_option):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValidationError):
             mommy.make(Question, rubric=self.rubric, question_type=Question.LONG_TEXT,
                        choice_sort=sort_option)
 
     @given(fixed_decimals(min_value=0.001))
     def test_unweighted_question_type_with_non_zero_weight_raises_value_error(self, weight):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValidationError):
             mommy.make(Question, rubric=self.rubric, question_type=Question.LONG_TEXT,
                        weight=weight)
 
@@ -147,7 +147,7 @@ class ChoiceTests(TestBase):
     def choice_test_with_positive_weight(self, key):
         self.question.weight = 1.000
         kwargs = {'question': self.question, 'order': 1, 'key': key, 'description': 'description'}
-        if not Choice.key_is_numeric(key):
+        if not value_is_numeric(key):
             with self.assertRaises(ValidationError):
                 Choice.validate(**kwargs)
             c = Choice(**kwargs)
@@ -288,7 +288,7 @@ class ChoiceFormTests(HypTestCase):
         self.success_test(data)
 
     def test_long_text_question_with_positive_weight(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValidationError):
             self.update_question(Question.LONG_TEXT, 1.000)
 
     def test_long_text_question_with_zero_weight(self):
