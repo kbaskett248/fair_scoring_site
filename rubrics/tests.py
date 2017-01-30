@@ -86,6 +86,9 @@ class RubricTests(HypTestCase):
 
 
 class QuestionTests(HypTestCase):
+    def setUp(self):
+        self.rubric = create_rubric_with_questions_and_choices()
+
     def test_is_allowed_type(self):
         self.assertTrue(Question.is_allowed_type(Question.LONG_TEXT))
         self.assertFalse(Question.is_allowed_type("Some Google Type"))
@@ -95,51 +98,46 @@ class QuestionTests(HypTestCase):
         self.assertFalse(Question.is_allowed_sort("Some Google Sort"))
 
     def test_num_choices(self):
-        rubric = create_rubric_with_questions_and_choices()
-
-        for question in rubric.question_set.all():
-            if question.show_choices():
-                self.assertIsInstance(question.num_choices_display(), int)
-                self.assertEquals(question.num_choices_display(), 5)
-            else:
-                self.assertEquals(question.num_choices_display(), '-')
+        for number, question in enumerate(self.rubric.question_set.all(), start=1):
+            with self.subTest('Question %(number)s', number=number):
+                if question.show_choices():
+                    self.assertIsInstance(question.num_choices_display(), int)
+                    self.assertEquals(question.num_choices_display(), 5)
+                else:
+                    self.assertEquals(question.num_choices_display(), '-')
 
     @given(question_type=sane_text())
     def test_invalid_question_type_raises_error(self, question_type):
-        rubric = create_rubric_with_questions_and_choices()
         with self.assertRaises(ValueError):
-            mommy.make(Question, rubric=rubric, question_type=question_type)
+            mommy.make(Question, rubric=self.rubric, question_type=question_type)
 
     @given(sort_option=one_of(sane_text(), none()))
     def test_invalid_sort_option_raises_error(self, sort_option):
-        rubric = create_rubric_with_questions_and_choices()
         with self.assertRaises(ValueError):
-            mommy.make(Question, rubric=rubric, question_type=Question.LONG_TEXT,
+            mommy.make(Question, rubric=self.rubric, question_type=Question.LONG_TEXT,
                        choice_sort=sort_option)
 
     @given(fixed_decimals(min_value=0.001))
     def test_unweighted_question_type_with_non_zero_weight_raises_value_error(self, weight):
-        rubric = create_rubric_with_questions_and_choices()
         with self.assertRaises(ValueError):
-            mommy.make(Question, rubric=rubric, question_type=Question.LONG_TEXT,
+            mommy.make(Question, rubric=self.rubric, question_type=Question.LONG_TEXT,
                        weight=weight)
 
-    @given(rubric_with_questions(min_questions=1))
-    def test_add_choice(self, rubric):
-        self.assertIsInstance(rubric, Rubric)
-        question = rubric.question_set.first()
-
-        def add_questions():
+    def test_add_choice(self):
+        def add_choices(question):
             question.add_choice(1, 'Low')
             question.add_choice(10, 'High')
 
-        if question.show_choices():
-            add_questions()
+        with self.subTest('%(type)s question', type=Question.SCALE_TYPE):
+            question = mommy.make(Question, question_type=Question.SCALE_TYPE, rubric=self.rubric)
+            add_choices(question)
             self.assertQuerysetEqual(question.choice_set.order_by('description').all(),
                                      ['<Choice: High>', '<Choice: Low>'])
-        else:
-            with self.assertRaises(AttributeError):
-                add_questions()
+
+        with self.subTest('%(type)s question', type=Question.LONG_TEXT):
+            question = mommy.make(Question, question_type=Question.LONG_TEXT, rubric=self.rubric)
+            with self.assertRaises(ValidationError):
+                add_choices(question)
 
 
 class ChoiceTests(TestBase):
