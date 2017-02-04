@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from rubrics.forms import ChoiceForm
+from rubrics.forms import ChoiceForm, QuestionForm
 from .models import Rubric, Question, Choice
 
 
@@ -29,6 +29,7 @@ class RubricAdmin(admin.ModelAdmin):
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     model = Question
+    form = QuestionForm
     inlines = (ChoiceInline, )
     list_display = ('rubric', 'order', 'short_description', 'question_type', 'num_choices_display')
 

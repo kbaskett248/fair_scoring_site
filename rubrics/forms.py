@@ -72,12 +72,41 @@ def rubric_form_factory(rubric, field_dict=RubricForm.DEFAULT_FIELD_DICT,
     return type(form_name, form_bases, form_dict)
 
 
-class ChoiceForm(ModelForm):
+
+class ValidatedForm(ModelForm):
+    """Adds additional validation to a form by tying into model logic.
+
+    This class defines a framework for adding additional validation on clean of
+    a form.
+
+    This class should work in concert with a ValidatedModel model. Alternatively,
+    you can define the following methods on the model class:
+
+    @classmethod
+    def validate(cls, **fields):
+        pass
+
+    def validate_instance(self, **fields):
+        pass
+
+    """
+
+    def clean(self):
+        cleaned_data = super(ValidatedForm, self).clean()
+        self._meta.model.validate(**cleaned_data)
+        if self.instance:
+            self.instance.validate_instance(**cleaned_data)
+        return cleaned_data
+
+
+class ChoiceForm(ValidatedForm):
     class Meta:
         model = Choice
         fields = ('question', 'order', 'key', 'description')
 
-    def clean(self):
-        cleaned_data = super(ChoiceForm, self).clean()
-        Choice.validate(**cleaned_data)
-        return cleaned_data
+
+class QuestionForm(ValidatedForm):
+    class Meta:
+        model = Question
+        fields = ('rubric', 'order', 'short_description', 'long_description',
+                  'help_text', 'weight', 'question_type', 'choice_sort', 'required')

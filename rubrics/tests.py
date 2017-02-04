@@ -12,7 +12,7 @@ from hypothesis.strategies import one_of, sampled_from, text, lists, integers, \
     just, tuples, none
 from model_mommy import mommy
 
-from rubrics.forms import ChoiceForm
+from rubrics.forms import ChoiceForm, QuestionForm
 from rubrics.models import Rubric, Question, Choice, RubricResponse, QuestionResponse, value_is_numeric
 
 
@@ -86,8 +86,10 @@ class RubricTests(HypTestCase):
 
 
 class QuestionTests(HypTestCase):
-    def setUp(self):
-        self.rubric = create_rubric_with_questions_and_choices()
+    @classmethod
+    def setUpClass(cls):
+        super(QuestionTests, cls).setUpClass()
+        cls.rubric = create_rubric_with_questions_and_choices()
 
     def test_is_allowed_type(self):
         self.assertTrue(Question.is_allowed_type(Question.LONG_TEXT))
@@ -140,9 +142,92 @@ class QuestionTests(HypTestCase):
                 add_choices(question)
 
 
+class QuestionFormTests(HypTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(QuestionFormTests, cls).setUpClass()
+        cls.rubric = mommy.make(Rubric)  # type: Rubric
+        cls.data = {'rubric': cls.rubric.pk,
+                    'order': 1,
+                    'short_description': 'Test Question',
+                    'long_description': 'This question is very important',
+                    'help_text': 'This is help text for the question',
+                    'weight': 0,
+                    'question_type': Question.SCALE_TYPE,
+                    'choice_sort': Question.MANUAL_SORT,
+                    'required': True}
+        data = cls.data.copy()
+        data['rubric'] = cls.rubric
+        cls.question = Question.objects.create(**data)  # type: Question
+
+    def get_test_data_and_form(self, updated_data: dict, instance: Question=None) -> tuple:
+        data = self.data.copy()
+        if updated_data:
+            data.update(updated_data)
+        form = QuestionForm(data, instance=instance)
+        return data, form
+
+    def success_test(self, instance: Question=None, **updated_data):
+        data, form = self.get_test_data_and_form(updated_data, instance=instance)
+        self.assertTrue(form.is_valid())
+        question = form.save(commit=False)
+        for key, value in data.items():
+            if key == 'rubric':
+                self.assertEqual(value, question.rubric.pk)
+            else:
+                self.assertEqual(value, getattr(question, key, None))
+
+    def failed_test(self, instance: Question=None, **updated_data):
+        data, form = self.get_test_data_and_form(updated_data, instance=instance)
+        self.assertFalse(form.is_valid())
+        with self.assertRaises(ValueError):
+            form.save(commit=False)
+
+    def test_valid_data(self):
+        self.success_test()
+
+    def test_invalid_question_type(self):
+        self.failed_test(question_type='invalid question type')
+
+    def test_invalid_sort(self):
+        self.failed_test(choice_sort='Q')
+
+    def test_negative_weight(self):
+        self.failed_test(weight=-0.5)
+
+    def test_weight_with_non_choice_type(self):
+        self.failed_test(weight=0.5, question_type=Question.LONG_TEXT)
+
+    def test_instance_with_numeric_choices_and_zero_weight(self):
+        self.question.weight = 1
+        self.question.save()
+        mommy.make(Choice, question=self.question, key='1')
+        self.success_test(instance=self.question, weight=0)
+
+    def test_instance_with_numeric_choices_and_positive_weight(self):
+        self.question.weight = 0
+        self.question.save()
+        mommy.make(Choice, question=self.question, key='1')
+        self.success_test(instance=self.question, weight=1)
+
+    def test_instance_with_non_numeric_choices_and_zero_weight(self):
+        self.question.weight = 0
+        self.question.save()
+        mommy.make(Choice, question=self.question, key='test')
+        self.success_test(instance=self.question, weight=0)
+
+    def test_instance_with_non_numeric_choices_and_positive_weight(self):
+        self.question.weight = 0
+        self.question.save()
+        mommy.make(Choice, question=self.question, key='test')
+        self.failed_test(instance=self.question, weight=1)
+
+
 class ChoiceTests(TestBase):
-    def setUp(self):
-        self.question = mommy.make(Question)  # type: Question
+    @classmethod
+    def setUpClass(cls):
+        super(ChoiceTests, cls).setUpClass()
+        cls.question = mommy.make(Question)  # type: Question
 
     def choice_test_with_positive_weight(self, key):
         self.question.weight = 1.000
