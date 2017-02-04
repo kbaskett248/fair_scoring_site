@@ -12,46 +12,10 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 
 import os
 
-from hypothesis import Verbosity, settings
-
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '4u-)z(xg)t+=!o_gyw%^^r=pgpt)mbx*+qer_&9k3ynf^zg-t3'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'handlers': {
-#         'file': {
-#             'level': 'DEBUG',
-#             'class': 'logging.FileHandler',
-#             'filename': '/home/kbaskett/fair_scoring_site/debug.log',
-#         },
-#     },
-#     'loggers': {
-#         'fair_scoring_site': {
-#             'handlers': ['file'],
-#             'level': 'DEBUG',
-#             'propagate': True,
-#         },
-#     },
-# }
-
-ALLOWED_HOSTS = []
-
-
 # Application definition
-
 INSTALLED_APPS = [
     'awards.apps.AwardsConfig',
     'judges.apps.JudgesConfig',
@@ -106,18 +70,6 @@ STATICFILES_DIRS = [
 
 WSGI_APPLICATION = 'fair_scoring_site.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/1.9/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
-
-
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
 
@@ -166,9 +118,6 @@ BOOTSTRAP3 = {
 'include_jquery': True,
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'app-messages')
-
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 CONSTANCE_CONFIG = {
     'FAIR_NAME': ('Science Fair', 'The name of the science fair'),
@@ -183,8 +132,3 @@ CONSTANCE_CONFIG_FIELDSETS = {
     'Judging': ('JUDGES_PER_PROJECT', 'PROJECTS_PER_JUDGE', 'JUDGING_ACTIVE', 'RUBRIC_NAME')
 }
 CONSTANCE_DATABASE_PREFIX = 'constance:fair_scoring_site:'
-
-settings.register_profile("ci", settings(max_examples=1000))
-settings.register_profile("dev", settings(max_examples=20))
-settings.register_profile("debug", settings(max_examples=10, verbosity=Verbosity.verbose))
-settings.load_profile('dev')
