@@ -1,9 +1,9 @@
 from django import forms
 from django.contrib import admin
-from django.core.exceptions import FieldError
+from django.core.exceptions import FieldError, ValidationError
 from django.utils.translation import gettext as _
 
-from awards.models import Award, AwardRule, AwardInstance
+from awards.models import Award, AwardRule, AwardInstance, In, NotIn
 
 
 def format_external_name(string: str):
@@ -48,6 +48,40 @@ class AwardRuleForm(forms.ModelForm):
             return build_trait_list(cls.traits)
         else:
             return None
+
+    @staticmethod
+    def get_validator_name(trait: str) -> str:
+        return 'validate_' + trait
+
+    def clean(self):
+        cleaned_data = super(AwardRuleForm, self).clean()
+
+        operator_name = cleaned_data.get('operator_name', None)
+        if operator_name == In.internal or operator_name == NotIn.internal:
+            cleaned_data['value'] = ','.join(
+                item.strip() for item in self.individual_value_iterator(**cleaned_data)
+                if item.strip())
+
+        trait = cleaned_data.get('trait', None)
+        if trait is not None:
+            validator_name = self.get_validator_name(trait)
+            if hasattr(self, validator_name):
+                getattr(self, validator_name)(**cleaned_data)
+
+        return cleaned_data
+
+    def individual_value_iterator(self, operator_name=None, value=None, **additional_fields):
+        if (operator_name == In.internal or operator_name == NotIn.internal) and value is not None:
+            for item in value.split(','):
+                yield item
+        else:
+            yield value
+
+    @staticmethod
+    def raise_default_validation_error(params):
+        raise ValidationError('%(value)s is not a valid value for the %(trait)s trait',
+                              code='invalid trait value',
+                              params=params)
 
 
 class AwardRuleInline(admin.TabularInline):
