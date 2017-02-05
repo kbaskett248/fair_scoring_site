@@ -1,6 +1,7 @@
 from hypothesis.extra.django import TestCase as HypTestCase
 from model_mommy import mommy
 
+from awards.models import Is, In
 from fair_categories.models import Category, Subcategory, Division
 from fair_projects.models import Project
 from fair_scoring_site.admin import AwardRuleForm
@@ -39,27 +40,27 @@ class AwardRuleFormTests(HypTestCase):
     def trait_validation_test(self, trait: str, good_values: list, bad_value: str):
         with self.subTest('Validation succeeds for single {trait} when value exists'.format(
                 trait=trait)):
-            self.success_test(trait, 'IS', good_values[0])
+            self.success_test(trait, Is.internal, good_values[0])
 
         with self.subTest('Validation fails for single {trait} when value does not exist'.format(
                 trait=trait)):
-            self.failed_test(trait, 'IS', bad_value)
+            self.failed_test(trait, Is.internal, bad_value)
 
         with self.subTest('Validation succeeds for {trait} IN when single value exists'.format(
                 trait=trait)):
-            self.success_test(trait, 'IN', good_values[0])
+            self.success_test(trait, In.internal, good_values[0])
 
         with self.subTest('Validation fails for {trait} IN when single value does not exist'.format(
                 trait=trait)):
-            self.failed_test(trait, 'IN', bad_value)
+            self.failed_test(trait, In.internal, bad_value)
 
         with self.subTest('Validation succeeds for {trait} IN when all values exist'.format(
                 trait=trait)):
-            self.success_test(trait, 'IN', ', '.join(good_values))
+            self.success_test(trait, In.internal, ', '.join(good_values))
 
         with self.subTest('Validation fails for {trait} IN when any value does not exist'.format(
                 trait=trait)):
-            self.failed_test(trait, 'IN', ', '.join(good_values + [bad_value]))
+            self.failed_test(trait, In.internal, ', '.join(good_values + [bad_value]))
 
     def test_category_validation(self):
         self.trait_validation_test('category', ['Category 1', 'Category 2'], 'Category 0')

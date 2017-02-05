@@ -12,7 +12,7 @@ from model_mommy import mommy
 
 from awards.admin import AwardRuleForm
 from awards.logic import InstanceBase
-from awards.models import Award, AwardRule, Is, Greater, NotIn
+from awards.models import Award, AwardRule, Is, Greater, NotIn, In, IsNot, Less
 
 
 def make_Award(**kwargs) -> Award:
@@ -152,15 +152,15 @@ class AwardRuleTests(HypTestCase):
 
     @given(sane_text(max_size=300, average_size=10), instance_values())
     def test_allow_instance_Is(self, rule_value: str, instance_value):
-        self.generic_operator_test('IS', rule_value, instance_value, rule_value == str(instance_value))
-        self.generic_operator_test('IS', rule_value, rule_value, True)
-        self.generic_operator_test('IS', str(instance_value), instance_value, True)
+        self.generic_operator_test(Is.internal, rule_value, instance_value, rule_value == str(instance_value))
+        self.generic_operator_test(Is.internal, rule_value, rule_value, True)
+        self.generic_operator_test(Is.internal, str(instance_value), instance_value, True)
 
     @given(sane_text(max_size=300, average_size=10), instance_values())
     def test_allow_instance_IsNot(self, rule_value: str, instance_value):
-        self.generic_operator_test('IS_NOT', rule_value, instance_value, rule_value != str(instance_value))
-        self.generic_operator_test('IS_NOT', rule_value, rule_value, False)
-        self.generic_operator_test('IS_NOT', str(instance_value), instance_value, False)
+        self.generic_operator_test(IsNot.internal, rule_value, instance_value, rule_value != str(instance_value))
+        self.generic_operator_test(IsNot.internal, rule_value, rule_value, False)
+        self.generic_operator_test(IsNot.internal, str(instance_value), instance_value, False)
 
     @given(sane_text(max_size=300, average_size=10, min_size=1), instance_values())
     def test_allow_instance_Greater_string(self, rule_value: str, instance_value):
@@ -172,17 +172,17 @@ class AwardRuleTests(HypTestCase):
             except ValueError:
                 test_value = str(instance_value) > rule_value
 
-        self.generic_operator_test('GREATER', rule_value, instance_value, test_value)
-        self.generic_operator_test('GREATER', rule_value, rule_value, False)
+        self.generic_operator_test(Greater.internal, rule_value, instance_value, test_value)
+        self.generic_operator_test(Greater.internal, rule_value, rule_value, False)
         if not isinstance(instance_value, bool):
-            self.generic_operator_test('GREATER', str(instance_value), instance_value, False)
+            self.generic_operator_test(Greater.internal, str(instance_value), instance_value, False)
 
     @given(numeric_strings(min_value=-40000, max_value=40000), floats(min_value=-40000, max_value=40000))
     def test_allow_instance_Greater_numeric(self, rule_value: str, instance_value: float):
-        self.generic_operator_test('GREATER', rule_value, instance_value, instance_value > float(rule_value))
-        self.generic_operator_test('GREATER', rule_value, rule_value, False)
-        self.generic_operator_test('GREATER', str(instance_value), instance_value, False)
-        self.generic_operator_test('GREATER', rule_value, '1' + rule_value, True)
+        self.generic_operator_test(Greater.internal, rule_value, instance_value, instance_value > float(rule_value))
+        self.generic_operator_test(Greater.internal, rule_value, rule_value, False)
+        self.generic_operator_test(Greater.internal, str(instance_value), instance_value, False)
+        self.generic_operator_test(Greater.internal, rule_value, '1' + rule_value, True)
 
     @given(sane_text(max_size=300, average_size=10, min_size=1), instance_values())
     def test_allow_instance_Less_string(self, rule_value: str, instance_value):
@@ -194,17 +194,17 @@ class AwardRuleTests(HypTestCase):
             except ValueError:
                 test_value = str(instance_value) < rule_value
 
-        self.generic_operator_test('LESS', rule_value, instance_value, test_value)
-        self.generic_operator_test('LESS', rule_value, rule_value, False)
+        self.generic_operator_test(Less.internal, rule_value, instance_value, test_value)
+        self.generic_operator_test(Less.internal, rule_value, rule_value, False)
         if not isinstance(instance_value, bool):
-            self.generic_operator_test('LESS', str(instance_value), instance_value, False)
+            self.generic_operator_test(Less.internal, str(instance_value), instance_value, False)
 
     @given(numeric_strings(min_value=-40000, max_value=40000), floats(min_value=-40000, max_value=40000))
     def test_allow_instance_Less_numeric(self, rule_value: str, instance_value: float):
-        self.generic_operator_test('LESS', rule_value, instance_value, instance_value < float(rule_value))
-        self.generic_operator_test('LESS', rule_value, rule_value, False)
-        self.generic_operator_test('LESS', str(instance_value), instance_value, False)
-        self.generic_operator_test('LESS', '1' + rule_value, rule_value, True)
+        self.generic_operator_test(Less.internal, rule_value, instance_value, instance_value < float(rule_value))
+        self.generic_operator_test(Less.internal, rule_value, rule_value, False)
+        self.generic_operator_test(Less.internal, str(instance_value), instance_value, False)
+        self.generic_operator_test(Less.internal, '1' + rule_value, rule_value, True)
 
     @given(text_lists(max_size=50, average_size=10), instance_values())
     @example([], "")
@@ -214,14 +214,14 @@ class AwardRuleTests(HypTestCase):
         assume(',' not in ''.join(rule_value))
 
         formatted_rule_value = ','.join(rule_value)
-        self.generic_operator_test('IN', formatted_rule_value, instance_value, instance_value in rule_value)
+        self.generic_operator_test(In.internal, formatted_rule_value, instance_value, instance_value in rule_value)
 
         rule_value.append(str(instance_value))
         rule_value.append('something else')
         formatted_rule_value = ','.join(rule_value)
-        self.generic_operator_test('IN', formatted_rule_value, instance_value, True)
+        self.generic_operator_test(In.internal, formatted_rule_value, instance_value, True)
 
-        self.generic_operator_test('IN', 'happy,days', instance_value, False)
+        self.generic_operator_test(In.internal, 'happy,days', instance_value, False)
 
     @given(text_lists(max_size=50, average_size=10), instance_values())
     def test_allow_instance_NotIn(self, rule_value: list, instance_value):
@@ -230,14 +230,14 @@ class AwardRuleTests(HypTestCase):
         assume(',' not in ''.join(rule_value))
 
         formatted_rule_value = ','.join(rule_value)
-        self.generic_operator_test('NOT_IN', formatted_rule_value, instance_value, instance_value not in rule_value)
+        self.generic_operator_test(NotIn.internal, formatted_rule_value, instance_value, instance_value not in rule_value)
 
         rule_value.append(str(instance_value))
         rule_value.append('something else')
         formatted_rule_value = ','.join(rule_value)
-        self.generic_operator_test('NOT_IN', formatted_rule_value, instance_value, False)
+        self.generic_operator_test(NotIn.internal, formatted_rule_value, instance_value, False)
 
-        self.generic_operator_test('NOT_IN', 'happy,days', instance_value, True)
+        self.generic_operator_test(NotIn.internal, 'happy,days', instance_value, True)
 
 
 class AwardRuleFormTests(HypTestCase):
@@ -279,21 +279,21 @@ class AwardRuleFormTests(HypTestCase):
 
     def test_form_validation_trims_spaces_from_list(self):
         with self.subTest('IN operator'):
-            form = self.get_form(operator_name='IN', value='one , two, three')
+            form = self.get_form(operator_name=In.internal, value='one , two, three')
             self.assertTrue(form.is_valid())
             self.assertEqual(form.cleaned_data['value'], 'one,two,three')
         with self.subTest('NOT_IN operator'):
-            form = self.get_form(operator_name='NOT_IN', value='one , two, three')
+            form = self.get_form(operator_name=NotIn.internal, value='one , two, three')
             self.assertTrue(form.is_valid())
             self.assertEqual(form.cleaned_data['value'], 'one,two,three')
 
     def test_form_validation_does_not_change_non_list(self):
         with self.subTest('IN operator'):
-            form = self.get_form(operator_name='IN', value='one')
+            form = self.get_form(operator_name=In.internal, value='one')
             self.assertTrue(form.is_valid())
             self.assertEqual(form.cleaned_data['value'], 'one')
         with self.subTest('NOT_IN operator'):
-            form = self.get_form(operator_name='NOT_IN', value='one')
+            form = self.get_form(operator_name=NotIn.internal, value='one')
             self.assertTrue(form.is_valid())
             self.assertEqual(form.cleaned_data['value'], 'one')
 
@@ -307,6 +307,6 @@ class AwardRuleFormTests(HypTestCase):
         self.assertFalse(form.is_valid())
 
     def test_form_validation_removes_empty_values(self):
-        form = self.get_form(operator_name='IN', value='one, , two, three, ')
+        form = self.get_form(operator_name=In.internal, value='one, , two, three, ')
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data['value'], 'one,two,three')

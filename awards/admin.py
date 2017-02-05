@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.core.exceptions import FieldError, ValidationError
 from django.utils.translation import gettext as _
 
-from awards.models import Award, AwardRule, AwardInstance
+from awards.models import Award, AwardRule, AwardInstance, In, NotIn
 
 
 def format_external_name(string: str):
@@ -57,7 +57,7 @@ class AwardRuleForm(forms.ModelForm):
         cleaned_data = super(AwardRuleForm, self).clean()
 
         operator_name = cleaned_data.get('operator_name', None)
-        if operator_name == 'IN' or operator_name == 'NOT_IN':
+        if operator_name == In.internal or operator_name == NotIn.internal:
             cleaned_data['value'] = ','.join(
                 item.strip() for item in self.individual_value_iterator(**cleaned_data)
                 if item.strip())
@@ -71,7 +71,7 @@ class AwardRuleForm(forms.ModelForm):
         return cleaned_data
 
     def individual_value_iterator(self, operator_name=None, value=None, **additional_fields):
-        if (operator_name == 'IN' or operator_name == 'NOT_IN') and value is not None:
+        if (operator_name == In.internal or operator_name == NotIn.internal) and value is not None:
             for item in value.split(','):
                 yield item
         else:
