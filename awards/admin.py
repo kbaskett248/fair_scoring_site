@@ -56,16 +56,18 @@ class AwardRuleForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(AwardRuleForm, self).clean()
 
-        operator_name = cleaned_data['operator_name']
-        value = cleaned_data['value']
+        operator_name = cleaned_data.get('operator_name', None)
         if operator_name == 'IN' or operator_name == 'NOT_IN':
-            elements = [item.trim() for item in value]
-            cleaned_data['value'] = ','.join(elements)
+            value = cleaned_data.get('value', None)
+            if value is not None:
+                elements = [item.strip() for item in value.split(',')]
+                cleaned_data['value'] = ','.join(elements)
 
-        trait = cleaned_data['trait']
-        validator_name = self.get_validator_name(trait)
-        if hasattr(self, validator_name):
-            getattr(self, validator_name)(**cleaned_data)
+        trait = cleaned_data.get('trait', None)
+        if trait is not None:
+            validator_name = self.get_validator_name(trait)
+            if hasattr(self, validator_name):
+                getattr(self, validator_name)(**cleaned_data)
 
         return cleaned_data
 

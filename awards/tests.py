@@ -11,6 +11,7 @@ from hypothesis.strategies import text, one_of, integers, booleans, floats, list
 from model_mommy import mommy
 
 from awards.admin import AwardRuleForm
+from awards.logic import InstanceBase
 from awards.models import Award, AwardRule, Is, Greater, NotIn
 
 
@@ -50,6 +51,12 @@ def instance_values() -> SearchStrategy:
 
 
 class AwardTests(TestCase):
+    class TestInstance(InstanceBase):
+        def __init__(self, trait_a, trait_b):
+            super(AwardTests.TestInstance, self).__init__()
+            self.trait_a = trait_a
+            self.trait_b = trait_b
+
     def setUp(self):
         self.award1 = make_Award(name='Award 1',
                                  award_order=1,
@@ -79,30 +86,32 @@ class AwardTests(TestCase):
         self.assertEqual(str(self.award1), self.award1.name)
 
     def test_assign_single_instance(self):
-        TestInstance = namedtuple('TestInstance', ('trait_a', 'trait_b', 'awards'))
-        instance = TestInstance(trait_a='A', trait_b='A', awards=[])
-        instances = [instance]
-        self.award1.assign(instances)
-        self.assertIn(self.award1, instance.awards)
+        with self.subTest('Award 1 is assigned ans award 2 is not'):
+            instance = self.TestInstance('A', 'A')
+            instances = [instance]
+            self.award1.assign(instances)
+            self.assertIn(self.award1, instance.awards)
 
-        self.award2.assign(instances)
-        self.assertNotIn(self.award2, instance.awards)
+            self.award2.assign(instances)
+            self.assertNotIn(self.award2, instance.awards)
 
-        instance = TestInstance(trait_a='B', trait_b='B', awards=[])
-        instances = [instance]
-        self.award1.assign(instances)
-        self.assertNotIn(self.award1, instance.awards)
+        with self.subTest('Award 2 is assigned and Award 1 is not'):
+            instance = self.TestInstance('B', 'B')
+            instances = [instance]
+            self.award1.assign(instances)
+            self.assertNotIn(self.award1, instance.awards)
 
-        self.award2.assign(instances)
-        self.assertIn(self.award2, instance.awards)
+            self.award2.assign(instances)
+            self.assertIn(self.award2, instance.awards)
 
-        instance = TestInstance(trait_a='A', trait_b='B', awards=[])
-        instances = [instance]
-        self.award1.assign(instances)
-        self.assertNotIn(self.award1, instance.awards)
+        with self.subTest('Neither Award 1 nor Award 2 is assigned'):
+            instance = self.TestInstance('A', 'B')
+            instances = [instance]
+            self.award1.assign(instances)
+            self.assertNotIn(self.award1, instance.awards)
 
-        self.award2.assign(instances)
-        self.assertNotIn(self.award2, instance.awards)
+            self.award2.assign(instances)
+            self.assertNotIn(self.award2, instance.awards)
 
 
 class AwardRuleTests(HypTestCase):
@@ -113,7 +122,7 @@ class AwardRuleTests(HypTestCase):
         rule = make_AwardRule()
         self.assertEqual(str(rule), '{trait} {0} {value}'.format(rule.operator.display, **rule.__dict__))
 
-    @given(text(max_size=20))
+    @given(text(min_size=1, max_size=20))
     def test_operator_raises_error_with_invalid_operator_name(self, operator_name):
         with self.assertRaises(ValueError):
             rule = make_AwardRule(operator_name=operator_name)
@@ -232,8 +241,8 @@ class AwardRuleTests(HypTestCase):
 
 
 class AwardRuleFormTests(HypTestCase):
-    class FormWithValidation(AwardRuleForm):
-        traits = ('test_trait', )
+    class TestForm(AwardRuleForm):
+        traits = ('test_trait', 'other_trait')
 
         def validate_test_trait(self, trait=None, operator_name=None, value=None):
             if value == 'Error':
@@ -246,16 +255,53 @@ class AwardRuleFormTests(HypTestCase):
                     'operator_name': 'IS',
                     'value': 'Valid Data'}
 
-    def get_form(self, form_class, **updated_data):
+    def get_form(self, **updated_data):
         data = self.data.copy()
         data.update(updated_data)
-        return form_class(data)
+        return self.TestForm(data)
 
-    def test_form_validation_does_not_raise_error_for_valid_data(self):
-        form = self.get_form(self.FormWithValidation)
+    def test_form_valid_for_valid_data(self):
+        form = self.get_form()
         self.assertTrue(form.is_valid())
 
-    def test_form_validation_raises_error_for_invalid_data(self):
-        form = self.get_form(self.FormWithValidation, value='Error')
+    def test_form_invalid_for_invalid_data(self):
+        form = self.get_form(value='Error')
         self.assertFalse(form.is_valid())
 
+    def test_form_valid_for_invalidated_data(self):
+        with self.subTest('Test with Valid Data'):
+            form = self.get_form(trait='other_trait')
+            self.assertTrue(form.is_valid())
+
+        with self.subTest('Test with Error'):
+            form = self.get_form(trait='other_trait', value='Error')
+            self.assertTrue(form.is_valid())
+
+    def test_form_validation_trims_spaces_from_list(self):
+        with self.subTest('IN operator'):
+            form = self.get_form(operator_name='IN', value='one , two, three')
+            self.assertTrue(form.is_valid())
+            self.assertEqual(form.cleaned_data['value'], 'one,two,three')
+        with self.subTest('NOT_IN operator'):
+            form = self.get_form(operator_name='NOT_IN', value='one , two, three')
+            self.assertTrue(form.is_valid())
+            self.assertEqual(form.cleaned_data['value'], 'one,two,three')
+
+    def test_form_validation_does_not_change_non_list(self):
+        with self.subTest('IN operator'):
+            form = self.get_form(operator_name='IN', value='one')
+            self.assertTrue(form.is_valid())
+            self.assertEqual(form.cleaned_data['value'], 'one')
+        with self.subTest('NOT_IN operator'):
+            form = self.get_form(operator_name='NOT_IN', value='one')
+            self.assertTrue(form.is_valid())
+            self.assertEqual(form.cleaned_data['value'], 'one')
+
+    def test_form_validation_does_not_change_non_list_operators(self):
+        form = self.get_form(value='one , two, three')
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['value'], 'one , two, three')
+
+    def test_form_validation_prevents_invalid_traits(self):
+        form = self.get_form(trait='invalid_trait')
+        self.assertFalse(form.is_valid())
