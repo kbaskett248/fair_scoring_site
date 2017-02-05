@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib import admin
-from django.core.exceptions import FieldError
+from django.core.exceptions import FieldError, ValidationError
 from django.utils.translation import gettext as _
 
 from awards.models import Award, AwardRule, AwardInstance
@@ -58,10 +58,8 @@ class AwardRuleForm(forms.ModelForm):
 
         operator_name = cleaned_data.get('operator_name', None)
         if operator_name == 'IN' or operator_name == 'NOT_IN':
-            value = cleaned_data.get('value', None)
-            if value is not None:
-                elements = [item.strip() for item in value.split(',')]
-                cleaned_data['value'] = ','.join(elements)
+            cleaned_data['value'] = ','.join(
+                item.strip() for item in self.individual_value_iterator(**cleaned_data))
 
         trait = cleaned_data.get('trait', None)
         if trait is not None:
@@ -70,6 +68,19 @@ class AwardRuleForm(forms.ModelForm):
                 getattr(self, validator_name)(**cleaned_data)
 
         return cleaned_data
+
+    def individual_value_iterator(self, operator_name=None, value=None, **additional_fields):
+        if (operator_name == 'IN' or operator_name == 'NOT_IN') and value is not None:
+            for item in value.split(','):
+                yield item
+        else:
+            yield value
+
+    @staticmethod
+    def raise_default_validation_error(params):
+        raise ValidationError('%(value)s is not a valid value for the %(trait)s trait',
+                              code='invalid trait value',
+                              params=params)
 
 
 class AwardRuleInline(admin.TabularInline):
