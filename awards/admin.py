@@ -49,6 +49,26 @@ class AwardRuleForm(forms.ModelForm):
         else:
             return None
 
+    @staticmethod
+    def get_validator_name(trait: str) -> str:
+        return 'validate_' + trait
+
+    def clean(self):
+        cleaned_data = super(AwardRuleForm, self).clean()
+
+        operator_name = cleaned_data['operator_name']
+        value = cleaned_data['value']
+        if operator_name == 'IN' or operator_name == 'NOT_IN':
+            elements = [item.trim() for item in value]
+            cleaned_data['value'] = ','.join(elements)
+
+        trait = cleaned_data['trait']
+        validator_name = self.get_validator_name(trait)
+        if hasattr(self, validator_name):
+            getattr(self, validator_name)(**cleaned_data)
+
+        return cleaned_data
+
 
 class AwardRuleInline(admin.TabularInline):
     model = AwardRule

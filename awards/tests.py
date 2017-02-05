@@ -1,5 +1,6 @@
 from collections import namedtuple
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from hypothesis import assume
 from hypothesis import example
@@ -9,6 +10,7 @@ from hypothesis.searchstrategy import SearchStrategy
 from hypothesis.strategies import text, one_of, integers, booleans, floats, lists
 from model_mommy import mommy
 
+from awards.admin import AwardRuleForm
 from awards.models import Award, AwardRule, Is, Greater, NotIn
 
 
@@ -227,3 +229,33 @@ class AwardRuleTests(HypTestCase):
         self.generic_operator_test('NOT_IN', formatted_rule_value, instance_value, False)
 
         self.generic_operator_test('NOT_IN', 'happy,days', instance_value, True)
+
+
+class AwardRuleFormTests(HypTestCase):
+    class FormWithValidation(AwardRuleForm):
+        traits = ('test_trait', )
+
+        def validate_test_trait(self, trait=None, operator_name=None, value=None):
+            if value == 'Error':
+                raise ValidationError('The trait has an invalid value')
+
+    @classmethod
+    def setUpClass(cls):
+        super(AwardRuleFormTests, cls).setUpClass()
+        cls.data = {'trait': 'test_trait',
+                    'operator_name': 'IS',
+                    'value': 'Valid Data'}
+
+    def get_form(self, form_class, **updated_data):
+        data = self.data.copy()
+        data.update(updated_data)
+        return form_class(data)
+
+    def test_form_validation_does_not_raise_error_for_valid_data(self):
+        form = self.get_form(self.FormWithValidation)
+        self.assertTrue(form.is_valid())
+
+    def test_form_validation_raises_error_for_invalid_data(self):
+        form = self.get_form(self.FormWithValidation, value='Error')
+        self.assertFalse(form.is_valid())
+
