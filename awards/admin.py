@@ -59,7 +59,8 @@ class AwardRuleForm(forms.ModelForm):
         operator_name = cleaned_data.get('operator_name', None)
         if operator_name == 'IN' or operator_name == 'NOT_IN':
             cleaned_data['value'] = ','.join(
-                item.strip() for item in self.individual_value_iterator(**cleaned_data))
+                item.strip() for item in self.individual_value_iterator(**cleaned_data)
+                if item.strip())
 
         trait = cleaned_data.get('trait', None)
         if trait is not None:

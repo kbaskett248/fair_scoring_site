@@ -305,3 +305,8 @@ class AwardRuleFormTests(HypTestCase):
     def test_form_validation_prevents_invalid_traits(self):
         form = self.get_form(trait='invalid_trait')
         self.assertFalse(form.is_valid())
+
+    def test_form_validation_removes_empty_values(self):
+        form = self.get_form(operator_name='IN', value='one, , two, three, ')
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['value'], 'one,two,three')
