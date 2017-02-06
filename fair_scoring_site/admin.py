@@ -167,10 +167,6 @@ class StudentResource(resources.ModelResource):
 
 
 class ProjectResource(resources.ModelResource):
-    student_fields = ('first_name', 'last_name', 'grade_level', 'gender',
-                      ('ethnicity', 'ethnicity__short_description'),
-                      ('teacher', 'teacher__user__last_name'),
-                      'email')
     category = fields.Field(attribute='category',
                             column_name='category',
                             widget=ForeignKeyWidget(Category, 'short_description'))
@@ -186,76 +182,6 @@ class ProjectResource(resources.ModelResource):
         fields = ('number', 'title', 'category', 'subcategory', 'division')
         export_order = ('number', 'title', 'category', 'subcategory', 'division')
         import_id_fields = ('title', 'number')
-
-    def __init__(self):
-        super(ProjectResource, self).__init__()
-        self.student_values = []
-        self.create_student_fields(4)
-
-    @classmethod
-    def get_student_attribute_names(cls):
-        return map(lambda x: x[1], cls.iterate_student_tuples())
-
-    @classmethod
-    def iterate_student_tuples(cls):
-        return map(tuplify, cls.student_fields)
-
-    def before_export(self, queryset: QuerySet, *args, **kwargs):
-        self.student_values = self.compile_student_values(Student.objects.all())
-        max_num_students = reduce(lambda x, y: max(x, len(y)), self.student_values.values(), 0)
-        # self.create_student_fields(max_num_students)
-        self.create_dehydrate_methods(max_num_students)
-        pass
-
-    def compile_student_values(self, queryset):
-        value_list = ['project__pk']
-        value_list.extend(self.get_student_attribute_names())
-        return {k: tuple(g) for k, g in groupby(queryset.order_by('project__pk').values(*value_list),
-                                                lambda x: x['project__pk'])}
-
-    def create_student_fields(self, number):
-        for index in range(1, number + 1):
-            for field, attribute in self.iterate_student_tuples():
-                self.add_student_field(index, field, attribute)
-
-    def add_student_field(self, index, field, attribute):
-        field_name = 's%s_%s' % (index, field)
-        self.fields[field_name] = fields.Field(attribute='student',
-                                               column_name=convert_field_name_to_column_name(field_name),
-                                               widget=CharWidget(),
-                                               default=None)
-
-    def create_dehydrate_methods(self, number):
-        for index, field_tuple in product(range(1, number + 1), self.iterate_student_tuples()):
-            self.add_dehydrate_method(index, *field_tuple)
-
-    def add_dehydrate_method(self, index, field, attribute):
-        field_name = 's%s_%s' % (index, field)
-
-        def dehydrate_student_value(self, instance):
-            project_data = self.student_values[instance.pk]
-            try:
-                return project_data[index - 1][attribute]
-            except IndexError:
-                return ''
-
-        setattr(self, 'dehydrate_%s' % field_name, functools.partial(dehydrate_student_value, self))
-
-    def before_import(self, dataset, using_transactions, dry_run, **kwargs):
-        pass
-
-    def before_import_row(self, row, **kwargs):
-        super(ProjectResource, self).before_import_row(row, **kwargs)
-        pass
-
-    def after_import_row(self, row, row_result, **kwargs):
-        pass
-
-    def after_import_instance(self, instance, new, **kwargs):
-        pass
-
-    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
-        pass
 
 
 class AwardRuleForm(awards.admin.AwardRuleForm):
@@ -404,4 +330,4 @@ class ProjectAdmin(ImportExportMixin, fair_projects.admin.ProjectAdmin):
                fair_projects.admin.JudgingInstanceInline,
                ProjectAwardInline)
 
-    resource_class = StudentResource
+    resource_class = ProjectResource
