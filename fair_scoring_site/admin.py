@@ -166,24 +166,6 @@ class StudentResource(resources.ModelResource):
         pass
 
 
-class ProjectResource(resources.ModelResource):
-    category = fields.Field(attribute='category',
-                            column_name='category',
-                            widget=ForeignKeyWidget(Category, 'short_description'))
-    subcategory = fields.Field(attribute='subcategory',
-                               column_name='subcategory',
-                               widget=ForeignKeyWidget(Subcategory, 'short_description'))
-    division = fields.Field(attribute='division',
-                            column_name='division',
-                            widget=ForeignKeyWidget(Division, 'short_description'))
-
-    class Meta:
-        model = Project
-        fields = ('number', 'title', 'category', 'subcategory', 'division')
-        export_order = ('number', 'title', 'category', 'subcategory', 'division')
-        import_id_fields = ('title', 'number')
-
-
 class AwardRuleForm(awards.admin.AwardRuleForm):
     traits = ('category',
               'subcategory',
@@ -325,9 +307,5 @@ class ProjectAwardInline(GenericTabularInline):
 
 
 @admin.register(Project)
-class ProjectAdmin(ImportExportMixin, fair_projects.admin.ProjectAdmin):
-    inlines = (fair_projects.admin.StudentInline,
-               fair_projects.admin.JudgingInstanceInline,
-               ProjectAwardInline)
-
-    resource_class = ProjectResource
+class ProjectAdmin(fair_projects.admin.ProjectAdmin):
+    inlines = list(fair_projects.admin.ProjectAdmin.inlines) + [ProjectAwardInline]
