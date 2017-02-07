@@ -7,12 +7,34 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from import_export import resources, fields
+from import_export.admin import ExportMixin, ImportExportMixin
+from import_export.widgets import ForeignKeyWidget, CharWidget
 
+from fair_categories.models import Category, Subcategory, Division
 from fair_projects.logic import mass_email
 from fair_projects.models import JudgingInstance
 from fair_scoring_site.logic import get_judging_rubric
 from rubrics.models import RubricResponse
 from .models import School, Teacher, Student, Project
+
+
+class ProjectResource(resources.ModelResource):
+    category = fields.Field(attribute='category',
+                            column_name='category',
+                            widget=ForeignKeyWidget(Category, 'short_description'))
+    subcategory = fields.Field(attribute='subcategory',
+                               column_name='subcategory',
+                               widget=ForeignKeyWidget(Subcategory, 'short_description'))
+    division = fields.Field(attribute='division',
+                            column_name='division',
+                            widget=ForeignKeyWidget(Division, 'short_description'))
+
+    class Meta:
+        model = Project
+        fields = ('number', 'title', 'category', 'subcategory', 'division')
+        export_order = ('number', 'title', 'category', 'subcategory', 'division')
+        import_id_fields = ('title', 'number')
 
 
 class StudentInline(admin.StackedInline):
@@ -47,7 +69,7 @@ class JudgingInstanceInline(admin.TabularInline):
 
 
 @admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
+class ProjectAdmin(ImportExportMixin, admin.ModelAdmin):
     model = Project
     list_display = ('number', 'title', 'category', 'subcategory', 'division')
     list_display_links = ('number', 'title')
@@ -56,6 +78,8 @@ class ProjectAdmin(admin.ModelAdmin):
     inlines = (StudentInline, JudgingInstanceInline)
     view_on_site = True
     save_on_top = True
+
+    resource_class = ProjectResource
 
 
 class TeacherInline(admin.StackedInline):
