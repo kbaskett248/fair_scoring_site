@@ -143,8 +143,13 @@ class Student(models.Model):
         null=True
     )
 
-    def __str__(self):
+    @property
+    def full_name(self) -> str:
+        """str: Getter for full_name"""
         return self.first_name + ' ' + self.last_name
+
+    def __str__(self):
+        return self.full_name
 
 
 def create_student(first_name, last_name, ethnicity, gender, grade_level, project,
