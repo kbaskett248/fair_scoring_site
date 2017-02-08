@@ -8,8 +8,8 @@ from django.db import transaction
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from import_export import resources, fields
-from import_export.admin import ExportMixin, ImportExportMixin
-from import_export.widgets import ForeignKeyWidget, CharWidget
+from import_export.admin import ImportExportMixin
+from import_export.widgets import ForeignKeyWidget
 
 from fair_categories.models import Category, Subcategory, Division, Ethnicity
 from fair_projects.logic import mass_email
@@ -34,7 +34,25 @@ class ProjectResource(resources.ModelResource):
         model = Project
         fields = ('number', 'title', 'category', 'subcategory', 'division')
         export_order = ('number', 'title', 'category', 'subcategory', 'division')
-        import_id_fields = ('title', 'number')
+        import_id_fields = ('number', )
+
+    def get_instance(self, instance_loader, row):
+        number = self.fields['number'].clean(row)
+        title = self.fields['title'].clean(row)
+        instance = None
+
+        if number:
+            try:
+                instance = self.get_queryset().get(number=number)
+            except Project.DoesNotExist:
+                pass
+        elif title:
+            try:
+                instance = self.get_queryset().get(title=title)
+            except Project.DoesNotExist:
+                pass
+
+        return instance
 
 
 class StudentResource(resources.ModelResource):

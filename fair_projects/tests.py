@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+import tablib
 from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import call_command
@@ -493,28 +494,75 @@ class TestQuestionFeedbackDict(TestCase):
 
 class TestProjectResource(TestCase):
     @classmethod
-    def setUpClass(cls):
-        super(TestProjectResource, cls).setUpClass()
-
-        cls.labels = ('number', 'title', 'category', 'subcategory', 'division')
+    def setUpTestData(cls):
+        cls.headers = ('number', 'title', 'category', 'subcategory', 'division')
 
         cls.resource = ProjectResource()
-        cls.category = mommy.make(Category, short_description='Category 1')
+        cls.category = mommy.make(Category, short_description='Category 1')  # type: Category
         cls.subcategory = mommy.make(Subcategory, short_description='Subcategory 1',
-                                     category=cls.category)
-        cls.division = mommy.make(Division, short_description='Division 1')
+                                     category=cls.category)  # type: Subcategory
+        cls.division = mommy.make(Division, short_description='Division 1')  # type: Division
         cls.instance = mommy.make(Project,
                                   category=cls.category,
                                   subcategory=cls.subcategory,
-                                  division=cls.division)
+                                  division=cls.division)  # type: Project
+        cls.subcategory2 = mommy.make(Subcategory, short_description='Subcategory 2',
+                                      category=cls.category)  # type: Subcategory
+
+    def setUp(self):
+        self.instance.refresh_from_db()
 
     def test_export_headers(self):
         dataset = self.resource.export()
-        for index, label in enumerate(self.labels):
+        for index, label in enumerate(self.headers):
             self.assertEqual(dataset.headers[index], label)
 
     def test_export_data(self):
         dataset = self.resource.export()
-        for key in self.labels:
+        for key in self.headers:
             self.assertEqual(dataset.dict[0][key], str(getattr(self.instance, key, None)))
 
+    def build_row(self, **updated_fields):
+        row = [str(getattr(self.instance, key, None)) for key in self.headers]
+        for key, value in updated_fields.items():
+            row[self.headers.index(key)] = value
+        return row
+
+    def get_import_dataset(self, **updated_fields):
+        return tablib.Dataset(self.build_row(**updated_fields),
+                              headers=self.headers)
+
+    def test_import_generates_no_errors(self):
+        dataset = self.get_import_dataset()
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertFalse(result.has_errors())
+
+    def test_import_changes_title(self):
+        dataset = self.get_import_dataset(title='New Title')
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertFalse(result.has_errors())
+        self.resource.import_data(dataset)
+        instance = Project.objects.get(title='New Title')  #type: Project
+        self.assertEqual(instance.number, self.instance.number)
+        self.assertEqual(instance.category, self.instance.category)
+        self.assertEqual(instance.pk, self.instance.pk)
+
+    def test_import_without_number_matches_existing(self):
+        dataset = self.get_import_dataset(number='',
+                                          subcategory=self.subcategory2.short_description)
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertFalse(result.has_errors())
+        self.resource.import_data(dataset)
+        instance = Project.objects.get(title=self.instance.title)  # type: Project
+        self.assertEqual(instance.pk, self.instance.pk)
+        self.assertEqual(str(instance.subcategory), 'Subcategory 2')
+
+    def test_import_without_number_creates_new(self):
+        dataset = self.get_import_dataset(number='', title='Extra Project')
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertFalse(result.has_errors())
+        self.resource.import_data(dataset)
+        instance = Project.objects.get(title='Extra Project')  # type: Project
+        self.assertEqual(instance.title, 'Extra Project')
+        self.assertNotEqual(instance.pk, self.instance.pk)
+        self.assertNotEqual(instance.number, self.instance.number)

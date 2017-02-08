@@ -238,13 +238,13 @@ class Project(models.Model):
         max_proj_num = get_max(
             Project.objects.filter(division=self.division, category=self.category))
         if max_proj_num:
-            return int(max_proj_num) + 1
+            return str(int(max_proj_num) + 1)
 
         max_proj_num = get_max(Project.objects.all())
         if max_proj_num:
-            return int(max_proj_num) + 1001 - (int(max_proj_num) % 1000)
+            return str(int(max_proj_num) + 1001 - (int(max_proj_num) % 1000))
         else:
-            return 1001
+            return str(1001)
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
