@@ -499,6 +499,8 @@ class TestProjectResource(TestCase):
     def setUpClass(cls):
         super(TestProjectResource, cls).setUpClass()
 
+        cls.labels = ('number', 'title', 'category', 'subcategory', 'division')
+
         cls.resource = ProjectResource()
         cls.category = mommy.make(Category, short_description='Category 1')
         cls.subcategory = mommy.make(Subcategory, short_description='Subcategory 1',
@@ -509,9 +511,13 @@ class TestProjectResource(TestCase):
                                   subcategory=cls.subcategory,
                                   division=cls.division)
 
-    def test_export(self):
+    def test_export_headers(self):
         dataset = self.resource.export()
-        csv = dataset.csv
-        header = 'number,title,category,subcategory,division'
-        self.assertEqual(header, csv[0:len(header)])
+        for index, label in enumerate(self.labels):
+            self.assertEqual(dataset.headers[index], label)
+
+    def test_export_data(self):
+        dataset = self.resource.export()
+        for key in self.labels:
+            self.assertEqual(dataset.dict[0][key], str(getattr(self.instance, key, None)))
 
