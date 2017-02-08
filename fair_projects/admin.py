@@ -11,7 +11,7 @@ from import_export import resources, fields
 from import_export.admin import ExportMixin, ImportExportMixin
 from import_export.widgets import ForeignKeyWidget, CharWidget
 
-from fair_categories.models import Category, Subcategory, Division
+from fair_categories.models import Category, Subcategory, Division, Ethnicity
 from fair_projects.logic import mass_email
 from fair_projects.models import JudgingInstance
 from fair_scoring_site.logic import get_judging_rubric
@@ -35,6 +35,31 @@ class ProjectResource(resources.ModelResource):
         fields = ('number', 'title', 'category', 'subcategory', 'division')
         export_order = ('number', 'title', 'category', 'subcategory', 'division')
         import_id_fields = ('title', 'number')
+
+
+class StudentResource(resources.ModelResource):
+    class Meta:
+        model = Student
+        fields = ('first_name', 'last_name', 'gender', 'ethnicity',
+                  'grade_level', 'email', 'teacher', 'project_number', 'project_title')
+        export_order = ('first_name', 'last_name', 'gender', 'ethnicity',
+                        'grade_level', 'email', 'teacher', 'project_number', 'project_title')
+        import_id_fields = ('first_name', 'last_name')
+
+    ethnicity = fields.Field(attribute='ethnicity',
+                             column_name='ethnicity',
+                             widget=ForeignKeyWidget(Ethnicity, 'short_description'))
+    teacher = fields.Field(attribute='teacher__user',
+                           column_name='teacher',
+                           widget=ForeignKeyWidget(Teacher, 'last_name'),
+                           readonly=True)
+    project_number = fields.Field(attribute='project',
+                                  column_name='project number',
+                                  widget=ForeignKeyWidget(Project, 'number'))
+    project_title = fields.Field(attribute='project',
+                                 column_name='project title',
+                                 widget=ForeignKeyWidget(Project, 'title'),
+                                 readonly=True)
 
 
 class StudentInline(admin.StackedInline):
@@ -88,6 +113,8 @@ class StudentAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ('full_name', 'teacher', 'grade_level', 'project_title')
     list_filter = ('teacher', 'grade_level', 'project__category', 'project__division')
     ordering = ('last_name', 'first_name')
+
+    resource_class = StudentResource
 
     def full_name(self, obj):
         return obj.full_name
