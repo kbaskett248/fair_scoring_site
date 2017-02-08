@@ -10,6 +10,7 @@ from django.utils.six import StringIO
 from model_mommy import mommy
 
 from fair_categories.models import Category, Division, Subcategory
+from fair_projects.admin import ProjectResource
 from fair_projects.logic import assign_judges, get_projects_sorted_by_score, get_question_feedback_dict
 from fair_projects.models import School, create_teacher, Teacher, create_teachers_group, Student, Project, \
     JudgingInstance
@@ -492,4 +493,25 @@ class TestQuestionFeedbackDict(TestCase):
         print(question_feedback_dict)
         self.assertFalse(True)
 
+
+class TestProjectResource(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(TestProjectResource, cls).setUpClass()
+
+        cls.resource = ProjectResource()
+        cls.category = mommy.make(Category, short_description='Category 1')
+        cls.subcategory = mommy.make(Subcategory, short_description='Subcategory 1',
+                                     category=cls.category)
+        cls.division = mommy.make(Division, short_description='Division 1')
+        cls.instance = mommy.make(Project,
+                                  category=cls.category,
+                                  subcategory=cls.subcategory,
+                                  division=cls.division)
+
+    def test_export(self):
+        dataset = self.resource.export()
+        csv = dataset.csv
+        header = 'number,title,category,subcategory,division'
+        self.assertEqual(header, csv[0:len(header)])
 
