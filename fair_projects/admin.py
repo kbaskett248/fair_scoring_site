@@ -82,6 +82,23 @@ class ProjectAdmin(ImportExportMixin, admin.ModelAdmin):
     resource_class = ProjectResource
 
 
+@admin.register(Student)
+class StudentAdmin(ImportExportMixin, admin.ModelAdmin):
+    model = Student
+    list_display = ('full_name', 'teacher', 'grade_level', 'project_title')
+    list_filter = ('teacher', 'grade_level', 'project__category', 'project__division')
+    ordering = ('last_name', 'first_name')
+
+    def full_name(self, obj):
+        return obj.full_name
+    full_name.admin_order_field = 'last_name'
+
+    def project_title(self, obj):
+        try:
+            return obj.project.title
+        except AttributeError:
+            return "-"
+
 class TeacherInline(admin.StackedInline):
     model = Teacher
     can_delete = False
