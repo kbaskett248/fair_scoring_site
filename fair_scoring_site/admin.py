@@ -1,10 +1,3 @@
-import types
-
-import functools
-
-from functools import singledispatch, reduce
-from itertools import groupby, permutations, product
-
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -12,13 +5,12 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
 from django.core.exceptions import ValidationError
 from django.db.models.base import Model
-from django.db.models.query import QuerySet
 from django.urls.base import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from import_export import resources, fields
-from import_export.admin import ExportMixin, ImportExportMixin
-from import_export.widgets import ForeignKeyWidget, CharWidget
+from import_export.admin import ExportMixin
+from import_export.widgets import ForeignKeyWidget
 
 import awards.admin
 import fair_projects
@@ -97,22 +89,6 @@ class AwardInstanceResource(resources.ModelResource):
 
 def convert_field_name_to_column_name(field_name: str) -> str:
     return field_name.replace("_", " ").title()
-
-
-@singledispatch
-def tuplify(_object):
-    return _object, _object
-
-
-@tuplify.register(tuple)
-def _(_object):
-    return _object
-
-
-@tuplify.register(list)
-@tuplify.register(set)
-def _(_object):
-    return tuple(_object)
 
 
 class StudentResource(resources.ModelResource):
