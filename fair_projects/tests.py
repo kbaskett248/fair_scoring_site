@@ -178,25 +178,20 @@ def make_project(category_name: str=None, division_name: str=None, **kwargs):
 
 
 class ProjectTests(TestCase):
-    def setUp(self):
-        self.rubric = make_rubric()
-        user = mommy.make(User, first_name='Dallas', last_name='Green')
-        self.judge = make_judge(user=user)
-
     def test_str(self, project_title: str='The effect of her presence on the amount of sunshine') -> None:
         project = make_project(title=project_title)
         self.assertEqual(str(project), project_title)
 
     def test_get_next_number(self):
         data = (
-            ('PH', 1001),
-            ('PH', 1002),
-            ('LM', 2001),
-            ('LH', 3001),
-            ('PM', 4001),
-            ('PH', 1003),
-            ('LH', 3002),
-            ('LM', 2002)
+            ('PH', '1001'),
+            ('PH', '1002'),
+            ('LM', '2001'),
+            ('LH', '3001'),
+            ('PM', '4001'),
+            ('PH', '1003'),
+            ('LH', '3002'),
+            ('LM', '2002')
         )
         cats = {'P': 'Physical Sciences', 'L': 'Life Sciences'}
         divs = {'H': 'High School', 'M': 'Middle School'}
@@ -303,40 +298,40 @@ def make_judging_instance(project: Project, judge: Judge=None, rubric: Rubric=No
 
 
 class JudgingInstanceTests(TestCase):
-    def setUp(self):
-        self.rubric = make_rubric()
-        self.school = make_school()
+    @classmethod
+    def setUpTestData(cls):
+        cls.rubric = make_rubric()
+        cls.school = make_school()
         user = mommy.make(User, first_name='Dallas', last_name='Green')
-        self.judge = make_judge(user=user)
-        self.project = make_project(title='Test Project')
+        cls.judge = make_judge(user=user)
+        cls.project = make_project(title='Test Project')
+
+    def setUp(self):
+        self.ji = make_judging_instance(self.project, judge=self.judge, rubric=self.rubric)
 
     def test_create_judging_instance_with_rubric(self):
-        ji = make_judging_instance(self.project, judge=self.judge, rubric=self.rubric)
-        self.assertIsInstance(ji, JudgingInstance)
-        self.assertIsNotNone(ji.response)
-        self.assertIsInstance(ji.response, RubricResponse)
+        self.assertIsInstance(self.ji, JudgingInstance)
+        self.assertIsNotNone(self.ji.response)
+        self.assertIsInstance(self.ji.response, RubricResponse)
 
     def test_judging_instance_string_method(self):
-        ji = make_judging_instance(self.project, judge=self.judge, rubric=self.rubric)
-        self.assertIn(str(self.judge), str(ji))
-        self.assertIn(str(self.project), str(ji))
-        self.assertIn(str(self.rubric.name), str(ji))
+        self.assertIn(str(self.judge), str(self.ji))
+        self.assertIn(str(self.project), str(self.ji))
+        self.assertIn(str(self.rubric.name), str(self.ji))
 
     def test_score_is_zero_for_unanswered_rubric(self):
-        ji = make_judging_instance(self.project, judge=self.judge, rubric=self.rubric)
-        self.assertEqual(ji.score(), 0,
+        self.assertEqual(self.ji.score(), 0,
                          msg='Score is not zero for unanswered rubrics')
-        self.assertFalse(ji.has_response(),
+        self.assertFalse(self.ji.has_response(),
                          msg='has_response should be False for unanswered rubrics')
 
     def test_score_is_non_zero_for_answered_rubrics(self):
-        ji = make_judging_instance(self.project, judge=self.judge, rubric=self.rubric)
-        answer_rubric_response(ji.response)
-        self.assertTrue(ji.has_response(),
+        answer_rubric_response(self.ji.response)
+        self.assertTrue(self.ji.has_response(),
                         msg='has_response should be True for answered rubrics')
-        self.assertNotEqual(ji.score(), 0,
+        self.assertNotEqual(self.ji.score(), 0,
                             msg='Score should be non-zero for answered rubrics')
-        self.assertGreater(ji.score(), 0,
+        self.assertGreater(self.ji.score(), 0,
                            msg='Score should be non-zero for answered rubrics')
 
 
@@ -349,7 +344,8 @@ class TestJudgeAssignmentAndProjectScoring(TestCase):
                 'judges.json',
                 'rubric.json']
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         assign_judges()
 
     def test_judge_assignment_creates_judging_instances(self):
@@ -419,19 +415,20 @@ class TestResultsPage(TestCase):
                 'judges.json',
                 'rubric.json']
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         assign_judges()
-        self.client = Client()
-        self.user_without_permission = User.objects.create_user(
+        cls.client = Client()
+        cls.user_without_permission = User.objects.create_user(
             'user_without_permission', password='user_without_permission')
-        self.user_with_permission = User.objects.create_user(
+        cls.user_with_permission = User.objects.create_user(
             'user_with_permission', password='user_with_permission')
 
         permission = Permission.objects.get(codename='can_view_results')
-        self.user_with_permission.user_permissions.add(permission)
+        cls.user_with_permission.user_permissions.add(permission)
 
-        self.results_url = reverse('fair_projects:project_results')
-        self.results_link = '<a href="%s">Results</a>' % self.results_url
+        cls.results_url = reverse('fair_projects:project_results')
+        cls.results_link = '<a href="%s">Results</a>' % cls.results_url
 
     def test_results_view_redirects_anonymous(self):
         response = self.client.get(self.results_url, follow=True)
@@ -489,7 +486,7 @@ class TestQuestionFeedbackDict(TestCase):
         ji = project.judginginstance_set.first()
         answer_rubric_response(ji.response)
         question_feedback_dict = get_question_feedback_dict(project)
-        print(question_feedback_dict)
-        self.assertFalse(True)
+        for question in ji.response.rubric.question_set.all():
+            self.assertIsNotNone(question_feedback_dict[question.short_description])
 
 
