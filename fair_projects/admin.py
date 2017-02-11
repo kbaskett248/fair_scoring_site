@@ -7,12 +7,77 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from import_export import resources, fields
+from import_export.admin import ImportExportMixin
+from import_export.widgets import ForeignKeyWidget
 
+from fair_categories.models import Category, Subcategory, Division, Ethnicity
 from fair_projects.logic import mass_email
 from fair_projects.models import JudgingInstance
 from fair_scoring_site.logic import get_judging_rubric
 from rubrics.models import RubricResponse
 from .models import School, Teacher, Student, Project
+
+
+class ProjectResource(resources.ModelResource):
+    category = fields.Field(attribute='category',
+                            column_name='category',
+                            widget=ForeignKeyWidget(Category, 'short_description'))
+    subcategory = fields.Field(attribute='subcategory',
+                               column_name='subcategory',
+                               widget=ForeignKeyWidget(Subcategory, 'short_description'))
+    division = fields.Field(attribute='division',
+                            column_name='division',
+                            widget=ForeignKeyWidget(Division, 'short_description'))
+
+    class Meta:
+        model = Project
+        fields = ('number', 'title', 'category', 'subcategory', 'division')
+        export_order = ('number', 'title', 'category', 'subcategory', 'division')
+        import_id_fields = ('number', )
+
+    def get_instance(self, instance_loader, row):
+        number = self.fields['number'].clean(row)
+        title = self.fields['title'].clean(row)
+        instance = None
+
+        if number:
+            try:
+                instance = self.get_queryset().get(number=number)
+            except Project.DoesNotExist:
+                pass
+        elif title:
+            try:
+                instance = self.get_queryset().get(title=title)
+            except Project.DoesNotExist:
+                pass
+
+        return instance
+
+
+class StudentResource(resources.ModelResource):
+    class Meta:
+        model = Student
+        fields = ('first_name', 'last_name', 'gender', 'ethnicity',
+                  'grade_level', 'email', 'teacher', 'project_number', 'project_title')
+        export_order = ('first_name', 'last_name', 'gender', 'ethnicity',
+                        'grade_level', 'email', 'teacher', 'project_number', 'project_title')
+        import_id_fields = ('first_name', 'last_name')
+
+    ethnicity = fields.Field(attribute='ethnicity',
+                             column_name='ethnicity',
+                             widget=ForeignKeyWidget(Ethnicity, 'short_description'))
+    teacher = fields.Field(attribute='teacher__user',
+                           column_name='teacher',
+                           widget=ForeignKeyWidget(Teacher, 'last_name'),
+                           readonly=True)
+    project_number = fields.Field(attribute='project',
+                                  column_name='project number',
+                                  widget=ForeignKeyWidget(Project, 'number'))
+    project_title = fields.Field(attribute='project',
+                                 column_name='project title',
+                                 widget=ForeignKeyWidget(Project, 'title'),
+                                 readonly=True)
 
 
 class StudentInline(admin.StackedInline):
@@ -39,15 +104,15 @@ class JudgingInstanceForm(forms.ModelForm):
 class JudgingInstanceInline(admin.TabularInline):
     model = JudgingInstance
     form = JudgingInstanceForm
-    fields = ('judge', 'rubric')
-    readonly_fields = ('rubric', )
+    fields = ('judge', 'rubric', 'score')
+    readonly_fields = ('rubric', 'score')
 
     def rubric(self, instance):
         return instance.response.rubric
 
 
 @admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
+class ProjectAdmin(ImportExportMixin, admin.ModelAdmin):
     model = Project
     list_display = ('number', 'title', 'category', 'subcategory', 'division')
     list_display_links = ('number', 'title')
@@ -57,6 +122,27 @@ class ProjectAdmin(admin.ModelAdmin):
     view_on_site = True
     save_on_top = True
 
+    resource_class = ProjectResource
+
+
+@admin.register(Student)
+class StudentAdmin(ImportExportMixin, admin.ModelAdmin):
+    model = Student
+    list_display = ('full_name', 'teacher', 'grade_level', 'project_title')
+    list_filter = ('teacher', 'grade_level', 'project__category', 'project__division')
+    ordering = ('last_name', 'first_name')
+
+    resource_class = StudentResource
+
+    def full_name(self, obj):
+        return obj.full_name
+    full_name.admin_order_field = 'last_name'
+
+    def project_title(self, obj):
+        try:
+            return obj.project.title
+        except AttributeError:
+            return "-"
 
 class TeacherInline(admin.StackedInline):
     model = Teacher

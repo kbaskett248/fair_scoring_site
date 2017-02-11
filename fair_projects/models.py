@@ -143,8 +143,13 @@ class Student(models.Model):
         null=True
     )
 
-    def __str__(self):
+    @property
+    def full_name(self) -> str:
+        """str: Getter for full_name"""
         return self.first_name + ' ' + self.last_name
+
+    def __str__(self):
+        return self.full_name
 
 
 def create_student(first_name, last_name, ethnicity, gender, grade_level, project,
@@ -233,13 +238,13 @@ class Project(models.Model):
         max_proj_num = get_max(
             Project.objects.filter(division=self.division, category=self.category))
         if max_proj_num:
-            return int(max_proj_num) + 1
+            return str(int(max_proj_num) + 1)
 
         max_proj_num = get_max(Project.objects.all())
         if max_proj_num:
-            return int(max_proj_num) + 1001 - (int(max_proj_num) % 1000)
+            return str(int(max_proj_num) + 1001 - (int(max_proj_num) % 1000))
         else:
-            return 1001
+            return str(1001)
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
@@ -269,6 +274,9 @@ class Project(models.Model):
 
     def get_absolute_url(self):
         return reverse('fair_projects:detail', args=(self.number, ))
+
+    def student_str(self):
+        return ', '.join(str(student) for student in self.student_set.all())
 
 
 def create_project(title, abstract, category, subcategory, division, output_stream=None):
