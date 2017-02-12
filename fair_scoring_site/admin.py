@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.contrib import messages
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
 from django.core.exceptions import ValidationError
@@ -10,7 +9,6 @@ from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from import_export import resources, fields
 from import_export.admin import ExportMixin
-from import_export.widgets import ForeignKeyWidget
 
 import awards.admin
 import fair_projects
@@ -85,61 +83,6 @@ class AwardInstanceResource(resources.ModelResource):
 
     def dehydrate_division(self, instance):
         return instance.content_object.division
-
-
-def convert_field_name_to_column_name(field_name: str) -> str:
-    return field_name.replace("_", " ").title()
-
-
-class StudentResource(resources.ModelResource):
-    class Meta:
-        model = Student
-        fields = ('number', 'title', 'category', 'subcategory', 'division',
-                  'first_name', 'last_name', 'gender', 'ethnicity', 'grade_level', 'teacher', 'email')
-        export_order = fields
-        import_id_fields = ('first_name', 'last_name')
-
-    number = fields.Field(attribute='project', column_name='Number',
-                          widget=ForeignKeyWidget(Project, 'number'))
-
-    title = fields.Field(attribute='project', column_name='Title',
-                         widget=ForeignKeyWidget(Project, 'title'))
-
-    category = fields.Field(attribute='project__category', column_name='Category',
-                            widget=ForeignKeyWidget(Category, 'short_description'))
-
-    subcategory = fields.Field(attribute='project__subcategory', column_name='Subcategory',
-                               widget=ForeignKeyWidget(Subcategory, 'short_description'))
-
-    division = fields.Field(attribute='project__division', column_name='Division',
-                            widget=ForeignKeyWidget(Division, 'short_description'))
-
-    first_name = fields.Field(attribute='first_name', column_name='Student First Name')
-    last_name = fields.Field(attribute='last_name', column_name='Student Last Name')
-    gender = fields.Field(attribute='gender', column_name='Student Gender')
-    grade_level = fields.Field(attribute='grade_level', column_name='Student Grade Level')
-    email = fields.Field(attribute='email', column_name='Student Email')
-    ethnicity = fields.Field(attribute='ethnicity', column_name='Ethnicity',
-                             widget=ForeignKeyWidget(Ethnicity, 'short_description'))
-    teacher = fields.Field(attribute='teacher__user', column_name='Teacher',
-                           widget=ForeignKeyWidget(User, 'last_name'))
-
-    def export(self, queryset=None, *args, **kwargs):
-        if queryset:
-            project_keys = [values['pk'] for values in queryset.values('pk')]
-            queryset = Student.objects.filter(project__in=project_keys)
-        else:
-            queryset = Student.objects.all()
-
-        queryset = queryset.select_related('project', 'ethnicity').order_by('project__number')
-
-        return super(StudentResource, self).export(queryset, *args, **kwargs)
-
-    def before_import_row(self, row, **kwargs):
-        pass
-
-    def after_import_row(self, row, row_result, **kwargs):
-        pass
 
 
 class AwardRuleForm(awards.admin.AwardRuleForm):
