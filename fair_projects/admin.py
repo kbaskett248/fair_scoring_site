@@ -9,7 +9,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from import_export import resources, fields
 from import_export.admin import ImportExportMixin
-from import_export.widgets import ForeignKeyWidget
+from import_export.widgets import ForeignKeyWidget, CharWidget, IntegerWidget
 
 from fair_categories.models import Category, Subcategory, Division, Ethnicity
 from fair_projects.logic import mass_email
@@ -64,6 +64,15 @@ class StudentResource(resources.ModelResource):
                         'grade_level', 'email', 'teacher', 'project_number', 'project_title')
         import_id_fields = ('first_name', 'last_name')
 
+    first_name = fields.Field(attribute='first_name',
+                              column_name='first name',
+                              widget=CharWidget())
+    last_name = fields.Field(attribute='last_name',
+                              column_name='last name',
+                              widget=CharWidget())
+    grade_level = fields.Field(attribute='grade_level',
+                               column_name='grade level',
+                               widget=IntegerWidget())
     ethnicity = fields.Field(attribute='ethnicity',
                              column_name='ethnicity',
                              widget=ForeignKeyWidget(Ethnicity, 'short_description'))
