@@ -12,8 +12,20 @@
       method="post"
       class="form-horizontal">
     {% csrf_token %}
-    {% for field in form %}
+    {% for field in form.visible_fields %}
         {% include "horizontal_field.html" %}
+    {% endfor %}
+    {% for field in form.hidden_fields %}
+        {{ field }}
+    {% endfor %}
+    {{ judge_formset.management_form }}
+    {% for form in judge_formset %}
+        {% for field in form.visible_fields %}
+            {% include "horizontal_field.html" %}
+        {% endfor %}
+        {% for field in form.hidden_fields %}
+            {{ field }}
+        {% endfor %}
     {% endfor %}
     <div class="form-group">
         <div class="col-sm-offset-2 col-sm-10">
