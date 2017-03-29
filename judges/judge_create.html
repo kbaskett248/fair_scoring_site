@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% load i18n widget_tweaks %}
+
+{% block html-title %}Judge Signup{% endblock %}
+
+{% block title %}Judge Signup{% endblock %}
+
+{% block content %}
+    {% url 'judges:judge_create' as submission_url %}
+    <form action="{{ submission_url }}"
+      method="post"
+      class="form-horizontal">
+    {% csrf_token %}
+    {% for field in form %}
+        {% include "horizontal_field.html" %}
+    {% endfor %}
+    <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+            <button type="submit" class="btn btn-primary">{% trans "Submit" %}</button>
+        </div>
+    </div>
+    </form>
+{% endblock %}
