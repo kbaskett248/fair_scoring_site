@@ -31,6 +31,7 @@ urlpatterns = [
     url(r'^accounts/', include('django.contrib.auth.urls')),
     url(r'^$', home, name='home'),
     url(r'^projects/', include('fair_projects.urls')),
+    url(r'^judges/', include('judges.urls'))
 ]
 
 if settings.DEBUG:
