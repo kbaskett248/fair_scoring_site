@@ -24,6 +24,13 @@ class JudgeCreateView(CreateView):
 
     model = Judge
     template_name = 'judges/judge_create.html'
-
+    fields = ['user',
+              'phone',
+              'has_device',
+              'education',
+              'fair_experience',
+              'categories',
+              'divisions',
+              ]
 
 
