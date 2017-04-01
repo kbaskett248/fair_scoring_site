@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.forms import inlineformset_factory
@@ -115,6 +115,8 @@ class JudgeCreateView(CreateView):
     @transaction.atomic
     def form_valid(self, form):
         user = form.save()
+        self.add_user_to_judges_group(user)
+        user.save()
         self.object = user
 
         for judge in self.formset.save(commit=False):
@@ -123,6 +125,10 @@ class JudgeCreateView(CreateView):
             judge.save()
 
         return HttpResponseRedirect(self.get_success_url())
+
+    def add_user_to_judges_group(self, user):
+        judges_group = Group.objects.get(name='Judges')
+        user.groups.add(judges_group.pk)
 
 
 
