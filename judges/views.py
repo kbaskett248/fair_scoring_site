@@ -4,8 +4,8 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
 
-from .forms import UserCreationForm, JudgeFormset
-from .models import Judge
+from .forms import UserCreationForm, JudgeCreationForm
+
 
 class JudgeCreateView(CreateView):
     """Use to create a new Judge.
@@ -24,27 +24,22 @@ class JudgeCreateView(CreateView):
     def get_context_data(self, **kwargs):
         """Add the formset for Judge fields to the context."""
         context = super(JudgeCreateView, self).get_context_data(**kwargs)
-        context['judge_formset'] = self.get_formset(self.request)
+        context['judge_form'] = self.get_judge_form(self.request)
         return context
 
-    def get_formset(self, request):
+    def get_judge_form(self, request) -> JudgeCreationForm:
         if request.method == 'POST':
-            return JudgeFormset(self.request.POST, self.request.FILES, prefix='judge',
-                                queryset=Judge.objects.none(),
-                                form_kwargs=self.get_formset_form_kwargs(request))
+            return JudgeCreationForm(self.request.POST, self.request.FILES, prefix='judge')
         else:
-            return JudgeFormset(prefix='judge', queryset=Judge.objects.none(),
-                                form_kwargs=self.get_formset_form_kwargs(request))
-
-    def get_formset_form_kwargs(self, request):
-        return {}
+            return JudgeCreationForm(prefix='judge')
 
     def post(self, request, *args, **kwargs):
         self.object = None
-        fs = self.get_formset(request)
-        if fs.is_valid():
-            self.formset = fs
-            return super(JudgeCreateView, self).post(request, *args, **kwargs)
+
+        judge_form = self.get_judge_form(request)
+        if judge_form.is_valid():
+            self.judge_form = judge_form
+            return  super(JudgeCreateView, self).post(request, *args, **kwargs)
         else:
             return self.form_invalid(self.get_form(self.get_form_class()))
 
@@ -55,11 +50,11 @@ class JudgeCreateView(CreateView):
         user.save()
         self.object = user
 
-        for judge in self.formset.save(commit=False):
-            if not judge.user_id:
-                judge.user = user
-            judge.save()
-        self.formset.save_m2m()
+        judge = self.judge_form.save(commit=False)
+        if not judge.user_id:
+            judge.user = user
+        judge.save()
+        self.judge_form.save_m2m()
 
         return HttpResponseRedirect(self.get_success_url())
 

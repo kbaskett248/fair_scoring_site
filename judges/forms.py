@@ -1,6 +1,5 @@
 from django.contrib.auth.forms import UserCreationForm as UserForm
-from django.contrib.auth.models import User
-from django.forms import Form, inlineformset_factory, FileField
+from django.forms import Form, FileField, ModelForm
 
 from judges.models import Judge
 
@@ -8,10 +7,9 @@ from judges.models import Judge
 class UploadFileForm(Form):
     file = FileField()
 
-class UserCreationForm(UserForm):
-    """Override the built-in user form to gather first_name, last_name and email.
 
-    """
+class UserCreationForm(UserForm):
+    """Override the built-in user form to gather first_name, last_name and email."""
     Meta = UserForm.Meta
     Meta.fields = ('username',
                    'password1',
@@ -34,14 +32,10 @@ class UserCreationForm(UserForm):
         self.fields['email'].required = True
 
 
-JudgeFormset = inlineformset_factory(User, Judge,
-                                     fields=['user',
-                                             'phone',
-                                             'has_device',
-                                             'education',
-                                             'fair_experience',
-                                             'categories',
-                                             'divisions',
-                                             ],
-                                     min_num=1, max_num=1, extra=0, can_delete=False,
-                                     can_order=False)
+class JudgeCreationForm(ModelForm):
+    """Form used for creating a new judge"""
+
+    class Meta:
+        model = Judge
+        fields = ('phone', 'has_device', 'education', 'fair_experience', 'categories', 'divisions')
+

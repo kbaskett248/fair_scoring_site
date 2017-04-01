@@ -12,21 +12,65 @@
       method="post"
       class="form-horizontal">
     {% csrf_token %}
-    {% for field in form.visible_fields %}
+        <p>Account</p>
+        {% with field=form.username %}
         {% include "horizontal_field.html" %}
-    {% endfor %}
-    {% for field in form.hidden_fields %}
+        {% endwith %}
+
+        {% with field=form.password1 %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=form.password2 %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        <p>Name</p>
+        {% with field=form.first_name %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=form.last_name %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        <p>Contact</p>
+        {% with field=form.email %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=judge_form.phone %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=judge_form.has_device %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        <p>Experience</p>
+        {% with field=judge_form.education %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=judge_form.fair_experience %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=judge_form.categories %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=judge_form.divisions %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% for field in judge_form.hidden_fields %}
         {{ field }}
-    {% endfor %}
-    {{ judge_formset.management_form }}
-    {% for form in judge_formset %}
-        {% for field in form.visible_fields %}
-            {% include "horizontal_field.html" %}
         {% endfor %}
+
         {% for field in form.hidden_fields %}
-            {{ field }}
+        {{ field }}
         {% endfor %}
-    {% endfor %}
     <div class="form-group">
         <div class="col-sm-offset-2 col-sm-10">
             <button type="submit" class="btn btn-primary">{% trans "Submit" %}</button>
