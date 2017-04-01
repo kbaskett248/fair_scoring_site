@@ -1,83 +1,18 @@
 from django.contrib.auth.models import User, Group
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
-from django.contrib.auth.forms import UserCreationForm as UserForm
 
-from judges.models import Judge
-
-class UserCreationForm(UserForm):
-    """The summary line for a class docstring should fit on one line.
-
-    If the class has public attributes, they may be documented here
-    in an ``Attributes`` section and follow the same formatting as a
-    function's ``Args`` section. Alternatively, attributes may be documented
-    inline with the attribute's declaration (see __init__ method below).
-
-    Properties created with the ``@property`` decorator should be documented
-    in the property's getter method.
-
-    Attributes:
-        attr1 (str): Description of `attr1`.
-        attr2 (:obj:`int`, optional): Description of `attr2`.
-
-    """
-    Meta = UserForm.Meta
-    Meta.fields = ('username',
-                   'password1',
-                   'password2',
-                   'first_name',
-                   'last_name',
-                   'email')
-
-    def __init__(self, *args, **kwargs):
-        """Example function with PEP 484 type annotations.
-
-        Arguments:
-            arg1: The first parameter.
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
-        Returns:
-            The return value. True for success, False otherwise.
-
-        """
-        super(UserCreationForm, self).__init__(*args, **kwargs)
-        self.fields['first_name'].required = True
-        self.fields['last_name'].required = True
-        self.fields['email'].required = True
-
-
-JudgeFormset = inlineformset_factory(User, Judge,
-                                     fields=['user',
-                                             'phone',
-                                             'has_device',
-                                             'education',
-                                             'fair_experience',
-                                             'categories',
-                                             'divisions',
-                                             ],
-                                     min_num=1, max_num=1, extra=0, can_delete=False,
-                                     can_order=False)
+from .forms import UserCreationForm, JudgeFormset
+from .models import Judge
 
 class JudgeCreateView(CreateView):
-    """The summary line for a class docstring should fit on one line.
+    """Use to create a new Judge.
 
-    If the class has public attributes, they may be documented here
-    in an ``Attributes`` section and follow the same formatting as a
-    function's ``Args`` section. Alternatively, attributes may be documented
-    inline with the attribute's declaration (see __init__ method below).
-
-    Properties created with the ``@property`` decorator should be documented
-    in the property's getter method.
-
-    Attributes:
-        attr1 (str): Description of `attr1`.
-        attr2 (:obj:`int`, optional): Description of `attr2`.
+    This view is used to create a new Judge and the corresponding User object.
+    In addition to gathering all the necessary fields, it ensures the Judge's
+    User object has been added to the Judges group.
 
     """
 
@@ -87,6 +22,7 @@ class JudgeCreateView(CreateView):
     success_url = reverse_lazy('login')
 
     def get_context_data(self, **kwargs):
+        """Add the formset for Judge fields to the context."""
         context = super(JudgeCreateView, self).get_context_data(**kwargs)
         context['judge_formset'] = self.get_formset(self.request)
         return context
