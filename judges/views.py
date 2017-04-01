@@ -27,7 +27,12 @@ class UserCreationForm(UserForm):
 
     """
     Meta = UserForm.Meta
-    Meta.fields = Meta.fields + ('first_name', 'last_name', 'email')
+    Meta.fields = ('username',
+                   'password1',
+                   'password2',
+                   'first_name',
+                   'last_name',
+                   'email')
 
 
 JudgeFormset = inlineformset_factory(User, Judge,
