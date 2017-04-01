@@ -34,6 +34,23 @@ class UserCreationForm(UserForm):
                    'last_name',
                    'email')
 
+    def __init__(self, *args, **kwargs):
+        """Example function with PEP 484 type annotations.
+
+        Arguments:
+            arg1: The first parameter.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            The return value. True for success, False otherwise.
+
+        """
+        super(UserCreationForm, self).__init__(*args, **kwargs)
+        self.fields['first_name'].required = True
+        self.fields['last_name'].required = True
+        self.fields['email'].required = True
+
 
 JudgeFormset = inlineformset_factory(User, Judge,
                                      fields=['user',
