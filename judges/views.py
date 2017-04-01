@@ -123,6 +123,7 @@ class JudgeCreateView(CreateView):
             if not judge.user_id:
                 judge.user = user
             judge.save()
+        self.formset.save_m2m()
 
         return HttpResponseRedirect(self.get_success_url())
 
