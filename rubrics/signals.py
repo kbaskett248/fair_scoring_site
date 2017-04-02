@@ -31,8 +31,11 @@ def createRelatedQuestionResponses(sender: type, instance: Question, created: bo
         else:
             all_rubric_responses.add(qr.rubric_response)
 
+    new_responses = []
     for rr in all_rubric_responses - rubric_responses_for_specified_question:
-        QuestionResponse.objects.create(rubric_response=rr, question=question)
+        new_responses.append(QuestionResponse(rubric_response=rr, question=question))
+
+    QuestionResponse.objects.bulk_create(new_responses)
 
 
 @receiver(post_delete, sender=Question)
