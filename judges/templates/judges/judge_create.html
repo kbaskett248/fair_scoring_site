@@ -12,7 +12,7 @@
       method="post"
       class="form-horizontal">
     {% csrf_token %}
-        <p>Account</p>
+        <h2><small>Account</small></h2>
         {% with field=form.username %}
         {% include "horizontal_field.html" %}
         {% endwith %}
@@ -25,7 +25,7 @@
         {% include "horizontal_field.html" %}
         {% endwith %}
 
-        <p>Name</p>
+        <h2><small>Name</small></h2>
         {% with field=form.first_name %}
         {% include "horizontal_field.html" %}
         {% endwith %}
@@ -34,7 +34,7 @@
         {% include "horizontal_field.html" %}
         {% endwith %}
 
-        <p>Contact</p>
+        <h2><small>Contact</small></h2>
         {% with field=form.email %}
         {% include "horizontal_field.html" %}
         {% endwith %}
@@ -47,7 +47,7 @@
         {% include "horizontal_field.html" %}
         {% endwith %}
 
-        <p>Experience</p>
+        <h2><small>Experience</small></h2>
         {% with field=judge_form.education %}
         {% include "horizontal_field.html" %}
         {% endwith %}
