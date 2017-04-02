@@ -1,3 +1,5 @@
+from functools import reduce
+
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
@@ -14,7 +16,24 @@ def createRelatedQuestionResponses(sender: type, instance: Question, created: bo
         **kwargs: Additional, unused keyword arguments.
 
     """
-    pass
+    question = instance
+    rubric = question.rubric
+
+    queryset = QuestionResponse.objects\
+               .filter(rubric_response__rubric=rubric)\
+               .select_related('rubric_response', 'question')
+
+    all_rubric_responses = set()
+    rubric_responses_for_specified_question = set()
+    for qr in queryset:
+        if qr.question == question:
+            rubric_responses_for_specified_question.add(qr.rubric_response)
+        else:
+            all_rubric_responses.add(qr.rubric_response)
+
+    for rr in all_rubric_responses - rubric_responses_for_specified_question:
+        QuestionResponse.objects.create(rubric_response=rr, question=question)
+
 
 @receiver(post_delete, sender=Question)
 def deleteRelatedQuestionResponses(sender: type, instance: Question, **kwargs) -> None:

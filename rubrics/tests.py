@@ -616,4 +616,15 @@ class QuestionResponseTests(HypTestCase):
             elapsed_seconds = (now - response.last_submitted).seconds
             self.assertEqual(elapsed_seconds, 0)
 
+    def test_new_question_is_added_to_response(self):
+        rub_response = make_rubric_response()  # type: RubricResponse
 
+        question = mommy.make(Question, rubric=rub_response.rubric, short_description="Additional test question")  # type: Question
+
+        self.assertTrue(rub_response.questionresponse_set\
+                        .filter(question__short_description="Additional test question")\
+                        .exists())
+
+        response = rub_response.questionresponse_set\
+                   .get(question__short_description="Additional test question")  # type: QuestionResponse
+        self.assertEqual(question, response.question)
