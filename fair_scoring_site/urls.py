@@ -14,6 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 import django.contrib.admin
+from django.conf import settings
 from django.conf.urls import url, include
 
 from fair_projects.views import import_projects, judge_assignment, notify_teachers, delete_judge_assignments
@@ -30,4 +31,11 @@ urlpatterns = [
     url(r'^accounts/', include('django.contrib.auth.urls')),
     url(r'^$', home, name='home'),
     url(r'^projects/', include('fair_projects.urls')),
+    url(r'^judges/', include('judges.urls'))
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns

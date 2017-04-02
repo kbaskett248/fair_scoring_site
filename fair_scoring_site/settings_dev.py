@@ -27,6 +27,10 @@ SECRET_KEY = 'REPLACE ME'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+INSTALLED_APPS.append('debug_toolbar')
+
+MIDDLEWARE_CLASSES.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+
 ALLOWED_HOSTS = []
 
 # Database
@@ -37,6 +41,10 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+
+INTERNAL_IPS = [
+    '127.0.0.1'
+]
 
 # Email
 # https://docs.djangoproject.com/en/1.10/topics/email/#email-backends

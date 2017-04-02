@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% load i18n widget_tweaks %}
+
+{% block html-title %}Judge Signup{% endblock %}
+
+{% block title %}Judge Signup{% endblock %}
+
+{% block content %}
+    {% url 'judges:judge_create' as submission_url %}
+    <form action="{{ submission_url }}"
+      method="post"
+      class="form-horizontal">
+    {% csrf_token %}
+        <h2><small>Account</small></h2>
+        {% with field=form.username %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=form.password1 %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=form.password2 %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        <h2><small>Name</small></h2>
+        {% with field=form.first_name %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=form.last_name %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        <h2><small>Contact</small></h2>
+        {% with field=form.email %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=judge_form.phone %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=judge_form.has_device %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        <h2><small>Experience</small></h2>
+        {% with field=judge_form.education %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=judge_form.fair_experience %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=judge_form.categories %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% with field=judge_form.divisions %}
+        {% include "horizontal_field.html" %}
+        {% endwith %}
+
+        {% for field in judge_form.hidden_fields %}
+        {{ field }}
+        {% endfor %}
+
+        {% for field in form.hidden_fields %}
+        {{ field }}
+        {% endfor %}
+    <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+            <button type="submit" class="btn btn-primary">{% trans "Submit" %}</button>
+        </div>
+    </div>
+    </form>
+{% endblock %}
