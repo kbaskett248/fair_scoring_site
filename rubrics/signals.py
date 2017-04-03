@@ -45,19 +45,6 @@ def get_rubric_response_set_related_to_question(question_id) -> set:
                .values_list('rubric_response_id', flat=True)
     return set(queryset)
 
-
-@receiver(post_delete, sender=Question)
-def deleteRelatedQuestionResponses(sender: type, instance: Question, **kwargs) -> None:
-    """When deleting a question, delete the associated QuestionResponse objects.
-
-    Arguments:
-        sender: The model class sending this signal. Should be Question.
-        instance: The Question instance that was saved.
-        **kwargs: Additional, unused keyword arguments.
-
-    """
-    pass
-
 @receiver(post_save, sender=Choice)
 @receiver(post_delete, sender=Choice)
 def deleteResponsesForChoice(sender: type, instance: Choice, **kwargs) -> None:

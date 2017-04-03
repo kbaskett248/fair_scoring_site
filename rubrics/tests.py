@@ -628,3 +628,17 @@ class QuestionResponseTests(HypTestCase):
         response = rub_response.questionresponse_set\
                    .get(question__short_description="Additional test question")  # type: QuestionResponse
         self.assertEqual(question, response.question)
+
+    def test_deleted_question_is_removed_from_response(self):
+        rub_response = make_rubric_response()  # type: RubricResponse
+        num_question_responses = rub_response.questionresponse_set.count()
+
+        question = rub_response.questionresponse_set.first().question  # type: Question
+
+        question.delete()
+        self.assertEqual(rub_response.questionresponse_set.count(),
+                         num_question_responses-1)
+        self.assertQuerysetEqual(rub_response.questionresponse_set.all(),
+                                 ['Question SINGLE SELECT', 'Question MULTI SELECT', 'Question LONG TEXT'],
+                                 transform=lambda x: x.question.__str__(),
+                                 ordered=False)
