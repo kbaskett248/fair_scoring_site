@@ -3,11 +3,15 @@ from functools import reduce
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from .models import Question, Choice, QuestionResponse
+from .models import Question, Choice, QuestionResponse, RubricResponse, Rubric
+
 
 @receiver(post_save, sender=Question)
 def createRelatedQuestionResponses(sender: type, instance: Question, created: bool, **kwargs) -> None:
     """When saving a question, make sure there is a QuestionResponse for all RubricResponse objects
+
+    New QuestionResponse instances are created using bulk_create. This doesn't
+    call save and doesn't trigger pre_save or post_save hooks.
 
     Arguments:
         sender: The model class sending this signal. Should be Question.
@@ -16,26 +20,30 @@ def createRelatedQuestionResponses(sender: type, instance: Question, created: bo
         **kwargs: Additional, unused keyword arguments.
 
     """
-    question = instance
-    rubric = question.rubric
+    question_id = instance
+    rubric_id = instance.rubric_id
 
-    queryset = QuestionResponse.objects\
-               .filter(rubric_response__rubric=rubric)\
-               .select_related('rubric_response', 'question')
-
-    all_rubric_responses = set()
-    rubric_responses_for_specified_question = set()
-    for qr in queryset:
-        if qr.question == question:
-            rubric_responses_for_specified_question.add(qr.rubric_response)
-        else:
-            all_rubric_responses.add(qr.rubric_response)
+    all_rubric_responses = get_rubric_response_set(rubric_id)
+    rubric_responses_for_specified_question = get_rubric_response_set_related_to_question(question_id)
 
     new_responses = []
     for rr in all_rubric_responses - rubric_responses_for_specified_question:
-        new_responses.append(QuestionResponse(rubric_response=rr, question=question))
+        new_responses.append(QuestionResponse(rubric_response_id=rr, question=question_id))
 
     QuestionResponse.objects.bulk_create(new_responses)
+
+
+def get_rubric_response_set(rubric_id) -> set:
+    queryset = RubricResponse.objects\
+               .filter(rubric_id=rubric_id)\
+               .values_list('id', flat=True)
+    return set(queryset)
+
+def get_rubric_response_set_related_to_question(question_id) -> set:
+    queryset = QuestionResponse.objects\
+               .filter(question_id=question_id)\
+               .values_list('rubric_response_id', flat=True)
+    return set(queryset)
 
 
 @receiver(post_delete, sender=Question)
