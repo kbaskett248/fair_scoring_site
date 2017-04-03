@@ -117,6 +117,8 @@ class Question(ValidatedModel):
         if not self.order:
             self.order = self._get_next_order()
 
+        self.__original_question_type = self.question_type
+
     def _get_next_order(self):
         try:
             max_order = Question.objects.filter(
@@ -157,6 +159,17 @@ class Question(ValidatedModel):
             choice.order = order
         choice.save()
         return choice
+
+    def question_type_changed(self) -> bool:
+        return self.question_type != self.__original_question_type
+
+    def question_type_changed_compatibility(self) -> bool:
+        compatible_types = [Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE]
+        if ((self.question_type in compatible_types) and
+                (self.__original_question_type in compatible_types)):
+            return True
+        else:
+            return self.question_type_changed()
 
     def validate_instance(self, rubric=None, order=None, short_description=None, long_description=None,
                           help_text=None, weight=None, question_type=None, choice_sort=None, required=None,

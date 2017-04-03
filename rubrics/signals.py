@@ -39,11 +39,30 @@ def get_rubric_response_set(rubric_id) -> set:
                .values_list('id', flat=True)
     return set(queryset)
 
+
 def get_rubric_response_set_related_to_question(question_id) -> set:
     queryset = QuestionResponse.objects\
                .filter(question_id=question_id)\
                .values_list('rubric_response_id', flat=True)
     return set(queryset)
+
+
+@receiver(post_save, sender=Question)
+def deleteResponsesForQuestion(sender: type, instance: Question, created: bool, **kwargs):
+    """If a question type changes, delete the response from all associated
+    QuestionResponse objects.
+
+    Arguments:
+        sender: The model class sending this signal. Should be Question.
+        instance: The Question instance that was saved.
+        created: True if the instance was created.
+        **kwargs: Additional, unused keyword arguments.
+
+    """
+    if created:
+        return
+
+
 
 @receiver(post_save, sender=Choice)
 @receiver(post_delete, sender=Choice)
