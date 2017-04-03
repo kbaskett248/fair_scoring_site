@@ -141,6 +141,33 @@ class QuestionTests(HypTestCase):
             with self.assertRaises(ValidationError):
                 add_choices(question)
 
+    @given(question_type_and_weight(), question_type_and_weight())
+    def test_question_type_changed(self, q1: (str, float), q2: (str, float)):
+        question = mommy.make(Question, question_type=q1[0], weight=0)  # type: Question
+        self.assertEqual(question.question_type, q1[0])
+        question.question_type = q2[0]
+        self.assertEqual(question.question_type, q2[0])
+
+        if q1[0] == q2[0]:
+            self.assertFalse(question.question_type_changed())
+        else:
+            self.assertTrue(question.question_type_changed())
+
+    @given(question_type_and_weight(), question_type_and_weight())
+    def test_question_type_changed_compatibility(self, q1: (str, float), q2: (str, float)):
+        compatible_types = (Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE)
+        question = mommy.make(Question, question_type=q1[0], weight=0)  # type: Question
+        self.assertEqual(question.question_type, q1[0])
+        question.question_type = q2[0]
+        self.assertEqual(question.question_type, q2[0])
+
+        if q1[0] == q2[0]:
+            self.assertFalse(question.question_type_changed_compatibility())
+        elif (q1[0] in compatible_types) and (q2[0] in compatible_types):
+            self.assertFalse(question.question_type_changed_compatibility())
+        else:
+            self.assertTrue(question.question_type_changed_compatibility())
+
 
 class QuestionFormTests(HypTestCase):
     @classmethod

@@ -167,7 +167,7 @@ class Question(ValidatedModel):
         compatible_types = [Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE]
         if ((self.question_type in compatible_types) and
                 (self.__original_question_type in compatible_types)):
-            return True
+            return False
         else:
             return self.question_type_changed()
 
