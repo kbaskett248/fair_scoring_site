@@ -4,7 +4,7 @@ from datetime import datetime
 
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from hypothesis import given
+from hypothesis import given, example, assume
 from hypothesis.extra.django import TestCase as HypTestCase
 from hypothesis.extra.django.models import models
 from hypothesis.searchstrategy import SearchStrategy
@@ -633,7 +633,6 @@ class QuestionResponseTests(HypTestCase):
         self.assertEqual(q_resp.score(), 0,
                          msg='Score should be zero for questions with non-numeric choices')
 
-
     def test_last_saved_date(self):
         rub_response = make_rubric_response()
 
@@ -714,3 +713,29 @@ class QuestionResponseTests(HypTestCase):
                             msg="Response not cleared for change from {} to {}".format(
                                 Question.LONG_TEXT, new_type
                             ))
+
+    def test_responses_are_not_cleared_for_special_case(self):
+        rub_response = make_rubric_response()
+        answer_rubric_response(rub_response)
+
+        def internal_test(starting_type, new_type):
+            question = rub_response.rubric.question_set \
+                .filter(question_type=starting_type) \
+                .first()  # type: Question
+            response = rub_response.questionresponse_set \
+                .get(question_id=question.id)  # type: QuestionResponse
+
+            self.assertTrue(response.question_answered)
+
+            question.question_type = new_type
+            question.save()
+            # Refreshing the response since refresh_from_db doesn't seem to work
+            response = QuestionResponse.objects.get(id=response.id)  # type: QuestionResponse
+
+            self.assertTrue(response.question_answered)
+
+        for starting_type, new_type in ((Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE),
+                                        (Question.SINGLE_SELECT_TYPE, Question.SCALE_TYPE)):
+            with self.subTest('{} -> {}'.format(starting_type, new_type)):
+                internal_test(starting_type, new_type)
+
