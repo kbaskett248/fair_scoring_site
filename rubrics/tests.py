@@ -723,6 +723,12 @@ class QuestionResponseClearingTests(HypTestCase):
         # Refreshing the response since refresh_from_db doesn't seem to work
         return QuestionResponse.objects.get(id=response.id)  # type: QuestionResponse
 
+    @contextmanager
+    def assertOnlyResponseForChoiceCleared(self, question_type):
+        choice, response = self.get_choice_and_response(question_type)
+        yield choice
+        self.assertOnlyGivenResponseCleared(response)
+
     def assertOnlyGivenResponseCleared(self, response: QuestionResponse) -> None:
         for r in self.rub_response.questionresponse_set.all():
             if r.pk == response.pk:
@@ -762,9 +768,11 @@ class QuestionResponseClearingTests(HypTestCase):
 
     @given(question_type().filter(lambda x: x in Question.CHOICE_TYPES))
     def test_clear_responses_when_choice_changes(self, question_type):
-        choice, response = self.get_choice_and_response(question_type)
+        with self.assertOnlyResponseForChoiceCleared(question_type) as choice:
+            choice.key = 10000
+            choice.save()
 
-        choice.key = 10000
-        choice.save()
-
-        self.assertOnlyGivenResponseCleared(response)
+    @given(question_type().filter(lambda x: x in Question.CHOICE_TYPES))
+    def test_clear_responses_when_choice_deleted(self, question_type):
+        with self.assertOnlyResponseForChoiceCleared(question_type) as choice:
+            choice.delete()
