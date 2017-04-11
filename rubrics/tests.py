@@ -685,23 +685,48 @@ class QuestionResponseTests(HypTestCase):
                                  transform=lambda x: x.question.__str__(),
                                  ordered=False)
 
-    @given(question_type())
-    def test_clear_responses_when_question_type_changed(self, new_type):
-        rub_response = make_rubric_response()
-        answer_rubric_response(rub_response)
 
-        question = rub_response.rubric.question_set\
-                   .filter(question_type=Question.LONG_TEXT)\
-                   .first()  # type: Question
-        response = rub_response.questionresponse_set\
-                   .get(question_id=question.id)  # type: QuestionResponse
+class QuestionResponseClearingTests(HypTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(QuestionResponseClearingTests, cls).setUpClass()
+        cls.rubric = make_rubric()
+
+    def setUp(self):
+        super(QuestionResponseClearingTests, self).setUp()
+        self.rub_response = make_rubric_response(self.rubric)
+        answer_rubric_response(self.rub_response)
+
+    def get_question_and_response(self, question_type: str) -> (Question, QuestionResponse):
+        question = self.rub_response.rubric.question_set \
+            .filter(question_type=question_type) \
+            .first()  # type: Question
+        response = self.rub_response.questionresponse_set \
+            .get(question_id=question.id)  # type: QuestionResponse
 
         self.assertTrue(response.question_answered)
 
+        return question, response
+
+    @staticmethod
+    def update_question_type(question: Question, new_type: str) -> None:
         question.question_type = new_type
         question.save()
+
+    @staticmethod
+    def refresh_response(response: QuestionResponse) -> QuestionResponse:
         # Refreshing the response since refresh_from_db doesn't seem to work
-        response = QuestionResponse.objects.get(id=response.id)  # type: QuestionResponse
+        return QuestionResponse.objects.get(id=response.id)  # type: QuestionResponse
+
+    def update_question_and_get_fresh_response(self, starting_type, new_type) -> QuestionResponse:
+        question, response = self.get_question_and_response(starting_type)
+
+        self.update_question_type(question, new_type)
+        return self.refresh_response(response)
+
+    @given(question_type())
+    def test_clear_responses_when_question_type_changed(self, new_type):
+        response = self.update_question_and_get_fresh_response(Question.LONG_TEXT, new_type)
 
         if new_type == Question.LONG_TEXT:
             self.assertTrue(response.question_answered,
@@ -715,27 +740,11 @@ class QuestionResponseTests(HypTestCase):
                             ))
 
     def test_responses_are_not_cleared_for_special_case(self):
-        rub_response = make_rubric_response()
-        answer_rubric_response(rub_response)
-
-        def internal_test(starting_type, new_type):
-            question = rub_response.rubric.question_set \
-                .filter(question_type=starting_type) \
-                .first()  # type: Question
-            response = rub_response.questionresponse_set \
-                .get(question_id=question.id)  # type: QuestionResponse
-
-            self.assertTrue(response.question_answered)
-
-            question.question_type = new_type
-            question.save()
-            # Refreshing the response since refresh_from_db doesn't seem to work
-            response = QuestionResponse.objects.get(id=response.id)  # type: QuestionResponse
-
-            self.assertTrue(response.question_answered)
-
+        # Scale type and Single select type are the same with different widgets, so nothing
+        # is cleared in this special case.
         for starting_type, new_type in ((Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE),
                                         (Question.SINGLE_SELECT_TYPE, Question.SCALE_TYPE)):
             with self.subTest('{} -> {}'.format(starting_type, new_type)):
-                internal_test(starting_type, new_type)
+                response = self.update_question_and_get_fresh_response(starting_type, new_type)
+                self.assertTrue(response.question_answered)
 
