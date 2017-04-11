@@ -4,7 +4,7 @@ from datetime import datetime
 
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from hypothesis import given
+from hypothesis import given, example, assume
 from hypothesis.extra.django import TestCase as HypTestCase
 from hypothesis.extra.django.models import models
 from hypothesis.searchstrategy import SearchStrategy
@@ -25,6 +25,10 @@ def fixed_decimals(min_value: float=0, max_value: float=1, num_decimals=3) -> Se
 def sane_text(min_size=None, max_size=None, average_size=None) -> SearchStrategy:
     return text(alphabet=[chr(i) for i in range(33, 126)],
                 min_size=min_size, max_size=max_size, average_size=average_size)
+
+
+def question_type() -> SearchStrategy:
+    return sampled_from(Question.CHOICE_TYPES)
 
 
 def question_type_and_weight() -> SearchStrategy:
@@ -113,9 +117,11 @@ class QuestionTests(HypTestCase):
         with self.assertRaises(ValidationError):
             mommy.make(Question, rubric=self.rubric, question_type=question_type)
 
-    @given(sort_option=one_of(sane_text(), none()))
+    @given(sort_option=one_of(sane_text().filter(lambda x: x != 'A' and x != 'M'),
+                              none()))
     def test_invalid_sort_option_raises_error(self, sort_option):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValidationError,
+                               msg="No error raised for sort_option {}".format(sort_option)):
             mommy.make(Question, rubric=self.rubric, question_type=Question.LONG_TEXT,
                        choice_sort=sort_option)
 
@@ -140,6 +146,33 @@ class QuestionTests(HypTestCase):
             question = mommy.make(Question, question_type=Question.LONG_TEXT, rubric=self.rubric)
             with self.assertRaises(ValidationError):
                 add_choices(question)
+
+    @given(question_type_and_weight(), question_type_and_weight())
+    def test_question_type_changed(self, q1: (str, float), q2: (str, float)):
+        question = mommy.make(Question, question_type=q1[0], weight=0)  # type: Question
+        self.assertEqual(question.question_type, q1[0])
+        question.question_type = q2[0]
+        self.assertEqual(question.question_type, q2[0])
+
+        if q1[0] == q2[0]:
+            self.assertFalse(question.question_type_changed())
+        else:
+            self.assertTrue(question.question_type_changed())
+
+    @given(question_type_and_weight(), question_type_and_weight())
+    def test_question_type_changed_compatibility(self, q1: (str, float), q2: (str, float)):
+        compatible_types = (Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE)
+        question = mommy.make(Question, question_type=q1[0], weight=0)  # type: Question
+        self.assertEqual(question.question_type, q1[0])
+        question.question_type = q2[0]
+        self.assertEqual(question.question_type, q2[0])
+
+        if q1[0] == q2[0]:
+            self.assertFalse(question.question_type_changed_compatibility())
+        elif (q1[0] in compatible_types) and (q2[0] in compatible_types):
+            self.assertFalse(question.question_type_changed_compatibility())
+        else:
+            self.assertTrue(question.question_type_changed_compatibility())
 
 
 class QuestionFormTests(HypTestCase):
@@ -600,7 +633,6 @@ class QuestionResponseTests(HypTestCase):
         self.assertEqual(q_resp.score(), 0,
                          msg='Score should be zero for questions with non-numeric choices')
 
-
     def test_last_saved_date(self):
         rub_response = make_rubric_response()
 
@@ -616,4 +648,130 @@ class QuestionResponseTests(HypTestCase):
             elapsed_seconds = (now - response.last_submitted).seconds
             self.assertEqual(elapsed_seconds, 0)
 
+    def test_clear_response(self):
+        rub_response = make_rubric_response()
+        answer_rubric_response(rub_response)
 
+        for response in rub_response.questionresponse_set.all():
+            with self.subTest(response.question.question_type):
+                self.assertTrue(response.question_answered)
+                response.clear_response()
+                self.assertFalse(response.question_answered)
+
+    def test_new_question_is_added_to_response(self):
+        rub_response = make_rubric_response()  # type: RubricResponse
+
+        question = mommy.make(Question, rubric=rub_response.rubric, short_description="Additional test question")  # type: Question
+
+        self.assertTrue(rub_response.questionresponse_set\
+                        .filter(question__short_description="Additional test question")\
+                        .exists())
+
+        response = rub_response.questionresponse_set\
+                   .get(question__short_description="Additional test question")  # type: QuestionResponse
+        self.assertEqual(question, response.question)
+
+    def test_deleted_question_is_removed_from_response(self):
+        rub_response = make_rubric_response()  # type: RubricResponse
+        num_question_responses = rub_response.questionresponse_set.count()
+
+        question = rub_response.questionresponse_set.first().question  # type: Question
+
+        question.delete()
+        self.assertEqual(rub_response.questionresponse_set.count(),
+                         num_question_responses-1)
+        self.assertQuerysetEqual(rub_response.questionresponse_set.all(),
+                                 ['Question SINGLE SELECT', 'Question MULTI SELECT', 'Question LONG TEXT'],
+                                 transform=lambda x: x.question.__str__(),
+                                 ordered=False)
+
+
+class QuestionResponseClearingTests(HypTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(QuestionResponseClearingTests, cls).setUpClass()
+        cls.rubric = make_rubric()
+
+    def setUp(self):
+        super(QuestionResponseClearingTests, self).setUp()
+        self.rub_response = make_rubric_response(self.rubric)
+        answer_rubric_response(self.rub_response)
+
+    def get_question_and_response(self, question_type: str) -> (Question, QuestionResponse):
+        question = self.rub_response.rubric.question_set \
+            .filter(question_type=question_type) \
+            .first()  # type: Question
+        response = self.rub_response.questionresponse_set \
+            .get(question_id=question.id)  # type: QuestionResponse
+
+        self.assertTrue(response.question_answered)
+
+        return question, response
+
+    def get_choice_and_response(self, question_type: str) -> (Choice, QuestionResponse):
+        question, response = self.get_question_and_response(question_type)
+        choice = question.choice_set.first()  # type: Choice
+        return choice, response
+
+    @staticmethod
+    def update_question_type(question: Question, new_type: str) -> None:
+        question.question_type = new_type
+        question.save()
+
+    @staticmethod
+    def refresh_response(response: QuestionResponse) -> QuestionResponse:
+        # Refreshing the response since refresh_from_db doesn't seem to work
+        return QuestionResponse.objects.get(id=response.id)  # type: QuestionResponse
+
+    @contextmanager
+    def assertOnlyResponseForChoiceCleared(self, question_type: str):
+        choice, response = self.get_choice_and_response(question_type)
+        yield choice
+        self.assertOnlyGivenResponseCleared(response)
+
+    def assertOnlyGivenResponseCleared(self, response: QuestionResponse) -> None:
+        for r in self.rub_response.questionresponse_set.all():
+            if r.pk == response.pk:
+                self.assertFalse(r.question_answered)
+            else:
+                self.assertTrue(r.question_answered)
+
+    def assertNoResponsesCleared(self):
+        for r in self.rub_response.questionresponse_set.all():
+            self.assertTrue(r.question_answered)
+
+    @given(question_type())
+    def test_clear_responses_when_question_type_changed(self, new_type):
+        question, response = self.get_question_and_response(Question.LONG_TEXT)
+        self.update_question_type(question, new_type)
+
+        if new_type == Question.LONG_TEXT:
+            self.assertNoResponsesCleared()
+        else:
+            self.assertOnlyGivenResponseCleared(response)
+
+    def test_responses_are_not_cleared_for_special_case(self):
+        # Scale type and Single select type are the same with different widgets, so nothing
+        # is cleared in this special case.
+        for starting_type, new_type in ((Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE),
+                                        (Question.SINGLE_SELECT_TYPE, Question.SCALE_TYPE)):
+            with self.subTest('{} -> {}'.format(starting_type, new_type)):
+                question, response = self.get_question_and_response(starting_type)
+                self.update_question_type(question, new_type)
+                self.assertNoResponsesCleared()
+
+    @given(question_type().filter(lambda x: x in Question.CHOICE_TYPES))
+    def test_clear_responses_when_choice_changes(self, question_type):
+        with self.assertOnlyResponseForChoiceCleared(question_type) as choice:
+            choice.key = 10000
+            choice.save()
+
+    @given(question_type().filter(lambda x: x in Question.CHOICE_TYPES))
+    def test_clear_responses_when_choice_deleted(self, question_type):
+        with self.assertOnlyResponseForChoiceCleared(question_type) as choice:
+            choice.delete()
+
+    @given(question_type().filter(lambda x: x in Question.CHOICE_TYPES))
+    def test_clear_responses_when_choice_added(self, question_type):
+        with self.assertOnlyResponseForChoiceCleared(question_type) as choice:
+            mommy.make(Choice, question=choice.question, key=10000)
