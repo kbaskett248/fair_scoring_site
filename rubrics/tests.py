@@ -776,3 +776,8 @@ class QuestionResponseClearingTests(HypTestCase):
     def test_clear_responses_when_choice_deleted(self, question_type):
         with self.assertOnlyResponseForChoiceCleared(question_type) as choice:
             choice.delete()
+
+    @given(question_type().filter(lambda x: x in Question.CHOICE_TYPES))
+    def test_clear_responses_when_choice_added(self, question_type):
+        with self.assertOnlyResponseForChoiceCleared(question_type) as choice:
+            mommy.make(Choice, question=choice.question, key=10000)
