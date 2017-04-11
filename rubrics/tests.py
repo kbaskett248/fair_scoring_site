@@ -708,6 +708,11 @@ class QuestionResponseClearingTests(HypTestCase):
 
         return question, response
 
+    def get_choice_and_response(self, question_type: str) -> (Choice, QuestionResponse):
+        question, response = self.get_question_and_response(question_type)
+        choice = question.choice_set.first()  # type: Choice
+        return choice, response
+
     @staticmethod
     def update_question_type(question: Question, new_type: str) -> None:
         question.question_type = new_type
@@ -717,6 +722,13 @@ class QuestionResponseClearingTests(HypTestCase):
     def refresh_response(response: QuestionResponse) -> QuestionResponse:
         # Refreshing the response since refresh_from_db doesn't seem to work
         return QuestionResponse.objects.get(id=response.id)  # type: QuestionResponse
+
+    def assertOnlyGivenResponseCleared(self, response: QuestionResponse) -> None:
+        for r in self.rub_response.questionresponse_set.all():
+            if r.pk == response.pk:
+                self.assertFalse(r.question_answered)
+            else:
+                self.assertTrue(r.question_answered)
 
     def update_question_and_get_fresh_response(self, starting_type, new_type) -> QuestionResponse:
         question, response = self.get_question_and_response(starting_type)
@@ -750,13 +762,9 @@ class QuestionResponseClearingTests(HypTestCase):
 
     @given(question_type().filter(lambda x: x in Question.CHOICE_TYPES))
     def test_clear_responses_when_choice_changes(self, question_type):
-        question, response = self.get_question_and_response(question_type)
-
-        choice = question.choice_set.first()  # type: Choice
+        choice, response = self.get_choice_and_response(question_type)
 
         choice.key = 10000
         choice.save()
 
-        response = self.refresh_response(response)
-
-        self.assertFalse(response.question_answered)
+        self.assertOnlyGivenResponseCleared(response)
