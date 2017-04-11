@@ -748,3 +748,15 @@ class QuestionResponseClearingTests(HypTestCase):
                 response = self.update_question_and_get_fresh_response(starting_type, new_type)
                 self.assertTrue(response.question_answered)
 
+    @given(question_type().filter(lambda x: x in Question.CHOICE_TYPES))
+    def test_clear_responses_when_choice_changes(self, question_type):
+        question, response = self.get_question_and_response(question_type)
+
+        choice = question.choice_set.first()  # type: Choice
+
+        choice.key = 10000
+        choice.save()
+
+        response = self.refresh_response(response)
+
+        self.assertFalse(response.question_answered)

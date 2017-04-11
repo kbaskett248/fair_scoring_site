@@ -73,3 +73,17 @@ def delete_related_responses(question_id):
     for response in queryset:
         response.clear_response()
 
+
+@receiver(post_save, sender=Choice)
+@receiver(post_delete, sender=Choice)
+def clearResponsesForChoice(sender: type, instance: Choice, **kwargs) -> None:
+    """When saving or deletting a Choice, delete the response from all associated
+    QuestionResponse objects.
+
+    Arguments:
+        sender: The model class sending this signal. Should be Question.
+        instance: The Question instance that was saved.
+        **kwargs: Additional, unused keyword arguments.
+
+    """
+    delete_related_responses(instance.question_id)
