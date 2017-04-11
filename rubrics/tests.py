@@ -113,9 +113,11 @@ class QuestionTests(HypTestCase):
         with self.assertRaises(ValidationError):
             mommy.make(Question, rubric=self.rubric, question_type=question_type)
 
-    @given(sort_option=one_of(sane_text(), none()))
+    @given(sort_option=one_of(sane_text().filter(lambda x: x != 'A' and x != 'M'),
+                              none()))
     def test_invalid_sort_option_raises_error(self, sort_option):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValidationError,
+                               msg="No error raised for sort_option {}".format(sort_option)):
             mommy.make(Question, rubric=self.rubric, question_type=Question.LONG_TEXT,
                        choice_sort=sort_option)
 
@@ -643,6 +645,17 @@ class QuestionResponseTests(HypTestCase):
             elapsed_seconds = (now - response.last_submitted).seconds
             self.assertEqual(elapsed_seconds, 0)
 
+    def test_clear_response(self):
+        rub_response = make_rubric_response()
+        answer_rubric_response(rub_response)
+
+        for response in rub_response.questionresponse_set.all():
+            with self.subTest(response.question.question_type):
+                print(response.question.question_type)
+                self.assertTrue(response.question_answered)
+                response.clear_response()
+                self.assertFalse(response.question_answered)
+
     def test_new_question_is_added_to_response(self):
         rub_response = make_rubric_response()  # type: RubricResponse
 
@@ -669,3 +682,4 @@ class QuestionResponseTests(HypTestCase):
                                  ['Question SINGLE SELECT', 'Question MULTI SELECT', 'Question LONG TEXT'],
                                  transform=lambda x: x.question.__str__(),
                                  ordered=False)
+

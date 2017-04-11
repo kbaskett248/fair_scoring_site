@@ -382,8 +382,11 @@ class QuestionResponse(models.Model):
 
     def score(self):
         return QuestionType.get_instance(self.question).score(self)
-    
-    
+
+    def clear_response(self):
+        self.update_response('')
+
+
 class QuestionType(object):
     @classmethod
     def get_instance(cls, question: Question):
@@ -481,7 +484,10 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
         return [choices[indv] for indv in resp]
 
     def update_response(self, response: QuestionResponse, value):
-        response.text_response = json.dumps(value)
+        if not value:
+            response.text_response = ''
+        else:
+            response.text_response = json.dumps(value)
 
     def score(self, response: QuestionResponse) -> float:
         weight = float(self.question.weight)
