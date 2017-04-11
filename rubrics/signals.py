@@ -1,5 +1,6 @@
 from functools import reduce
 
+from django.db import transaction
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
@@ -48,7 +49,7 @@ def get_rubric_response_set_related_to_question(question_id) -> set:
 
 
 @receiver(post_save, sender=Question)
-def deleteResponsesForQuestion(sender: type, instance: Question, created: bool, **kwargs):
+def clearResponsesForQuestion(sender: type, instance: Question, created: bool, **kwargs) -> None:
     """If a question type changes, delete the response from all associated
     QuestionResponse objects.
 
@@ -61,19 +62,14 @@ def deleteResponsesForQuestion(sender: type, instance: Question, created: bool, 
     """
     if created:
         return
+    elif instance.question_type_changed_compatibility():
+        delete_related_responses(instance.id)
 
 
+@transaction.atomic
+def delete_related_responses(question_id):
+    queryset = QuestionResponse.objects.filter(question_id=question_id)
 
-@receiver(post_save, sender=Choice)
-@receiver(post_delete, sender=Choice)
-def deleteResponsesForChoice(sender: type, instance: Choice, **kwargs) -> None:
-    """When saving or deletting a Choice, delete the response from all associated
-    QuestionResponse objects.
+    for response in queryset:
+        response.clear_response()
 
-    Arguments:
-        sender: The model class sending this signal. Should be Question.
-        instance: The Question instance that was saved.
-        **kwargs: Additional, unused keyword arguments.
-
-    """
-    pass

@@ -27,6 +27,10 @@ def sane_text(min_size=None, max_size=None, average_size=None) -> SearchStrategy
                 min_size=min_size, max_size=max_size, average_size=average_size)
 
 
+def question_type() -> SearchStrategy:
+    return sampled_from(Question.CHOICE_TYPES)
+
+
 def question_type_and_weight() -> SearchStrategy:
     return one_of(
         tuples(sampled_from(Question.CHOICE_TYPES),
@@ -651,7 +655,6 @@ class QuestionResponseTests(HypTestCase):
 
         for response in rub_response.questionresponse_set.all():
             with self.subTest(response.question.question_type):
-                print(response.question.question_type)
                 self.assertTrue(response.question_answered)
                 response.clear_response()
                 self.assertFalse(response.question_answered)
@@ -683,3 +686,31 @@ class QuestionResponseTests(HypTestCase):
                                  transform=lambda x: x.question.__str__(),
                                  ordered=False)
 
+    @given(question_type())
+    def test_clear_responses_when_question_type_changed(self, new_type):
+        rub_response = make_rubric_response()
+        answer_rubric_response(rub_response)
+
+        question = rub_response.rubric.question_set\
+                   .filter(question_type=Question.LONG_TEXT)\
+                   .first()  # type: Question
+        response = rub_response.questionresponse_set\
+                   .get(question_id=question.id)  # type: QuestionResponse
+
+        self.assertTrue(response.question_answered)
+
+        question.question_type = new_type
+        question.save()
+        # Refreshing the response since refresh_from_db doesn't seem to work
+        response = QuestionResponse.objects.get(id=response.id)  # type: QuestionResponse
+
+        if new_type == Question.LONG_TEXT:
+            self.assertTrue(response.question_answered,
+                            msg="Response not cleared for change from {} to {}".format(
+                                Question.LONG_TEXT, new_type
+                            ))
+        else:
+            self.assertFalse(response.question_answered,
+                            msg="Response not cleared for change from {} to {}".format(
+                                Question.LONG_TEXT, new_type
+                            ))

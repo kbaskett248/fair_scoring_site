@@ -362,7 +362,7 @@ class QuestionResponse(models.Model):
 
     def __str__(self):
         return '{question}: {answer}'.format(question=self.question.short_description,
-                                             answer=self.response_external)
+                                             answer=self.response)
 
     @property
     def response(self):
@@ -384,7 +384,7 @@ class QuestionResponse(models.Model):
         return QuestionType.get_instance(self.question).score(self)
 
     def clear_response(self):
-        self.update_response('')
+        self.update_response(None)
 
 
 class QuestionType(object):
