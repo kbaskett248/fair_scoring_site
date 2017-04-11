@@ -724,7 +724,7 @@ class QuestionResponseClearingTests(HypTestCase):
         return QuestionResponse.objects.get(id=response.id)  # type: QuestionResponse
 
     @contextmanager
-    def assertOnlyResponseForChoiceCleared(self, question_type):
+    def assertOnlyResponseForChoiceCleared(self, question_type: str):
         choice, response = self.get_choice_and_response(question_type)
         yield choice
         self.assertOnlyGivenResponseCleared(response)
@@ -736,26 +736,19 @@ class QuestionResponseClearingTests(HypTestCase):
             else:
                 self.assertTrue(r.question_answered)
 
-    def update_question_and_get_fresh_response(self, starting_type, new_type) -> QuestionResponse:
-        question, response = self.get_question_and_response(starting_type)
-
-        self.update_question_type(question, new_type)
-        return self.refresh_response(response)
+    def assertNoResponsesCleared(self):
+        for r in self.rub_response.questionresponse_set.all():
+            self.assertTrue(r.question_answered)
 
     @given(question_type())
     def test_clear_responses_when_question_type_changed(self, new_type):
-        response = self.update_question_and_get_fresh_response(Question.LONG_TEXT, new_type)
+        question, response = self.get_question_and_response(Question.LONG_TEXT)
+        self.update_question_type(question, new_type)
 
         if new_type == Question.LONG_TEXT:
-            self.assertTrue(response.question_answered,
-                            msg="Response not cleared for change from {} to {}".format(
-                                Question.LONG_TEXT, new_type
-                            ))
+            self.assertNoResponsesCleared()
         else:
-            self.assertFalse(response.question_answered,
-                            msg="Response not cleared for change from {} to {}".format(
-                                Question.LONG_TEXT, new_type
-                            ))
+            self.assertOnlyGivenResponseCleared(response)
 
     def test_responses_are_not_cleared_for_special_case(self):
         # Scale type and Single select type are the same with different widgets, so nothing
@@ -763,8 +756,9 @@ class QuestionResponseClearingTests(HypTestCase):
         for starting_type, new_type in ((Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE),
                                         (Question.SINGLE_SELECT_TYPE, Question.SCALE_TYPE)):
             with self.subTest('{} -> {}'.format(starting_type, new_type)):
-                response = self.update_question_and_get_fresh_response(starting_type, new_type)
-                self.assertTrue(response.question_answered)
+                question, response = self.get_question_and_response(starting_type)
+                self.update_question_type(question, new_type)
+                self.assertNoResponsesCleared()
 
     @given(question_type().filter(lambda x: x in Question.CHOICE_TYPES))
     def test_clear_responses_when_choice_changes(self, question_type):
