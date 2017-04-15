@@ -1,10 +1,48 @@
+from django.contrib.auth.models import User
 from hypothesis.extra.django import TestCase as HypTestCase
 from model_mommy import mommy
 
 from awards.models import Is, In
 from fair_categories.models import Category, Subcategory, Division
-from fair_projects.models import Project
+from fair_projects.models import Project, JudgingInstance
 from fair_scoring_site.admin import AwardRuleForm
+from judges.models import Judge
+
+
+project_number_counter = 1000
+
+
+def make_test_category(short_description: str) -> Category:
+    return Category.objects.create(short_description=short_description)
+
+
+def make_test_subcategory(category: Category, short_description: str) -> Subcategory:
+    return mommy.make(Subcategory,
+                      short_description=short_description,
+                      category=category)
+
+
+def make_test_division(short_description: str) -> Division:
+    return Division.objects.create(short_description=short_description)
+
+
+def make_test_judge(categories: [Category], divisions: [Division], active=True) -> Judge:
+    user = mommy.make(User, first_name='Test', last_name='Judge')
+    judge = mommy.make(Judge, phone="770-867-5309", user=user)
+    judge.categories = categories
+    judge.divisions = divisions
+    judge.save()
+    return judge
+
+
+def make_test_project(subcategory: Subcategory, division: Division) -> Project:
+    global project_number_counter
+    project_number_counter += 1
+    return mommy.make(Project,
+                      number=project_number_counter,
+                      subcategory=subcategory,
+                      category=subcategory.category,
+                      division=division)
 
 
 class AwardRuleFormTests(HypTestCase):
@@ -76,3 +114,80 @@ class AwardRuleFormTests(HypTestCase):
 
     def test_grade_validation(self):
         self.trait_validation_test('grade_level', ['1', '6', '11', '12'], '13')
+
+
+class AssignmentTests(HypTestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super(AssignmentTests, cls).setUpClass()
+        cls.category1 = make_test_category('Category 1')
+        cls.category2 = make_test_category('Category 2')
+
+        cls.subcategory1 = make_test_subcategory(cls.category1, 'Subcategory 1')
+        cls.subcategory2 = make_test_subcategory(cls.category2, 'Subcategory 2')
+
+        cls.division1 = make_test_division('Division 1')
+        cls.division2 = make_test_division('Division 2')
+
+    @staticmethod
+    def _instance_exists(project: Project, judge: Judge) -> bool:
+        return JudgingInstance.objects.filter(project=project, judge=judge).exists()
+
+    def assertProjectAssignedToJudge(self, project: Project, judge: Judge, msg: str=None) -> None:
+        if not msg:
+            msg = 'Project ({}) not assigned to judge ({})'.format(
+                project, judge
+            )
+        self.assertTrue(self._instance_exists(project, judge), msg)
+
+    def assertProjectNotAssignedToJudge(self, project: Project, judge: Judge, msg: str=None) -> None:
+        if not msg:
+            msg = 'Project ({}) assigned to judge ({})'.format(
+                project, judge
+            )
+        self.assertFalse(self._instance_exists(project, judge), msg)
+
+
+class JudgeAssignmentTests(AssignmentTests):
+    # TODO: Need to test for inactive judges to ensure they aren't assigned
+    # TODO: Need to test with judges that have multiple categories and divisions
+    # TODO: Test a subsequent edit to ensure projects aren't assigned to the same judge twice
+    @classmethod
+    def setUpClass(cls) -> None:
+        super(JudgeAssignmentTests, cls).setUpClass()
+        cls.judge = make_test_judge(categories=[cls.category1], divisions=[cls.division1])
+
+    # An existing judge is assigned to a new project if the category and division match
+    def test_judge_assigned_for_matching_category_and_division(self):
+        project = make_test_project(self.subcategory1, self.division1)
+        self.assertProjectAssignedToJudge(project, self.judge)
+
+    # An existing judge is not assigned to a new project if the category and division do not match
+    def test_judge_not_assigned_for_mismatched_category(self):
+        project = make_test_project(self.subcategory2, self.division1)
+        self.assertProjectNotAssignedToJudge(project, self.judge)
+
+    def test_judge_not_assigned_for_mismatched_division(self):
+        project = make_test_project(self.subcategory1, self.division2)
+        self.assertProjectNotAssignedToJudge(project, self.judge)
+
+
+class ProjectAssignmentTests(AssignmentTests):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super(ProjectAssignmentTests, cls).setUpClass()
+        cls.project = make_test_project(cls.subcategory1, cls.division1)
+
+    # An existing project is assigned to a new judge if the category and division match
+    def test_project_assigned_for_matching_category_and_division(self):
+        judge = make_test_judge(categories=[self.category1], divisions=[self.division1])
+        self.assertProjectAssignedToJudge(self.project, judge)
+
+    # An existing project is not assigned to a new judge if the category and division do not match
+    def test_project_not_assigned_for_mismatched_category(self):
+        judge = make_test_judge(categories=[self.category2], divisions=[self.division1])
+        self.assertProjectNotAssignedToJudge(self.project, judge)
+
+    def test_project_not_assigned_for_mismatched_division(self):
+        judge = make_test_judge(categories=[self.category1], divisions=[self.division2])
+        self.assertProjectNotAssignedToJudge(self.project, judge)
