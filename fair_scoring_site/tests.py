@@ -6,7 +6,9 @@ from awards.models import Is, In
 from fair_categories.models import Category, Subcategory, Division
 from fair_projects.models import Project, JudgingInstance
 from fair_scoring_site.admin import AwardRuleForm
+from fair_scoring_site.logic import get_judging_rubric_name
 from judges.models import Judge
+import rubrics.fixtures
 
 
 project_number_counter = 1000
@@ -43,6 +45,10 @@ def make_test_project(subcategory: Subcategory, division: Division) -> Project:
                       subcategory=subcategory,
                       category=subcategory.category,
                       division=division)
+
+
+def make_test_rubric():
+    return rubrics.fixtures.make_test_rubric(get_judging_rubric_name())
 
 
 class AwardRuleFormTests(HypTestCase):
@@ -120,6 +126,8 @@ class AssignmentTests(HypTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         super(AssignmentTests, cls).setUpClass()
+        make_test_rubric()
+
         cls.category1 = make_test_category('Category 1')
         cls.category2 = make_test_category('Category 2')
 
@@ -132,6 +140,17 @@ class AssignmentTests(HypTestCase):
     @staticmethod
     def _instance_exists(project: Project, judge: Judge) -> bool:
         return JudgingInstance.objects.filter(project=project, judge=judge).exists()
+
+    @staticmethod
+    def _instance_count(project: Project, judge: Judge) -> int:
+        return JudgingInstance.objects.filter(project=project, judge=judge).count()
+
+    def assertOnlyOneJudgingInstance(self, project: Project, judge: Judge, msg: str=None) -> None:
+        if not msg:
+            msg = 'There is not 1 JudgingInstnace for Project ({}) and judge ({})'.format(
+                project, judge
+            )
+        self.assertEqual(self._instance_count(project, judge), 1, msg)
 
     def assertProjectAssignedToJudge(self, project: Project, judge: Judge, msg: str=None) -> None:
         if not msg:
@@ -161,6 +180,16 @@ class JudgeAssignmentTests(AssignmentTests):
     def test_judge_assigned_for_matching_category_and_division(self):
         project = make_test_project(self.subcategory1, self.division1)
         self.assertProjectAssignedToJudge(project, self.judge)
+        self.assertOnlyOneJudgingInstance(project, self.judge)
+
+    # An existing judge is only assigned to a new project once
+    def test_judge_assigned_once(self):
+        project = make_test_project(self.subcategory1, self.division1)
+        self.assertProjectAssignedToJudge(project, self.judge)
+        self.assertOnlyOneJudgingInstance(project, self.judge)
+
+        project.save()
+        self.assertOnlyOneJudgingInstance(project, self.judge)
 
     # An existing judge is not assigned to a new project if the category and division do not match
     def test_judge_not_assigned_for_mismatched_category(self):
@@ -182,6 +211,16 @@ class ProjectAssignmentTests(AssignmentTests):
     def test_project_assigned_for_matching_category_and_division(self):
         judge = make_test_judge(categories=[self.category1], divisions=[self.division1])
         self.assertProjectAssignedToJudge(self.project, judge)
+        self.assertOnlyOneJudgingInstance(self.project, judge)
+
+    # An existing project is only assigned to a new judge once
+    def test_project_assigned_once(self):
+        judge = make_test_judge(categories=[self.category1], divisions=[self.division1])
+        self.assertProjectAssignedToJudge(self.project, judge)
+        self.assertOnlyOneJudgingInstance(self.project, judge)
+
+        judge.save()
+        self.assertOnlyOneJudgingInstance(self.project, judge)
 
     # An existing project is not assigned to a new judge if the category and division do not match
     def test_project_not_assigned_for_mismatched_category(self):

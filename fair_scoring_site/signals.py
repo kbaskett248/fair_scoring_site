@@ -1,6 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from rubrics.models import Rubric
 from .logic import get_judging_rubric
 from fair_projects.models import Project, JudgingInstance
 from judges.models import Judge
@@ -8,8 +9,9 @@ from judges.models import Judge
 
 def update_instances(queryset, **kwargs):
     rubric = get_judging_rubric()
-    for judge in AssignmentHelper.get_instances_for(queryset, **kwargs):
-        judge.assign(rubric)
+    for instance in AssignmentHelper.get_instances_for(queryset, **kwargs):
+        if not instance.exists(rubric):
+            instance.assign(rubric)
 
 
 @receiver(post_save, sender=Project, dispatch_uid='update_judging_instances_for_project')
@@ -41,8 +43,13 @@ class AssignmentHelper:
         self.project = project
         self.judge = judge
 
-    def assign(self, rubric):
+    def assign(self, rubric: Rubric) -> JudgingInstance:
         return JudgingInstance.objects.create(judge=self.judge,
                                               project=self.project,
                                               rubric=rubric)
+
+    def exists(self, rubric: Rubric) -> bool:
+        return JudgingInstance.objects.filter(judge=self.judge,
+                                              project=self.project,
+                                              response__rubric=rubric.pk)
 
