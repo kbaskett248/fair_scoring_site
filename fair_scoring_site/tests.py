@@ -168,7 +168,6 @@ class AssignmentTests(HypTestCase):
 
 
 class JudgeAssignmentTests(AssignmentTests):
-    # TODO: Need to test with judges that have multiple categories and divisions
     @classmethod
     def setUpClass(cls) -> None:
         super(JudgeAssignmentTests, cls).setUpClass()
@@ -213,6 +212,23 @@ class JudgeAssignmentTests(AssignmentTests):
         self.assertProjectAssignedToJudge(project, self.multiple_judge)
         self.assertOnlyOneJudgingInstance(project, self.multiple_judge)
 
+    def test_judge_removed_if_category_no_longer_matches(self):
+        project = make_test_project(self.subcategory1, self.division1)
+        self.assertProjectAssignedToJudge(project, self.judge)
+
+        project.category = self.category2
+        project.subcategory = self.subcategory2
+        project.save()
+        self.assertProjectNotAssignedToJudge(project, self.judge)
+
+    def test_judge_removed_if_division_no_longer_matches(self):
+        project = make_test_project(self.subcategory1, self.division1)
+        self.assertProjectAssignedToJudge(project, self.judge)
+
+        project.division = self.division2
+        project.save()
+        self.assertProjectNotAssignedToJudge(project, self.judge)
+
 
 class ProjectAssignmentTests(AssignmentTests):
     @classmethod
@@ -256,3 +272,19 @@ class ProjectAssignmentTests(AssignmentTests):
                                 divisions=[self.division1, self.division2])
         self.assertProjectAssignedToJudge(self.project, judge)
         self.assertOnlyOneJudgingInstance(self.project, judge)
+
+    def test_project_removed_if_category_no_longer_matches(self):
+        judge = make_test_judge(categories=[self.category1], divisions=[self.division1])
+        self.assertProjectAssignedToJudge(self.project, judge)
+
+        judge.categories = [self.category2]
+        judge.save()
+        self.assertProjectNotAssignedToJudge(self.project, judge)
+
+    def test_project_removed_if_division_no_longer_matches(self):
+        judge = make_test_judge(categories=[self.category1], divisions=[self.division1])
+        self.assertProjectAssignedToJudge(self.project, judge)
+
+        judge.divisions = [self.division2]
+        judge.save()
+        self.assertProjectNotAssignedToJudge(self.project, judge)
