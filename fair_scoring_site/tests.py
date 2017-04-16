@@ -288,3 +288,11 @@ class ProjectAssignmentTests(AssignmentTests):
         judge.divisions = [self.division2]
         judge.save()
         self.assertProjectNotAssignedToJudge(self.project, judge)
+
+    def test_project_removed_if_judge_changed_to_inactive(self):
+        judge = make_test_judge(categories=[self.category1], divisions=[self.division1])
+        self.assertProjectAssignedToJudge(self.project, judge)
+
+        judge.user.is_active = False
+        judge.user.save()
+        self.assertProjectNotAssignedToJudge(self.project, judge)

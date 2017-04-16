@@ -1,3 +1,5 @@
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -34,7 +36,7 @@ def update_judging_instances_for_project(sender: type, instance: Project, **kwar
 
 @receiver(post_save, sender=Judge, dispatch_uid='update_judging_instances_for_judge')
 def update_judging_instances_for_judge(sender: type, instance: Judge, **kwargs) -> None:
-    # Remove nonmatching projects, or all projects if the judge is no longer active
+    # Remove nonmatching projects
     remove_nonmatching_instances(judge=instance)
 
     if instance.user.is_active:
@@ -43,6 +45,17 @@ def update_judging_instances_for_judge(sender: type, instance: Judge, **kwargs) 
         projects_to_add = Project.objects.filter(category__in=categories,
                                                  division__in=divisions)
         add_instances(projects_to_add, judge=instance)
+
+
+@receiver(post_save, sender=User, dispatch_uid='update_judging_instances_for_inactive_judges')
+def update_judging_instances_for_inactive_judges(sender: type, instance: User, **kwargs) -> None:
+    if not instance.is_active:
+        try:
+            judge = Judge.objects.get(pk=instance.pk)
+        except ObjectDoesNotExist:
+            pass
+        else:
+            remove_nonmatching_instances(judge=judge)
         
         
 class AssignmentHelper:
