@@ -168,7 +168,6 @@ class AssignmentTests(HypTestCase):
 
 
 class JudgeAssignmentTests(AssignmentTests):
-    # TODO: Need to test for inactive judges to ensure they aren't assigned
     # TODO: Need to test with judges that have multiple categories and divisions
     @classmethod
     def setUpClass(cls) -> None:
@@ -177,6 +176,8 @@ class JudgeAssignmentTests(AssignmentTests):
         cls.inactive_judge = make_test_judge(categories=[cls.category2],
                                              divisions=[cls.division2],
                                              active=False)
+        cls.multiple_judge = make_test_judge(categories=[cls.category1, cls.category2],
+                                             divisions=[cls.division1, cls.division2])
 
     # An existing judge is assigned to a new project if the category and division match
     def test_judge_assigned_for_matching_category_and_division(self):
@@ -206,6 +207,11 @@ class JudgeAssignmentTests(AssignmentTests):
     def test_inactive_judge_not_assigned(self):
         project = make_test_project(self.subcategory2, self.division2)
         self.assertProjectNotAssignedToJudge(project, self.inactive_judge)
+
+    def test_judge_with_multiple_categories_and_divisions_assigned_to_new_project(self):
+        project = make_test_project(self.subcategory2, self.division2)
+        self.assertProjectAssignedToJudge(project, self.multiple_judge)
+        self.assertOnlyOneJudgingInstance(project, self.multiple_judge)
 
 
 class ProjectAssignmentTests(AssignmentTests):
@@ -244,3 +250,9 @@ class ProjectAssignmentTests(AssignmentTests):
                                 divisions=[self.division1],
                                 active=False)
         self.assertProjectNotAssignedToJudge(self.project, judge)
+
+    def test_project_assigned_to_judge_with_multiple_categories_and_divisions(self):
+        judge = make_test_judge(categories=[self.category1, self.category2],
+                                divisions=[self.division1, self.division2])
+        self.assertProjectAssignedToJudge(self.project, judge)
+        self.assertOnlyOneJudgingInstance(self.project, judge)
