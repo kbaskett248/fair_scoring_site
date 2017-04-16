@@ -24,11 +24,12 @@ def update_judging_instances_for_project(sender: type, instance: Project, **kwar
 
 @receiver(post_save, sender=Judge, dispatch_uid='update_judging_instances_for_judge')
 def update_judging_instances_for_judge(sender: type, instance: Judge, **kwargs) -> None:
-    categories = list(instance.categories.values_list('pk', flat=True))
-    divisions = list(instance.divisions.values_list('pk', flat=True))
-    queryset = Project.objects.filter(category__in=categories,
-                                      division__in=divisions)
-    update_instances(queryset, judge=instance)
+    if instance.user.is_active:
+        categories = list(instance.categories.values_list('pk', flat=True))
+        divisions = list(instance.divisions.values_list('pk', flat=True))
+        queryset = Project.objects.filter(category__in=categories,
+                                          division__in=divisions)
+        update_instances(queryset, judge=instance)
         
         
 class AssignmentHelper:

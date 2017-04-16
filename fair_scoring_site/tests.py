@@ -29,7 +29,7 @@ def make_test_division(short_description: str) -> Division:
 
 
 def make_test_judge(categories: [Category], divisions: [Division], active=True) -> Judge:
-    user = mommy.make(User, first_name='Test', last_name='Judge')
+    user = mommy.make(User, is_active=active, first_name='Test', last_name='Judge')
     judge = mommy.make(Judge, phone="770-867-5309", user=user)
     judge.categories = categories
     judge.divisions = divisions
@@ -170,11 +170,13 @@ class AssignmentTests(HypTestCase):
 class JudgeAssignmentTests(AssignmentTests):
     # TODO: Need to test for inactive judges to ensure they aren't assigned
     # TODO: Need to test with judges that have multiple categories and divisions
-    # TODO: Test a subsequent edit to ensure projects aren't assigned to the same judge twice
     @classmethod
     def setUpClass(cls) -> None:
         super(JudgeAssignmentTests, cls).setUpClass()
         cls.judge = make_test_judge(categories=[cls.category1], divisions=[cls.division1])
+        cls.inactive_judge = make_test_judge(categories=[cls.category2],
+                                             divisions=[cls.division2],
+                                             active=False)
 
     # An existing judge is assigned to a new project if the category and division match
     def test_judge_assigned_for_matching_category_and_division(self):
@@ -199,6 +201,11 @@ class JudgeAssignmentTests(AssignmentTests):
     def test_judge_not_assigned_for_mismatched_division(self):
         project = make_test_project(self.subcategory1, self.division2)
         self.assertProjectNotAssignedToJudge(project, self.judge)
+
+    # An existing inactive judge is not assigned to a new project
+    def test_inactive_judge_not_assigned(self):
+        project = make_test_project(self.subcategory2, self.division2)
+        self.assertProjectNotAssignedToJudge(project, self.inactive_judge)
 
 
 class ProjectAssignmentTests(AssignmentTests):
@@ -229,4 +236,11 @@ class ProjectAssignmentTests(AssignmentTests):
 
     def test_project_not_assigned_for_mismatched_division(self):
         judge = make_test_judge(categories=[self.category1], divisions=[self.division2])
+        self.assertProjectNotAssignedToJudge(self.project, judge)
+
+    # An existing project is not assigned to a new inactive judge
+    def test_project_not_assigned_to_inactive_judge(self):
+        judge = make_test_judge(categories=[self.category1],
+                                divisions=[self.division1],
+                                active=False)
         self.assertProjectNotAssignedToJudge(self.project, judge)
