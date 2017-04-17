@@ -1,4 +1,9 @@
+import itertools
+
+from collections import defaultdict
 from django.contrib.auth.models import User
+from django.core.management import call_command
+from django.db.models import Count
 from hypothesis.extra.django import TestCase as HypTestCase
 from model_mommy import mommy
 
@@ -6,7 +11,8 @@ from awards.models import Is, In
 from fair_categories.models import Category, Subcategory, Division
 from fair_projects.models import Project, JudgingInstance
 from fair_scoring_site.admin import AwardRuleForm
-from fair_scoring_site.logic import get_judging_rubric_name
+from fair_scoring_site.logic import get_judging_rubric_name, get_judging_rubric, get_num_judges_per_project, \
+    get_num_projects_per_judge
 from judges.models import Judge
 import rubrics.fixtures
 
@@ -296,3 +302,123 @@ class ProjectAssignmentTests(AssignmentTests):
         judge.user.is_active = False
         judge.user.save()
         self.assertProjectNotAssignedToJudge(self.project, judge)
+
+
+class BulkAssignmentTests(HypTestCase):
+    fixtures = ['divisions_categories.json',
+                'ethnicities.json',
+                'schools.json',
+                'teachers.json',
+                'rubric.json']
+
+    @classmethod
+    def setUpClass(cls):
+        super(BulkAssignmentTests, cls).setUpClass()
+        cls.rubric = get_judging_rubric()
+        cls.min_num_judges = get_num_judges_per_project()
+        cls.min_num_projects = get_num_projects_per_judge()
+        cls.groups = cls.get_groups()
+
+    @staticmethod
+    def get_groups():
+        categories = list(Category.objects.all())
+        divisions = list(Category.objects.all())
+        return list(itertools.product(categories, divisions))
+
+    @staticmethod
+    def load_fixture(fixture_name: str) -> None:
+        call_command('loaddata', fixture_name)
+
+    def get_judges(self):
+        queryset = Judge.objects.filter(user__is_active=True)\
+                                .annotate(num_projects=Count('judginginstance'))\
+                                .prefetch_related('categories', 'divisions')
+        return list(queryset.all())
+
+    def get_projects(self):
+        queryset = Project.objects.annotate(num_judges=Count('judginginstance'))
+        return list(queryset.all())
+
+    def assertWithinBounds(self):
+        judge_minimums = self.get_minimum_num_judges_by_group()
+        for project in self.get_projects():
+            print(project, project.category, project.division, project.num_judges)
+            self.assertGreaterEqual(project.num_judges,
+                                    judge_minimums[(project.category_id, project.division_id)])
+
+        project_minimums = self.get_minimum_num_projects_by_group()
+        for judge in self.get_judges():
+            judge_min = 0
+
+            for cat, div in self.judge_group_iterator(judge):
+                judge_min = max(judge_min, project_minimums[(cat, div)])
+
+            print(judge, judge.num_projects)
+            self.assertGreaterEqual(judge.num_projects,
+                                    judge_min)
+
+    @staticmethod
+    def judge_group_iterator(judge: Judge):
+        cats = [cat.pk for cat in judge.categories.all()]
+        divs = [div.pk for div in judge.divisions.all()]
+        return itertools.product(cats, divs)
+
+    @staticmethod
+    def get_project_counts_by_group() -> dict:
+        project_counts = defaultdict(lambda: 0)
+        for project in Project.objects.all():
+            cat = project.category_id
+            div = project.division_id
+            project_counts[(cat, div)] += 1
+        return project_counts
+
+    @staticmethod
+    def get_judge_counts_by_group() -> dict:
+        judge_counts = defaultdict(lambda: 0)
+        queryset = Judge.objects.filter(user__is_active=True)\
+                                .prefetch_related('categories', 'divisions')
+        for judge in queryset:
+            for cat, div in BulkAssignmentTests.judge_group_iterator(judge):
+                judge_counts[(cat, div)] += 1
+
+        return judge_counts
+
+    @classmethod
+    def get_minimum_num_projects_by_group(cls) -> dict:
+        project_minimums = cls.get_project_counts_by_group()
+        for k, v in project_minimums.items():
+            project_minimums[k] = min(v, cls.min_num_projects)
+        return project_minimums
+
+    @classmethod
+    def get_minimum_num_judges_by_group(cls) -> dict:
+        judge_minimums = cls.get_judge_counts_by_group()
+        for k, v in judge_minimums.items():
+            judge_minimums[k] = min(v, cls.min_num_judges)
+        return judge_minimums
+
+
+class BulkJudgeAssignmentTests(BulkAssignmentTests):
+    fixtures = BulkAssignmentTests.fixtures
+    fixtures.append('judges.json')
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super(BulkJudgeAssignmentTests, cls).setUpClass()
+        cls.load_fixture('projects_small.json')
+
+    def test_within_bounds(self):
+        self.assertWithinBounds()
+
+
+class BulkProjectAssignmentTests(BulkAssignmentTests):
+    fixtures = BulkAssignmentTests.fixtures
+    fixtures.append('projects_small.json')
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super(BulkProjectAssignmentTests, cls).setUpClass()
+        cls.load_fixture('judges.json')
+
+    def test_within_bounds(self):
+        self.assertWithinBounds()
