@@ -195,3 +195,14 @@ django.contrib.auth.admin.UserAdmin.actions.append(send_password_reset)
 
 # Register your models here.
 admin.site.register(School)
+
+from .views import judge_assignment, delete_judge_assignments
+def do_judge_assignment(modeladmin, request, queryset):
+    return judge_assignment(request)
+do_judge_assignment.short_description = 'Assign Judges'
+ProjectAdmin.actions.append(do_judge_assignment)
+
+def do_judge_deletion(modeladmin, request, queryset):
+    return delete_judge_assignments(request)
+do_judge_deletion.short_description = 'Delete Judge assignments'
+ProjectAdmin.actions.append(do_judge_deletion)
