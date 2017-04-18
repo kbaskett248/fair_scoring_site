@@ -332,11 +332,13 @@ class BulkAssignmentTests(HypTestCase):
     def get_judges(self):
         queryset = Judge.objects.filter(user__is_active=True)\
                                 .annotate(num_projects=Count('judginginstance'))\
-                                .prefetch_related('categories', 'divisions')
+                                .prefetch_related('categories', 'divisions')\
+                                .order_by('pk')
         return list(queryset.all())
 
     def get_projects(self):
-        queryset = Project.objects.annotate(num_judges=Count('judginginstance'))
+        queryset = Project.objects.annotate(num_judges=Count('judginginstance'))\
+                                  .order_by('pk')
         return list(queryset.all())
 
     def assertWithinBounds(self):
@@ -410,6 +412,11 @@ class BulkJudgeAssignmentTests(BulkAssignmentTests):
     def test_within_bounds(self):
         self.assertWithinBounds()
 
+    def test_within_bounds_with_additional_project(self):
+        make_test_project(Subcategory.objects.first(),
+                          Division.objects.first())
+        self.assertWithinBounds()
+
 
 class BulkProjectAssignmentTests(BulkAssignmentTests):
     fixtures = BulkAssignmentTests.fixtures
@@ -422,3 +429,20 @@ class BulkProjectAssignmentTests(BulkAssignmentTests):
 
     def test_within_bounds(self):
         self.assertWithinBounds()
+
+    def test_within_bounds_with_additional_judge(self):
+        make_test_judge(list(Category.objects.all()),
+                        list(Division.objects.all()))
+        self.assertWithinBounds()
+
+    def test_projects_assigned_to_each_judge_decreases_with_additional_judge(self):
+        before_new_judge = {judge.pk: judge.num_projects for judge in self.get_judges()}
+        make_test_judge(list(Category.objects.all()),
+                        list(Division.objects.all()))
+        after_new_judge = {judge.pk: judge.num_projects for judge in self.get_judges()}
+
+        for k in before_new_judge.keys():
+            self.assertLessEqual(after_new_judge[k], before_new_judge[k],
+                                 'Projects per judge should decrease when a judge is added')
+
+
