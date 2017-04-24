@@ -4,6 +4,8 @@ from collections import defaultdict
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.db.models import Count
+from hypothesis import given
+from hypothesis.strategies import integers
 from hypothesis.extra.django import TestCase as HypTestCase
 from model_mommy import mommy
 
@@ -147,16 +149,12 @@ class AssignmentTests(HypTestCase):
     def _instance_exists(project: Project, judge: Judge) -> bool:
         return JudgingInstance.objects.filter(project=project, judge=judge).exists()
 
-    @staticmethod
-    def _instance_count(project: Project, judge: Judge) -> int:
-        return JudgingInstance.objects.filter(project=project, judge=judge).count()
-
     def assertOnlyOneJudgingInstance(self, project: Project, judge: Judge, msg: str=None) -> None:
         if not msg:
             msg = 'There is not 1 JudgingInstnace for Project ({}) and judge ({})'.format(
                 project, judge
             )
-        self.assertEqual(self._instance_count(project, judge), 1, msg)
+        self.assertEqual(self.get_judging_instance_count(project=project, judge=judge), 1, msg)
 
     def assertProjectAssignedToJudge(self, project: Project, judge: Judge, msg: str=None) -> None:
         if not msg:
@@ -171,6 +169,28 @@ class AssignmentTests(HypTestCase):
                 project, judge
             )
         self.assertFalse(self._instance_exists(project, judge), msg)
+
+    def assertNumInstances(self, count, msg: str=None, **kwargs) -> None:
+        self.assertEqual(self.get_judging_instance_count(**kwargs), count, msg)
+
+    @staticmethod
+    def get_judging_instance_count(**kwargs):
+        queryset = JudgingInstance.objects
+        if kwargs:
+            queryset = queryset.filter(**kwargs)
+        return queryset.count()
+
+    @classmethod
+    def make_judges(cls, count=1) -> None:
+        for _ in range(0, count):
+            make_test_judge(categories=[cls.category1], divisions=[cls.division1])
+            print('adding judge', cls.get_judging_instance_count())
+
+    @classmethod
+    def make_projects(cls, count=1) -> None:
+        for _ in range(0, count):
+            make_test_project(subcategory=cls.subcategory1, division=cls.division1)
+            print('adding project', cls.get_judging_instance_count())
 
 
 class JudgeAssignmentTests(AssignmentTests):
@@ -322,3 +342,60 @@ class ProjectAssignmentTests(AssignmentTests):
 
             for j in judges:
                 self.assertProjectAssignedToJudge(self.project, j)
+
+
+class SequentialAssignmentTests(AssignmentTests):
+    @staticmethod
+    def compute_expected_instances(num_projects, num_judges):
+        projects_per_judge = get_num_projects_per_judge()
+        judges_per_project = get_num_judges_per_project()
+
+        if num_projects < projects_per_judge or num_judges < judges_per_project:
+            return num_projects * num_judges
+        else:
+            return max(num_projects * judges_per_project,
+                       num_judges * projects_per_judge)
+
+    @staticmethod
+    def get_active_judge():
+        return Judge.objects.filter(user__is_active=True).first()
+
+    @staticmethod
+    def get_project():
+        return Project.objects.first()
+
+    @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
+    def test_generic_with_project_division_change(self, num_projects, num_judges):
+        print(num_projects, num_judges)
+        self.make_projects(num_projects)
+        self.make_judges(num_judges)
+        self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
+
+        project = self.get_project()
+        project.division = self.division2
+        project.save()
+        self.assertNumInstances(self.compute_expected_instances(num_projects-1, num_judges))
+
+    @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
+    def test_generic_with_judge_category_change(self, num_projects, num_judges):
+        print(num_projects, num_judges)
+        self.make_projects(num_projects)
+        self.make_judges(num_judges)
+        self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
+
+        judge = self.get_active_judge()
+        judge.categories = [self.category2]
+        judge.save()
+        self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges-1))
+
+    @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
+    def test_generic_with_judge_inactivation(self, num_projects, num_judges):
+        print(num_projects, num_judges)
+        self.make_projects(num_projects)
+        self.make_judges(num_judges)
+        self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
+
+        judge = self.get_active_judge()
+        judge.user.is_active = False
+        judge.user.save()
+        self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges-1))
