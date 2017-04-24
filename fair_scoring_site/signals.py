@@ -29,7 +29,7 @@ def add_instances(queryset: QuerySet, minimum_instances: int, other_min: int, **
 def remove_nonmatching_instances(**kwargs) -> Iterator['ExistingInstanceHelper']:
     rubric = get_judging_rubric()
     for instance in ExistingInstanceHelper.get_instances_for(rubric=rubric, **kwargs):
-        if not instance.attributes_match():
+        if not instance.attributes_match() and not instance.has_response():
             instance.remove()
             yield instance
 
@@ -192,3 +192,6 @@ class ExistingInstanceHelper:
         return (self.judge.user.is_active and
                 (self.project.category in self.judge.categories.all()) and
                 (self.project.division in self.judge.divisions.all()))
+
+    def has_response(self):
+        return self.judging_instance.has_response()
