@@ -1,6 +1,5 @@
-from typing import Iterator, List
+from typing import Iterator
 
-from collections import defaultdict
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, QuerySet
@@ -59,26 +58,28 @@ def add_projects_to_judge(judge: Judge) -> None:
 
 def remove_excess_instances() -> None:
     rubric = get_judging_rubric()
-    helper = RemoveExcessHelper(rubric)
+    queryset = JudgingInstance.objects \
+        .filter(response__rubric=rubric) \
+        .annotate(num_projects=Count('judge__judginginstance',
+                                     distinct=True),
+                  num_judges=Count('project__judginginstance',
+                                   distinct=True)) \
+        .filter(num_projects__gt=get_num_projects_per_judge(),
+                num_judges__gt=get_num_judges_per_project()) \
+        .order_by('num_judges', 'num_projects') \
+        .reverse() \
+        .select_related('response')
 
-    project_max = max_by_projects()
-    judge_max = max_by_judges()
+    def get_instances():
+        return [i for i in queryset.all() if not i.response.has_response]
 
-    if project_max > judge_max:
-        helper.remove_excess_instances_by_project(project_max)
-    else:
-        helper.remove_excess_instance_by_judge(judge_max)
+    instances = get_instances()
 
-
-def max_by_judges() -> int:
-    num_judges = Judge.objects.filter(user__is_active=True)\
-                              .count()
-    return num_judges * get_num_projects_per_judge()
-
-
-def max_by_projects() -> int:
-    num_projects = Project.objects.count()
-    return num_projects * get_num_judges_per_project()
+    while instances:
+        instance = instances.pop()
+        instance.delete()
+        if instances:
+            instances = get_instances()
 
 
 @receiver(post_save, sender=Project, dispatch_uid='update_judging_instances_for_project')
@@ -191,84 +192,3 @@ class ExistingInstanceHelper:
         return (self.judge.user.is_active and
                 (self.project.category in self.judge.categories.all()) and
                 (self.project.division in self.judge.divisions.all()))
-
-
-class RemoveExcessHelper:
-    class Instance:
-        def __init__(self, judging_instance: JudgingInstance):
-            self.judging_instance = judging_instance
-
-        @property
-        def judge(self) -> Judge:
-            return self.judging_instance.judge
-
-        @property
-        def project(self) -> Project:
-            return self.judging_instance.project
-
-        def key(self) -> tuple:
-            return (self.project, self.judge)
-
-        def delete(self) -> None:
-            self.judging_instance.delete()
-
-    def __init__(self, rubric: Rubric):
-        self.instances = {}
-        self.judge_counts = defaultdict(lambda: 0)  # type: DefaultDict[Judge, int]
-        self.project_counts = defaultdict(lambda: 0)  # type: DefaultDict[Project, int]
-        self.projects_by_judge = defaultdict(lambda: [])  # type: DefaultDict[Judge, List[RemoveExcessHelper.Instance]]
-        self.judges_by_project = defaultdict(lambda: [])  # type: DefaultDict[Project, List[RemoveExcessHelper.Instance]]
-        queryset = JudgingInstance.objects.filter(response__rubric=rubric) \
-                                          .select_related('judge', 'project')
-        for i in queryset.all():
-            instance = self.Instance(i)
-            self.add_instance(instance)
-
-    def instance_count(self) -> int:
-        return len(self.instances)
-
-    def add_instance(self, instance: 'RemoveExcessHelper.Instance') -> None:
-        self.instances[instance.key()] = instance
-        self.judge_counts[instance.judge] += 1
-        self.project_counts[instance.project] += 1
-        self.projects_by_judge[instance.judge].append(instance)
-        self.judges_by_project[instance.project].append(instance)
-
-    def delete_instance(self, instance: 'RemoveExcessHelper.Instance') -> None:
-        instance.delete()
-        del self.instances[instance.key()]
-        self.judge_counts[instance.judge] -= 1
-        self.project_counts[instance.project] -= 1
-        self.projects_by_judge[instance.judge].remove(instance)
-        self.judges_by_project[instance.project].remove(instance)
-
-    def get_highest_instance_by_project(self):
-        project_count_sorted = list(self.project_counts.items())
-        project_count_sorted.sort(key=lambda item: item[1])
-        project = project_count_sorted[-1][0]
-
-        instances = self.judges_by_project[project]
-        instances.sort(key=lambda instance: self.judge_counts[instance.judge])
-        return instances[-1]
-
-    def get_highest_instance_by_judge(self):
-        judge_count_sorted = list(self.judge_counts.items())
-        judge_count_sorted.sort(key=lambda item: item[1])
-        judge = judge_count_sorted[-1][0]
-
-        instances = self.projects_by_judge[judge]
-        instances.sort(key=lambda instance: self.project_counts[instance.project])
-        return instances[-1]
-
-    def remove_excess_instances_by_project(self, max_instances: int) -> None:
-        print('remove_by_project', max_instances, self.instance_count())
-        while self.instance_count() > max_instances:
-            self.delete_instance(self.get_highest_instance_by_project())
-        print(self.instance_count())
-
-    def remove_excess_instance_by_judge(self, max_instances: int) -> None:
-        print('remove_by_judge', max_instances, self.instance_count())
-        while self.instance_count() > max_instances:
-            self.delete_instance((self.get_highest_instance_by_judge()))
-        print(self.instance_count())
-

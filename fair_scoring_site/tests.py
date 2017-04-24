@@ -184,13 +184,11 @@ class AssignmentTests(HypTestCase):
     def make_judges(cls, count=1) -> None:
         for _ in range(0, count):
             make_test_judge(categories=[cls.category1], divisions=[cls.division1])
-            print('adding judge', cls.get_judging_instance_count())
 
     @classmethod
     def make_projects(cls, count=1) -> None:
         for _ in range(0, count):
             make_test_project(subcategory=cls.subcategory1, division=cls.division1)
-            print('adding project', cls.get_judging_instance_count())
 
 
 class JudgeAssignmentTests(AssignmentTests):
@@ -366,7 +364,6 @@ class SequentialAssignmentTests(AssignmentTests):
 
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_project_division_change(self, num_projects, num_judges):
-        print(num_projects, num_judges)
         self.make_projects(num_projects)
         self.make_judges(num_judges)
         self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
@@ -378,7 +375,6 @@ class SequentialAssignmentTests(AssignmentTests):
 
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_judge_category_change(self, num_projects, num_judges):
-        print(num_projects, num_judges)
         self.make_projects(num_projects)
         self.make_judges(num_judges)
         self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
@@ -390,7 +386,6 @@ class SequentialAssignmentTests(AssignmentTests):
 
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_judge_inactivation(self, num_projects, num_judges):
-        print(num_projects, num_judges)
         self.make_projects(num_projects)
         self.make_judges(num_judges)
         self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
