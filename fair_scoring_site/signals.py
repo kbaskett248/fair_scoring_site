@@ -94,7 +94,7 @@ def update_judging_instances_for_project(sender: type, instance: Project, **kwar
     remove_excess_instances()
 
 
-@receiver(post_save, sender=Judge, dispatch_uid='update_judging_instances_for_judge')
+@receiver(Judge.post_commit, sender=Judge, dispatch_uid='update_judging_instances_for_judge')
 def update_judging_instances_for_judge(sender: type, instance: Judge, **kwargs) -> None:
     # Remove nonmatching projects
     deleted_instances = list(remove_nonmatching_instances(judge=instance))

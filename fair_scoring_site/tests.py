@@ -1,11 +1,9 @@
-import itertools
-
-from collections import defaultdict
 from django.contrib.auth.models import User
-from django.core.management import call_command
-from django.db.models import Count
+from django.db import transaction
+from django.test import TestCase
 from hypothesis import given
 from hypothesis.strategies import integers
+from hypothesis.extra.django import TransactionTestCase as HypTransTestCase
 from hypothesis.extra.django import TestCase as HypTestCase
 from model_mommy import mommy
 
@@ -13,7 +11,7 @@ from awards.models import Is, In
 from fair_categories.models import Category, Subcategory, Division
 from fair_projects.models import Project, JudgingInstance
 from fair_scoring_site.admin import AwardRuleForm
-from fair_scoring_site.logic import get_judging_rubric_name, get_judging_rubric, get_num_judges_per_project, \
+from fair_scoring_site.logic import get_judging_rubric_name, get_num_judges_per_project, \
     get_num_projects_per_judge
 from judges.models import Judge
 import rubrics.fixtures
@@ -36,9 +34,10 @@ def make_test_division(short_description: str) -> Division:
     return Division.objects.create(short_description=short_description)
 
 
+@transaction.atomic()
 def make_test_judge(categories: [Category], divisions: [Division], active=True) -> Judge:
     user = mommy.make(User, is_active=active, first_name='Test', last_name='Judge')
-    judge = mommy.make(Judge, phone="770-867-5309", user=user)
+    judge = mommy.prepare(Judge, phone="770-867-5309", user=user)  # type: Judge
     judge.categories = categories
     judge.divisions = divisions
     judge.save()
@@ -59,7 +58,7 @@ def make_test_rubric():
     return rubrics.fixtures.make_test_rubric(get_judging_rubric_name())
 
 
-class AwardRuleFormTests(HypTestCase):
+class AwardRuleFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super(AwardRuleFormTests, cls).setUpClass()
@@ -130,10 +129,9 @@ class AwardRuleFormTests(HypTestCase):
         self.trait_validation_test('grade_level', ['1', '6', '11', '12'], '13')
 
 
-class AssignmentTests(HypTestCase):
+class AssignmentTests:
     @classmethod
-    def setUpClass(cls) -> None:
-        super(AssignmentTests, cls).setUpClass()
+    def initialize_supporting_objects(cls) -> None:
         make_test_rubric()
 
         cls.category1 = make_test_category('Category 1')
@@ -191,10 +189,11 @@ class AssignmentTests(HypTestCase):
             make_test_project(subcategory=cls.subcategory1, division=cls.division1)
 
 
-class JudgeAssignmentTests(AssignmentTests):
+class JudgeAssignmentTests(AssignmentTests, HypTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         super(JudgeAssignmentTests, cls).setUpClass()
+        cls.initialize_supporting_objects()
         cls.judge = make_test_judge(categories=[cls.category1], divisions=[cls.division1])
         cls.inactive_judge = make_test_judge(categories=[cls.category2],
                                              divisions=[cls.division2],
@@ -264,11 +263,10 @@ class JudgeAssignmentTests(AssignmentTests):
                 self.assertProjectAssignedToJudge(p, self.judge)
 
 
-class ProjectAssignmentTests(AssignmentTests):
-    @classmethod
-    def setUpClass(cls) -> None:
-        super(ProjectAssignmentTests, cls).setUpClass()
-        cls.project = make_test_project(cls.subcategory1, cls.division1)
+class ProjectAssignmentTests(AssignmentTests, HypTransTestCase):
+    def setUp(self):
+        self.initialize_supporting_objects()
+        self.project = make_test_project(self.subcategory1, self.division1)
 
     # An existing project is assigned to a new judge if the category and division match
     def test_project_assigned_for_matching_category_and_division(self):
@@ -342,7 +340,7 @@ class ProjectAssignmentTests(AssignmentTests):
                 self.assertProjectAssignedToJudge(self.project, j)
 
 
-class SequentialAssignmentTests(AssignmentTests):
+class SequentialAssignmentTests(AssignmentTests, HypTransTestCase):
     @staticmethod
     def compute_expected_instances(num_projects, num_judges):
         projects_per_judge = get_num_projects_per_judge()
@@ -364,6 +362,8 @@ class SequentialAssignmentTests(AssignmentTests):
 
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_project_division_change(self, num_projects, num_judges):
+        self.initialize_supporting_objects()
+
         self.make_projects(num_projects)
         self.make_judges(num_judges)
         self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
@@ -375,6 +375,8 @@ class SequentialAssignmentTests(AssignmentTests):
 
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_judge_category_change(self, num_projects, num_judges):
+        self.initialize_supporting_objects()
+
         self.make_projects(num_projects)
         self.make_judges(num_judges)
         self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
@@ -386,6 +388,8 @@ class SequentialAssignmentTests(AssignmentTests):
 
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_judge_inactivation(self, num_projects, num_judges):
+        self.initialize_supporting_objects()
+
         self.make_projects(num_projects)
         self.make_judges(num_judges)
         self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
