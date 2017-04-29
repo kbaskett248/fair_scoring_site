@@ -1,0 +1,43 @@
+{% load dictkey %}
+
+<p>
+    Congratulations on a wonderful 2017 Freshmen Poster Session. Please take a look at your scores from
+    the event. This should help you determine your strengths and weaknesses. Please focus your energy
+    toward improving your work as you complete and ultimately compete with your research project.
+</p>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <td><strong>Description</strong></td>
+            <td><strong>Phrase/Question</strong></td>
+            <td><strong>Average Score</strong></td>
+        </tr>
+    </thead>
+    <tbody>
+        {% include "fair_projects\student_feedback_row_2.HTML" with question=questions|dictkey:"Clarity" %}
+        {% include "fair_projects\student_feedback_row_2.HTML" with question=questions|dictkey:"Variables & Controls" %}
+        {% include "fair_projects\student_feedback_row_2.HTML" with question=questions|dictkey:"Originality" %}
+        {% include "fair_projects\student_feedback_row_2.HTML" with question=questions|dictkey:"Methods and Data Interpretation" %}
+        {% include "fair_projects\student_feedback_row_2.HTML" with question=questions|dictkey:"Limitations & Assumptions" %}
+        {% include "fair_projects\student_feedback_row_2.HTML" with question=questions|dictkey:"Visual Appeal" %}
+        {% include "fair_projects\student_feedback_row_2.HTML" with question=questions|dictkey:"Spelling and Grammer" %}
+        {% include "fair_projects\student_feedback_row_2.HTML" with question=questions|dictkey:"Poster Neatness" %}
+        {% include "fair_projects\student_feedback_row_2.HTML" with question=questions|dictkey:"Overall Presentation" %}
+        {% include "fair_projects\student_feedback_row_2.HTML" with question=questions|dictkey:"Questions" %}
+    </tbody>
+</table>
+
+<h2>Top Ten Tips for Improvement from the Poster Session</h2>
+<ol>
+    <li>Be original! Make it clear how your project is a new direction.</li>
+    <li>Have previous studies that support what you are doing and show it is important.</li>
+    <li>Make sure EDD clearly shows all parts of study (IVs, Levels, Trials, DVs, Control, &amp; Constants).</li>
+    <li>Discuss methods clearly and where you are purchasing materials.</li>
+    <li>Cite appropriately using APA style.</li>
+    <li>Dress professionally and make eye contact with judges.</li>
+    <li>Don’t leave huge blank spaces on poster.</li>
+    <li>Speak loudly and clearly.</li>
+    <li>Clear visuals (no pixels!) &amp; make text visible on poster (need contrast so it is easy to read).</li>
+    <li>Give background and rationale before going into procedures and EDD.</li>
+</ol>

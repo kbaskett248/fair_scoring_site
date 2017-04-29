@@ -410,6 +410,7 @@ class StudentFeedbackForm(SpecificUserRequiredMixin, DetailView):
     context_object_name = 'project'
     queryset = Project.objects.select_related(
         'category', 'subcategory', 'division')
+    feedback_template = 'fair_projects\student_feedback_common_2.html'
 
     def get_required_user(self, *args, **kwargs):
         student = get_object_or_404(Student, pk=kwargs['student_id'])
@@ -429,6 +430,7 @@ class StudentFeedbackForm(SpecificUserRequiredMixin, DetailView):
         context['student'] = Student.objects.get(pk=self.kwargs['student_id'])
         context['project'] = context['student'].project
         context['questions'] = get_question_feedback_dict(context['project'])
+        context['feedback_template'] = self.feedback_template
 
         return context
 
@@ -439,6 +441,7 @@ class TeacherStudentsFeedbackForm(SpecificUserRequiredMixin, ListView):
     model = Student
     template_name = 'fair_projects/student_feedback_multi.html'
     context_object_name = 'student_list'
+    feedback_template = 'fair_projects\student_feedback_common_2.html'
 
     def get_required_user(self, *args, **kwargs):
         return get_object_or_404(User, username=kwargs['username'])
@@ -459,5 +462,6 @@ class TeacherStudentsFeedbackForm(SpecificUserRequiredMixin, ListView):
             feedback_list.append(
                 Feedback(student, student.project, get_question_feedback_dict(student.project)))
         context['feedback_list'] = feedback_list
+        context['feedback_template'] = self.feedback_template
 
         return context
