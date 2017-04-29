@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block html-title %}Science Fair Feedback{% endblock %}
+{% block html-title %}Freshmen Poster Session Feedback{% endblock %}
 
-{% block title %}Science Fair Feedback and Final Exam{% endblock %}
+{% block title %}Freshmen Poster Session Feedback{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -22,9 +22,9 @@
         <p class="col-xs-12 text-left" style="font-size: 120%;"><strong>{{ project.title }}</strong></p>
     </div>
 
-    <h1>Science Fair Feedback and Final Exam</h1>
+    <h1>Freshmen Poster Session Feedback</h1>
 
-    {% include 'fair_projects/student_feedback_common.html' %}
+    {% include feedback_template %}
 
     <div class="noprint" style="border-bottom: 1px solid;margin: 20px"></div>
     <div class="page-break"></div>
