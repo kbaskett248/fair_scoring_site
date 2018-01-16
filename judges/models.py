@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
+from django.dispatch import Signal
 from django.db import models, transaction
 
 
@@ -44,6 +45,8 @@ class JudgeEducation(models.Model):
 
 
 class Judge(models.Model):
+    post_commit = Signal(providing_args=['instance'])
+
     user = models.OneToOneField(User,
                                 on_delete=models.CASCADE,
                                 primary_key=True)
@@ -87,6 +90,13 @@ class Judge(models.Model):
 
     def __str__(self):
         return self.user.first_name + ' ' + self.user.last_name
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        super(Judge, self).save(force_insert=force_insert, force_update=force_update,
+                                using=using, update_fields=update_fields)
+        transaction.on_commit(lambda: self.post_commit.send(sender=Judge, instance=self))
+
 
 
 @transaction.atomic()

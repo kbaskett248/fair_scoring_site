@@ -18,6 +18,10 @@ from fair_categories.models import Category, Subcategory, Division, Ethnicity
 from fair_projects.logic import get_projects_sorted_by_score
 from fair_projects.models import Project, Student
 
+
+# This seems like a safe place to register signals
+from . import signals
+
 admin.site.unregister(Project)
 admin.site.unregister(Award)
 admin.site.unregister(AwardInstance)
