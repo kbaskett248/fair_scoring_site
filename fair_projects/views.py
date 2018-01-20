@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse, reverse_lazy
 from django.db import transaction
 from django.http import Http404
 from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import DetailView, ListView
 from django.views.generic import TemplateView
@@ -309,6 +309,7 @@ class JudgingInstanceMixin(SpecificUserRequiredMixin):
 
     def get_required_user(self, *args, **kwargs):
         self.judging_instance = self.queryset.get(pk=kwargs[self.pk_url_kwarg])
+
         self.judge = self.judging_instance.judge
         user_name = self.judge.user.username
         return get_object_or_404(User, username=user_name)
@@ -324,6 +325,27 @@ class JudgingInstanceMixin(SpecificUserRequiredMixin):
         context['edit_mode'] = False
 
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        """If a JudgingInstance can't be found, redirect to the judge's user page.
+
+        Arguments:
+            request: a request object
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            An HttpResponse or HttpResponseRedirect
+
+        """
+        try:
+            return super(JudgingInstanceMixin, self).dispatch(request, *args, **kwargs)
+        except JudgingInstance.DoesNotExist:
+            messages.add_message(request, messages.INFO, 'You are no longer assigned to judge that project')
+            if Judge.objects.filter(user__username=request.user.username).exists():
+                return redirect('fair_projects:judge_detail', judge_username=request.user.username)
+            else:
+                return redirect('fair_projects:index')
 
 
 class JudgingInstanceDetail(JudgingInstanceMixin, DetailView):
