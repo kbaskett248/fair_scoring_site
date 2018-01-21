@@ -13,9 +13,17 @@
                     Submission not saved. Correct the errors below.
                     {% endif %}
                 </div>
-                <button type="submit" class="btn btn-primary" style="float:right">
-                    {% trans "Submit" %}
-                </button>
+                <div style="float:right">
+                    <button type="submit" class="btn btn-warning" name="save">
+                        {% trans "Save" %}
+                        <span class="glyphicon glyphicon-asterisk"></span>
+                    </button>
+                    <button type="submit" class="btn btn-primary" name="submit">
+                        {% trans "Submit" %}
+                        <span class="glyphicon glyphicon-ok-sign"></span>
+                    </button>
+                </div>
+
             </div>
 
             <div class="list-group">
@@ -26,7 +34,14 @@
                 {% endfor %}
             </div>
             <div class="panel-footer">
-                <button type="submit" class="btn btn-primary">{% trans "Submit" %}</button>
+                <button type="submit" class="btn btn-warning" name="save">
+                    {% trans "Save" %}
+                    <span class="glyphicon glyphicon-asterisk"></span>
+                </button>
+                <button type="submit" class="btn btn-primary" name="submit">
+                    {% trans "Submit" %}
+                    <span class="glyphicon glyphicon-ok-sign"></span>
+                </button>
             </div>
         </div>
 

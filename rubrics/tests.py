@@ -1,3 +1,4 @@
+import random
 import unittest
 from contextlib import contextmanager
 from datetime import datetime
@@ -65,7 +66,8 @@ def rubric_with_questions(min_questions: int=None, max_questions: int=None,
 def create_rubric_with_questions_and_choices():
     rubric = mommy.make(Rubric)
     for _ in range(0, 10):
-        question = mommy.make(Question, rubric=rubric)
+        required = bool(random.getrandbits(1))
+        question = mommy.make(Question, rubric=rubric, required=required)
         if question.show_choices():
             for a in range(0, 5):
                 mommy.make(Choice, question=question)
@@ -439,17 +441,40 @@ class RubricResponseTests(HypTestCase):
         self.assertIsNotNone(q_resp)
         self.assertFalse(q_resp.question_answered)
 
-        question = q_resp.question
-        if question.question_type == Question.LONG_TEXT:
-            q_resp.update_response('This is some long text')
-        elif question.question_type == Question.MULTI_SELECT_TYPE:
-            choices = [choice[0] for choice in question.choices()]
-            q_resp.update_response(choices)
-        else:
-            q_resp.update_response(next(question.choices()))
-
+        self.answer_question(q_resp)
         self.assertTrue(rubric_response.has_response)
         self.assertTrue(q_resp.question_answered)
+
+    def test_complete(self, rubric=None):
+        if not rubric:
+            rubric = create_rubric_with_questions_and_choices()
+
+        rubric_response = self.make_rubric_response(rubric=rubric)
+        self.assertFalse(rubric_response.complete)
+
+        q_resp = rubric_response.questionresponse_set.first()
+        self.assertIsNotNone(q_resp)
+        self.assertFalse(q_resp.question_answered)
+
+        self.answer_question(q_resp)
+        self.assertTrue(q_resp.question_answered)
+        self.assertFalse(rubric_response.complete)
+
+        for q_resp in rubric_response.questionresponse_set.filter(question__required=True):
+            self.answer_question(q_resp)
+
+        self.assertTrue(rubric_response.complete)
+
+    @staticmethod
+    def answer_question(question_resp):
+        question = question_resp.question
+        if question.question_type == Question.LONG_TEXT:
+            question_resp.update_response('This is some long text')
+        elif question.question_type == Question.MULTI_SELECT_TYPE:
+            choices = [choice[0] for choice in question.choices()]
+            question_resp.update_response(choices)
+        else:
+            question_resp.update_response(next(question.choices()))
 
     def test_last_submitted(self):
         rub_response = make_rubric_response()

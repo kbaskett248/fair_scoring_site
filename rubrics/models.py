@@ -307,6 +307,13 @@ class RubricResponse(models.Model):
             choice_response__isnull=True, text_response__isnull=True).exists()
 
     @property
+    def complete(self) -> bool:
+        """bool: True if all required questions are answered. False otherwise."""
+        return not self.questionresponse_set.filter(question__required=True,
+                                                    choice_response__isnull=True,
+                                                    text_response__isnull=True).exists()
+
+    @property
     def question_response_dict(self):
         return {resp.question.pk: resp
                 for resp in self.questionresponse_set.select_related('question').all()}

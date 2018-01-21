@@ -383,7 +383,13 @@ class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
         return context
 
     def get_form_class(self):
-        return rubric_form_factory(self.object.response.rubric)
+        required = False
+        try:
+            if self.submit:
+                required = None
+        except AttributeError:
+            pass
+        return rubric_form_factory(self.object.response.rubric, override_required=required)
 
     def get_form_kwargs(self):
         kwargs = super(JudgingInstanceUpdate, self).get_form_kwargs()
@@ -395,6 +401,13 @@ class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
     def get_success_url(self):
         return reverse('fair_projects:judging_instance_detail',
                        args=(self.judging_instance.pk,))
+
+    def post(self, request, *args, **kwargs):
+        if 'submit' in request.POST:
+            self.submit = True
+        else:
+            self.submit = False
+        return super(JudgingInstanceUpdate, self).post(request, *args, **kwargs)
 
 
 class TeacherDetail(SpecificUserRequiredMixin, ListView):

@@ -323,3 +323,6 @@ class JudgingInstance(models.Model):
 
     def has_response(self):
         return self.response.has_response
+
+    def complete(self):
+        return self.response.complete

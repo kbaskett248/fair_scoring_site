@@ -4,29 +4,49 @@ from django.forms.models import ModelForm
 from .models import Question, Choice
 
 
-def default_field(question):
+def default_field(question, override_required=None):
+    if override_required is not None:
+        required = override_required
+    else:
+        required = question.required
     return forms.CharField(label=question.description(), help_text=question.help_text,
-                           strip=True, required=question.required)
+                           strip=True, required=required)
 
 
-def long_text_field(question):
+def long_text_field(question, override_required=None):
+    if override_required is not None:
+        required = override_required
+    else:
+        required = question.required
     return forms.CharField(label=question.description(), help_text=question.help_text,
-                           strip=True, required=question.required, widget=forms.Textarea)
+                           strip=True, required=required, widget=forms.Textarea)
 
 
-def scale_field(question):
+def scale_field(question, override_required=None):
+    if override_required is not None:
+        required = override_required
+    else:
+        required = question.required
     return forms.ChoiceField(label=question.description(), help_text=question.help_text,
-                             choices=question.choices, required=question.required, widget=forms.RadioSelect)
+                             choices=question.choices, required=required, widget=forms.RadioSelect)
 
 
-def single_select_field(question):
+def single_select_field(question, override_required=None):
+    if override_required is not None:
+        required = override_required
+    else:
+        required = question.required
     return forms.ChoiceField(label=question.description(), help_text=question.help_text,
-                             choices=question.choices, required=question.required, widget=forms.RadioSelect)
+                             choices=question.choices, required=required, widget=forms.RadioSelect)
 
 
-def multi_select_field(question):
+def multi_select_field(question, override_required=None):
+    if override_required is not None:
+        required = override_required
+    else:
+        required = question.required
     return forms.MultipleChoiceField(label=question.description(), help_text=question.help_text,
-                                     choices=question.choices, required=question.required, widget=forms.CheckboxSelectMultiple)
+                                     choices=question.choices, required=required, widget=forms.CheckboxSelectMultiple)
 
 
 class RubricForm(forms.Form):
@@ -55,7 +75,8 @@ class RubricForm(forms.Form):
         return self.instance
 
 
-def rubric_form_factory(rubric, field_dict=RubricForm.DEFAULT_FIELD_DICT,
+def rubric_form_factory(rubric, override_required=None,
+                        field_dict=RubricForm.DEFAULT_FIELD_DICT,
                         template_dict=RubricForm.DEFAULT_TEMPLATE_DICT):
     form_name = 'RubricForm%s' % rubric.pk
     form_bases = (RubricForm,)
@@ -63,7 +84,7 @@ def rubric_form_factory(rubric, field_dict=RubricForm.DEFAULT_FIELD_DICT,
                  'rubric': rubric}
     for question in rubric.ordered_question_set.all():
         name = 'question_%s' % question.pk
-        field = field_dict.get(question.question_type, default_field)(question)
+        field = field_dict.get(question.question_type, default_field)(question, override_required)
         field.question_type = question.question_type
         field.template = template_dict.get(question.question_type,
                                            'rubrics/default_type_edit.html')
