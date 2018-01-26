@@ -21,9 +21,7 @@
         {% endfor %}
         </ul>
     </div>
-    <div class="row">
-        {% for student in project.student_set.all %}
-            {{ student }}
-        {% endfor %}
+    <div class="row col-md-4">
+        {{ project.student_set.all|join:", " }}
     </div>
 </a>
