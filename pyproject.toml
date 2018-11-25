@@ -5,7 +5,7 @@ description = "Score science fair projects"
 authors = ["Kenny Baskett <kbaskett248@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "3.5"
+python = "^3.5"
 Django = "^2.1"
 argon2-cffi = "^18.3"
 django-bootstrap3 = "^11.0"
@@ -20,7 +20,6 @@ coverage = "^4.5"
 [tool.poetry.dev-dependencies]
 pytest = "^3.5"
 django-debug-toolbar = "^1.10"
-fake-factory = "^9999.9"
 model-mommy = "^1.6"
 pytest-cov = "^2.6"
 pytest-django = "^3.4"

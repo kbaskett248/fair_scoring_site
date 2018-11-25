@@ -150,15 +150,6 @@ python-versions = "*"
 platform = "UNKNOWN"
 
 [[package]]
-name = "fake-factory"
-version = "9999.9.9"
-description = "The `fake-factory` package was deprecated on December 15th, 2016. Use the `Faker` package instead."
-category = "dev"
-optional = false
-python-versions = "*"
-platform = "any"
-
-[[package]]
 name = "hypothesis"
 version = "3.82.1"
 description = "A library for property based testing"
@@ -415,9 +406,9 @@ python-versions = "*"
 platform = "Platform Independent"
 
 [metadata]
-python-versions = "3.5"
+python-versions = "^3.5"
 platform = "*"
-content-hash = "2188d9e4f667b7b91ca07623b1a45627ceb7ffae31b755622a1cee58522b4ee3"
+content-hash = "7ad91d65675e46c2b3d39389361aa76cb53d41ffbbc456a048c101af28c0fe03"
 
 [metadata.hashes]
 argon2-cffi = [ "457c5db9bb99f2ffb7ce9ebf923b523898e75464dd019fbebdd1c6096ddcf044", "ca65f736d2129687008178e3d9956264fd2be2f69429edf0d755c2f97cd003f1", "51d78eedbba1f9e45a1c3fb1470ad6d1faafc6ec42eabb969df29c2aa848b645", "2829d648dfa4d42ce33ec0f36e863d1068fd729b38ef6f830262b43e04f9ba1c", "04528ebbcc5d77eb49e7c2560fcf9d489cdc3b14f89fdd975c72c0a12934025a", "0d18a3dcb4ca7f3717155994a4f131a43072e47b708e57c4be16f60253337dfd", "193de795483b00d752d16ec5df11d119a3a2c43f5464edfaf919a2ca9cc5b991", "3ddcdde047cd4dba2bcce7d890dcefd6723548b849fa82ba87e04a468079b9b1", "af0d3dbc8f32d95be480eedd5d77fe8714f5441a28b9abcfa687ecf5301a1abd", "3b61a4ef1eb785d41f190520db716aa598d15f147419cbbdc9061dc232126f09", "d371fcd42e01c78c76397120d07c67f6e16f5fef97d327ad372c8debe38f9f56", "0529aeb71b50e068d300c992f850387c2456f2d3d4083d17d18e75710d057682", "04ead34244af38d79742cc46a212fec94daf99b49add66878f5d4b22da72d4aa", "ec12248d4c1e045a736beebf55daf1430c45a29ab8d773d8540c224555784275", "0ecbd2346da3e5af84427fd8df3ece484c903a9dafd9470571def47df54f2780", "22a99f90da7176ee86fbdfb0a95411bc807b9d795b89495ee88c2e0468a496e8", "003f588de43a817af6ecc1c06103fa0801de63849db3cb0f37576bb2da29043d",]
@@ -435,7 +426,6 @@ django-import-export = [ "51823434e06721725e0e51b8da424b3c0e915c93cbb65b607464e3
 django-picklefield = [ "8d1de6be099044ae61e55998b35de18a57499b946fe45781077f5cec4f73f0e0", "ce7fee5c6558fe5dc8924993d994ccde75bb75b91cd82787cbd4c92b95a69f9c",]
 django-widget-tweaks = [ "a69cba6c8a6b98f0cf6eef0535f8212d635e19044ee4533d4d78df700c2e233f", "bc645ef88307bc4ac269ee8ee9e572be814cd4a125c2bb6edb59ffcdc194982d",]
 et-xmlfile = [ "614d9722d572f6246302c4491846d2c393c199cfa4edc9af593437691683335b",]
-fake-factory = [ "60c64a953c03e29fbee6b59fcb700c86a313778d68dc5816fc560ef515019d77", "f5bd18deb22ad8cb4402513c025877bc6b50de58902d686b6b21ba8981dce260",]
 hypothesis = [ "43cabc87f32adc90fec41cb3f36d96c2e5d564d71f2e60817cd2b23d24c7ad7a", "46eef013dafe09467bc83065ab621b51098a84712ab39399fd15477406807c13", "f33d2e50080e09dcd4e81f939b1d825c6f5b104d89ebad7f57cdd3ea11983680",]
 hypothesis-django = [ "c5cc51bb3e4f9184bed50ddaf04b966aa3b68556acdc0360ee4891a5d2c1d5c8",]
 jdcal = [ "948fb8d079e63b4be7a69dd5f0cd618a0a57e80753de8248fd786a8a20658a07", "ea0a5067c5f0f50ad4c7bdc80abad3d976604f6fb026b0b3a17a9d84bb9046c9",]
