@@ -64,14 +64,16 @@ class Judge(models.Model):
         help_text=('Which option best describes your level of education? We '
                    'are required to compile this information for ISEF '
                    'reporting purposes.'),
-        null=True
+        null=True,
+        on_delete=models.SET_NULL
     )
     fair_experience = models.ForeignKey(
         JudgeFairExperience,
         verbose_name='Years of experience',
         help_text=('How many years have you judged science fairs at the '
                    'county level or higher?'),
-        null=True
+        null=True,
+        on_delete=models.SET_NULL
     )
 
     categories = models.ManyToManyField(

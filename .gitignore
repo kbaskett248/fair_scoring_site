@@ -1,0 +1,7 @@
+/.hypothesis
+/.vscode
+/.coverage
+/db.sqlite3
+/db.sqlite3.old
+/.history
+fair_scoring_site/settings.py

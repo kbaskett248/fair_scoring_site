@@ -436,12 +436,11 @@ class TestResultsPage(TestCase):
         response = self.client.get(self.results_url, follow=True)
         self.assertRedirects(response, reverse('login') + '?next=/projects/results',
                              msg_prefix='View did not redirect anonymous user')
-        
-    def test_results_view_redirects_user_without_permission(self):
+
+    def test_results_view_blocks_user_without_permission(self):
         self.client.login(username='user_without_permission', password='user_without_permission')
         response = self.client.get(self.results_url, follow=True)
-        self.assertRedirects(response, reverse('login') + '?next=/projects/results',
-                             msg_prefix='View did not redirect user without permission')
+        self.assertEqual(response.status_code, 403)
 
     def test_results_view_permits_user_with_permission(self):
         self.client.login(username='user_with_permission', password='user_with_permission')

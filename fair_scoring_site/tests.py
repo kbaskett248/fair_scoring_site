@@ -38,8 +38,8 @@ def make_test_division(short_description: str) -> Division:
 def make_test_judge(categories: [Category], divisions: [Division], active=True) -> Judge:
     user = mommy.make(User, is_active=active, first_name='Test', last_name='Judge')
     judge = mommy.prepare(Judge, phone="770-867-5309", user=user)  # type: Judge
-    judge.categories = categories
-    judge.divisions = divisions
+    judge.categories.set(categories)
+    judge.divisions.set(divisions)
     judge.save()
     return judge
 
@@ -309,7 +309,7 @@ class ProjectAssignmentTests(AssignmentTests, HypTransTestCase):
         judge = make_test_judge(categories=[self.category1], divisions=[self.division1])
         self.assertProjectAssignedToJudge(self.project, judge)
 
-        judge.categories = [self.category2]
+        judge.categories.set([self.category2])
         judge.save()
         self.assertProjectNotAssignedToJudge(self.project, judge)
 
@@ -317,7 +317,7 @@ class ProjectAssignmentTests(AssignmentTests, HypTransTestCase):
         judge = make_test_judge(categories=[self.category1], divisions=[self.division1])
         self.assertProjectAssignedToJudge(self.project, judge)
 
-        judge.divisions = [self.division2]
+        judge.divisions.set([self.division2])
         judge.save()
         self.assertProjectNotAssignedToJudge(self.project, judge)
 
@@ -382,7 +382,7 @@ class SequentialAssignmentTests(AssignmentTests, HypTransTestCase):
         self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
 
         judge = self.get_active_judge()
-        judge.categories = [self.category2]
+        judge.categories.set([self.category2])
         judge.save()
         self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges-1))
 

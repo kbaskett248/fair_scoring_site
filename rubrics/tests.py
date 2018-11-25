@@ -24,7 +24,7 @@ def fixed_decimals(min_value: float=0, max_value: float=1, num_decimals=3) -> Se
                     max_value=(max_value*power_of_ten)).map(lambda x: x / power_of_ten)
 
 
-def sane_text(min_size=None, max_size=None, average_size=None) -> SearchStrategy:
+def sane_text(min_size=0, max_size=1024, average_size=None) -> SearchStrategy:
     return text(alphabet=[chr(i) for i in range(33, 126)],
                 min_size=min_size, max_size=max_size, average_size=average_size)
 
@@ -37,7 +37,7 @@ def question_type_and_weight() -> SearchStrategy:
     return one_of(
         tuples(sampled_from(Question.CHOICE_TYPES),
                fixed_decimals()),
-        tuples(sampled_from(set(Question.available_types()) - set(Question.CHOICE_TYPES)),
+        tuples(sampled_from(sorted(set(Question.available_types()) - set(Question.CHOICE_TYPES))),
                just(0))
     )
 
@@ -111,9 +111,9 @@ class QuestionTests(HypTestCase):
             with self.subTest('Question %(number)s', number=number):
                 if question.show_choices():
                     self.assertIsInstance(question.num_choices_display(), int)
-                    self.assertEquals(question.num_choices_display(), 5)
+                    self.assertEqual(question.num_choices_display(), 5)
                 else:
-                    self.assertEquals(question.num_choices_display(), '-')
+                    self.assertEqual(question.num_choices_display(), '-')
 
     @given(question_type=sane_text())
     def test_invalid_question_type_raises_error(self, question_type):

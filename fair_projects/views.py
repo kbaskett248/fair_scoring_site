@@ -7,7 +7,6 @@ from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin, Use
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse, reverse_lazy
 from django.db import transaction
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -16,6 +15,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.generic import DetailView, ListView
 from django.views.generic import TemplateView
 from django.views.generic.edit import UpdateView, CreateView, DeleteView
+from django.urls import reverse, reverse_lazy
 
 from awards.models import Award
 from fair_projects.logic import get_rubric_name
@@ -41,7 +41,7 @@ class ProjectIndex(ListView):
 
         request_user = self.request.user
         context['allow_create'] = False
-        if request_user.is_authenticated():
+        if request_user.is_authenticated:
             if request_user.has_perm('fair_projects.add_project'):
                 context['allow_create'] = True
 
@@ -166,7 +166,7 @@ class ProjectDetail(DetailView):
 
         request_user = self.request.user
         context['is_submitting_teacher'] = False
-        if request_user.is_authenticated():
+        if request_user.is_authenticated:
             if request_user.is_superuser:
                 context['is_submitting_teacher'] = True
             elif request_user.has_perm('fair_projects.is_teacher'):
@@ -178,9 +178,10 @@ class ProjectDetail(DetailView):
         return context
 
 
-class ResultsIndex(PermissionRequiredMixin, TemplateView):
+class ResultsIndex(PermissionRequiredMixin, AccessMixin, TemplateView):
     template_name = 'fair_projects/results.html'
     permission_required = 'fair_projects.can_view_results'
+    permission_denied_message = 'This user has no access to the Results page.'
 
     def get_context_data(self, **kwargs):
         context = super(ResultsIndex, self).get_context_data(**kwargs)
@@ -247,7 +248,7 @@ class SpecificUserRequiredMixin(AccessMixin):
         current_user = self.request.user
         required_user = self.get_required_user(*args, **kwargs)
 
-        if not current_user.is_authenticated():
+        if not current_user.is_authenticated:
             return self.handle_no_permission()
 
         if self.allow_superuser and current_user.is_superuser:
@@ -431,7 +432,7 @@ class TeacherDetail(SpecificUserRequiredMixin, ListView):
 
         request_user = self.request.user
         context['allow_create'] = False
-        if request_user.is_authenticated():
+        if request_user.is_authenticated:
             if request_user.has_perm('fair_projects.add_project'):
                 context['allow_create'] = True
         return context

@@ -1,11 +1,11 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 
 
 @login_required
 def profile(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         if request.user.is_superuser:
             return HttpResponseRedirect(reverse('admin:index'))
         elif request.user.has_perm('judges.is_judge'):
