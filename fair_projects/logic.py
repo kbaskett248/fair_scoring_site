@@ -478,11 +478,17 @@ class FeedbackQuestion:
     def score_list_remove_empty(self):
         return list(filter(None, self.score_list()))
 
+    def unweighted_score_list(self):
+        return [resp.unweighted_score() for resp in self.responses]
+
     def average_score(self):
         return self._compute_average(self.score_list())
 
     def average_score_remove_empty(self):
         return self._compute_average(self.score_list_remove_empty())
+
+    def average_score_unweighted(self):
+        return self._compute_average(self.unweighted_score_list())
 
     @staticmethod
     def _compute_average(scores):
