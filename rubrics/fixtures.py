@@ -8,7 +8,7 @@ def make_test_rubric(name: str="Test Rubric") -> Rubric:
     default_weight = float('{0:.3f}'.format(1 / len(Question.CHOICE_TYPES)))
     for question_type in Question.available_types():
         question_is_choice_type = question_type in Question.CHOICE_TYPES
-        weight = 0
+        weight = 0.0
         if question_is_choice_type:
             weight = default_weight
         question = mommy.make(Question,

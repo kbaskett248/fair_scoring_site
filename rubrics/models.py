@@ -387,19 +387,31 @@ class QuestionResponse(models.Model):
         self.last_submitted = timezone.now()
         self.save()
 
-    def score(self):
+    def score(self) -> float:
+        """Return the weighted score of the question response.
+
+        Obtained by multiplying the unweighted score by the weight of the
+        question.
+
+        """
         return QuestionType.get_instance(self.question).score(self)
+
+    def unweighted_score(self) -> float:
+        """Return the unweighted score for the question response."""
+        return QuestionType.get_instance(self.question).unweighted_score(self)
 
     def clear_response(self):
         self.update_response(None)
 
 
 class QuestionType(object):
+    question: Question
+
     @classmethod
     def get_instance(cls, question: Question):
         return QUESTION_TYPE_DICT.get(question.question_type, GenericQuestionType)(question)
 
-    def __init__(self, question):
+    def __init__(self, question: Question):
         super(QuestionType, self).__init__()
         self.question = question
 
@@ -419,6 +431,9 @@ class QuestionType(object):
         raise NotImplementedError
 
     def score(self, response: QuestionResponse) -> float:
+        raise NotImplementedError
+
+    def unweighted_score(self, response: QuestionResponse) -> float:
         raise NotImplementedError
 
 
@@ -450,12 +465,16 @@ class SingleSelectionMixin(ChoiceSelectionMixin):
         weight = float(self.question.weight)
         if weight == 0:
             return 0.0
+        else:
+            return self.unweighted_score(response) * weight
+
+    def unweighted_score(self, response: QuestionResponse) -> float:
         try:
             value = float(response.choice_response)
         except ValueError:
             return 0.0
         else:
-            return value * weight
+            return value
 
 
 class SingleSelectQuestionType(SingleSelectionMixin, QuestionType):
@@ -500,15 +519,18 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
         weight = float(self.question.weight)
         if weight == 0:
             return 0.0
+        else:
+            return self.unweighted_score(response) * weight
 
+    def unweighted_score(self, response: QuestionResponse) -> float:
         responses = json.loads(response.text_response)
-        value = 0
+        value = 0.0
         for x in responses:
             try:
                 value += float(x)
             except ValueError:
                 continue
-        return value * weight
+        return value
 
 
 class LongTextQuestionType(QuestionType):
@@ -525,6 +547,10 @@ class LongTextQuestionType(QuestionType):
         response.text_response = value
 
     def score(self, response: QuestionResponse) -> float:
+        raise TypeError('Questions of type {0} cannot be scored'.format(
+            self.__class__.__name__))
+
+    def unweighted_score(self, response: QuestionResponse) -> float:
         raise TypeError('Questions of type {0} cannot be scored'.format(
             self.__class__.__name__))
 
