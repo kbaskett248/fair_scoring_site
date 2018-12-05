@@ -405,7 +405,7 @@ class QuestionResponse(models.Model):
 
 
 class QuestionType(object):
-    question: Question
+    question = None
 
     @classmethod
     def get_instance(cls, question: Question):
