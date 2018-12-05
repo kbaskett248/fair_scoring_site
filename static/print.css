@@ -26,7 +26,7 @@ body, #content, #container {
 /* SECTION 3: Set body font face, size, and color.
    Consider using a serif font for readability. */
 body {
-   font: 200% Georgia, "Times New Roman", Times, serif;
+   font: 160% Georgia, "Times New Roman", Times, serif;
    color: #000;
 }
 
