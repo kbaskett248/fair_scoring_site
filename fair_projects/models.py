@@ -42,7 +42,7 @@ class Teacher(models.Model):
 def create_teacher(username, email, first_name, last_name, school_name, password=None,
                    output_stream=None, styler: Style = None):
 
-    def write_output(message: str, style: str=None):
+    def write_output(message: str, style: str = None):
         if output_stream:
             if styler and style:
                 message = getattr(styler, style)(message)
@@ -80,7 +80,7 @@ def create_teacher(username, email, first_name, last_name, school_name, password
             return teacher
 
 
-def create_teachers_group(name: str ='Teachers',
+def create_teachers_group(name: str = 'Teachers',
                           permissions=('Designate this user as a teacher',
                                        'Can add project',
                                        'Can change project',
@@ -88,7 +88,7 @@ def create_teachers_group(name: str ='Teachers',
                           output_stream=None,
                           styler: Style = None):
 
-    def write_output(message: str, style: str=None):
+    def write_output(message: str, style: str = None):
         if output_stream:
             if styler and style:
                 message = getattr(styler, style)(message)
@@ -153,8 +153,8 @@ class Student(models.Model):
 
 
 def create_student(first_name, last_name, ethnicity, gender, grade_level, project,
-                   teacher, email=None, output_stream=None, styler: Style=None):
-    def write_output(message: str, style: str=None):
+                   teacher, email=None, output_stream=None, styler: Style = None):
+    def write_output(message: str, style: str = None):
         if output_stream:
             if styler and style:
                 message = getattr(styler, style)(message)
@@ -279,20 +279,30 @@ class Project(models.Model):
     def student_str(self):
         return ', '.join(str(student) for student in self.student_set.all())
 
+    @classmethod
+    def create(
+            cls,
+            title,
+            abstract,
+            category,
+            subcategory,
+            division,
+            output_stream=None) -> 'Project':
+        """Create a project."""
+        def write_output(message):
+            if output_stream:
+                output_stream.write(message)
 
-def create_project(title, abstract, category, subcategory, division, output_stream=None):
-    def write_output(message):
-        if output_stream:
-            output_stream.write(message)
+        project = cls.objects.create(
+            title=title,
+            abstract=abstract,
+            category=category,
+            subcategory=subcategory,
+            division=division)
 
-    project = Project.objects.create(title=title,
-                                     abstract=abstract,
-                                     category=category,
-                                     subcategory=subcategory,
-                                     division=division)
-    write_output('Created project: %s' % project)
+        write_output('Created project: %s' % project)
 
-    return project
+        return project
 
 
 class JudgingInstance(models.Model):

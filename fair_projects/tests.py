@@ -207,6 +207,24 @@ class ProjectTests(TestCase):
             project = get_new_project(code)
             self.assertEqual(project.number, number)
 
+    def test_project_create(self) -> None:
+        category = mommy.make(Category, short_description="Test category")
+        subcategory = mommy.make(
+            Subcategory,
+            short_description='Subcategory of %s' % category.short_description,
+            category=category
+        )
+        division = mommy.make(Division, short_description="Test division")
+        project = Project.create(
+            "Test project",
+            "abstract",
+            category,
+            subcategory,
+            division
+        )
+        self.assertEqual(project.title, "Test project")
+        self.assertEqual(project.number, "1001")
+
     def test_average_score_is_zero_for_project_with_no_instances(self):
         project = make_project()
         self.assertEqual(project.average_score(), 0,
