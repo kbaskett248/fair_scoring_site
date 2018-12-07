@@ -225,6 +225,7 @@ class Project(models.Model):
         Division,
         on_delete=models.PROTECT
     )
+    requires_attention = models.BooleanField(default=False)
 
     class Meta:
         permissions = (
