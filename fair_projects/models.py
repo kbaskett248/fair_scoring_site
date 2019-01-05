@@ -3,7 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.color import Style
 from django.db import models
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Manager
 from django.urls.base import reverse
 
 from fair_categories.models import Ethnicity, Category, Subcategory, Division
@@ -19,6 +19,11 @@ class School(models.Model):
         return self.name
 
 
+class WithUserManager(Manager):
+    def get_queryset(self):
+        return super().get_queryset().select_related('user')
+
+
 # Create your models here.
 class Teacher(models.Model):
     user = models.OneToOneField(User,
@@ -28,6 +33,8 @@ class Teacher(models.Model):
         School,
         on_delete=models.PROTECT
     )
+
+    objects = WithUserManager()
 
     class Meta:
         permissions = (
