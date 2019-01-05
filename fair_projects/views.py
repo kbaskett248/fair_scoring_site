@@ -50,7 +50,8 @@ class ProjectIndex(ListView):
 
 class ProjectModifyMixin(PermissionRequiredMixin):
     model = Project
-    fields = ('title', 'category', 'subcategory', 'division', 'abstract')
+    fields = ('title', 'category', 'subcategory',
+              'division', 'abstract', 'requires_attention', 'judge_notes')
     slug_url_kwarg = 'project_number'
     slug_field = 'number'
 
