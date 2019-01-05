@@ -3,7 +3,7 @@
 {% if rubric_form %}
     <form action="{{ post_url }}" method="post">
         {% csrf_token %}
-        <div class="panel {% if rubric_form.errors %}panel-danger{% else %}panel-default{% endif %}">
+        <div class="panel {% if rubric_form.errors %}panel-danger{% else %}panel-info{% endif %}">
             <!-- Default panel contents -->
             <div class="panel-heading clearfix">
                 <div style="float:left">

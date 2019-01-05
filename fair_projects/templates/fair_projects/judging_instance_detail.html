@@ -13,21 +13,45 @@
 
 {% block content %}
     <h2>{{ project.title }}</h2>
-    <div>{{ project.division.short_description }}</div>
-    <div>{{ project.category.short_description }} - {{ project.subcategory.short_description }}</div>
 
-    {% if student_list %}
-        <div class="student-list">
-            <h3>Students</h3>
+    <div class="panel panel-default">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <h3 class="panel-title">Project Information</h3>
+        </div>
+        <div class="panel-body">
+            <div>{{ project.division.short_description }}</div>
+            <div>{{ project.category.short_description }} - {{ project.subcategory.short_description }}</div>
+        </div>
+    
+        <ul class="list-group">
             {% for student in student_list %}
-                <ul class="list-group">
-                    <li class="list-group-item">{{ student.first_name }} {{ student.last_name }} - {{ student.teacher.school.name }}</li>
-                </ul>
+                <li class="list-group-item">{{ student.first_name }} {{ student.last_name }} - {{ student.teacher.school.name }}</li>
             {% endfor %}
+        </ul>
+    </div>
+
+    {% if project.abstract.strip %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Abstract</h3>
+            </div>
+            <div class="panel-body">
+                {{ project.abstract.strip | linebreaks }}
+            </div>
         </div>
     {% endif %}
 
-    <div>{{ project.abstract }}</div>
+    {% if project.judge_notes.strip %}
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+                <h3 class="panel-title">Special Notes</h3>
+            </div>
+            <div class="panel-body">
+                {{ project.judge_notes.strip | linebreaks }}
+            </div>
+        </div>
+    {% endif %}
 
     {% if rubric_form %}
         {% include "rubrics/rubric_edit.html" %}
