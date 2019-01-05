@@ -6,3 +6,4 @@
 /.history
 fair_scoring_site/settings.py
 /.mypy_cache
+/fair_scoring_site.egg-info

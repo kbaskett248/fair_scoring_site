@@ -233,6 +233,7 @@ class Project(models.Model):
         on_delete=models.PROTECT
     )
     requires_attention = models.BooleanField(default=False)
+    judge_notes = models.TextField(verbose_name='Notes for Judge', blank=True)
 
     class Meta:
         permissions = (
