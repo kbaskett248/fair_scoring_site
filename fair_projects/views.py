@@ -405,6 +405,11 @@ class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
         return reverse('fair_projects:judging_instance_detail',
                        args=(self.judging_instance.pk,))
 
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        self.judging_instance.set_locked()
+        return response
+
     def post(self, request, *args, **kwargs):
         if 'submit' in request.POST:
             self.submit = True

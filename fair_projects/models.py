@@ -347,9 +347,26 @@ class JudgingInstance(models.Model):
     def complete(self):
         return self.response.complete
 
+    def set_locked(self):
+        if not self.locked:
+            self.locked = True
+            self.save()
+
     class JudgingInstanceManager(models.Manager):
         def get_queryset(self):
             return super().get_queryset().select_related(
                 'judge', 'project', 'response')
 
     objects = JudgingInstanceManager()
+
+    class LockedInstanceManager(JudgingInstanceManager):
+        def get_queryset(self):
+            return super().get_queryset().filter(locked=True)
+
+    locked_objects= LockedInstanceManager()
+
+    class UnlockedInstanceManager(JudgingInstanceManager):
+        def get_queryset(self):
+            return super().get_queryset().filter(locked=False)
+
+    unlocked_objects = UnlockedInstanceManager()
