@@ -90,6 +90,12 @@ class Judge(models.Model):
             ('is_judge', 'Designates this user as a judge'),
         )
 
+    class WithUserManager(models.Manager):
+        def get_queryset(self):
+            return super().get_queryset().select_related('user')
+
+    objects = WithUserManager()
+
     def __str__(self):
         return self.user.first_name + ' ' + self.user.last_name
 

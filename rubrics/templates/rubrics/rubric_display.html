@@ -1,9 +1,18 @@
 {% if rubric_response %}
-    <div class="panel panel-default">
+    <div class="panel panel-info">
         <!-- Default panel contents -->
-        <div class="panel-heading">
-            <h3 class="panel-title">{{ rubric_response.rubric.name }}</h3>
-            <a href="{% url 'fair_projects:judging_instance_edit' judging_instance.pk %}">Edit response</a>
+        <div class="panel-heading clearfix">
+            <div style="float:left">
+                <h3 class="panel-title">{{ rubric_response.rubric.name }}</h3>
+            </div>
+            <!-- <h3 class="panel-title">{{ rubric_response.rubric.name }}</h3> -->
+            <!-- <a href="{% url 'fair_projects:judging_instance_edit' judging_instance.pk %}" class="btn btn-default btn-xs">Edit response</a> -->
+            <div style="float:right">
+                <a href="{% url 'fair_projects:judging_instance_edit' judging_instance.pk %}" 
+                   class="btn btn-default btn-sm">
+                    Edit response
+                </a>
+            </div>
         </div>
 
         <div class="list-group">

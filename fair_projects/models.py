@@ -3,7 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.color import Style
 from django.db import models
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Manager
 from django.urls.base import reverse
 
 from fair_categories.models import Ethnicity, Category, Subcategory, Division
@@ -19,6 +19,11 @@ class School(models.Model):
         return self.name
 
 
+class WithUserManager(Manager):
+    def get_queryset(self):
+        return super().get_queryset().select_related('user')
+
+
 # Create your models here.
 class Teacher(models.Model):
     user = models.OneToOneField(User,
@@ -28,6 +33,8 @@ class Teacher(models.Model):
         School,
         on_delete=models.PROTECT
     )
+
+    objects = WithUserManager()
 
     class Meta:
         permissions = (
@@ -42,7 +49,7 @@ class Teacher(models.Model):
 def create_teacher(username, email, first_name, last_name, school_name, password=None,
                    output_stream=None, styler: Style = None):
 
-    def write_output(message: str, style: str=None):
+    def write_output(message: str, style: str = None):
         if output_stream:
             if styler and style:
                 message = getattr(styler, style)(message)
@@ -80,7 +87,7 @@ def create_teacher(username, email, first_name, last_name, school_name, password
             return teacher
 
 
-def create_teachers_group(name: str ='Teachers',
+def create_teachers_group(name: str = 'Teachers',
                           permissions=('Designate this user as a teacher',
                                        'Can add project',
                                        'Can change project',
@@ -88,7 +95,7 @@ def create_teachers_group(name: str ='Teachers',
                           output_stream=None,
                           styler: Style = None):
 
-    def write_output(message: str, style: str=None):
+    def write_output(message: str, style: str = None):
         if output_stream:
             if styler and style:
                 message = getattr(styler, style)(message)
@@ -153,8 +160,8 @@ class Student(models.Model):
 
 
 def create_student(first_name, last_name, ethnicity, gender, grade_level, project,
-                   teacher, email=None, output_stream=None, styler: Style=None):
-    def write_output(message: str, style: str=None):
+                   teacher, email=None, output_stream=None, styler: Style = None):
+    def write_output(message: str, style: str = None):
         if output_stream:
             if styler and style:
                 message = getattr(styler, style)(message)
@@ -225,6 +232,8 @@ class Project(models.Model):
         Division,
         on_delete=models.PROTECT
     )
+    requires_attention = models.BooleanField(default=False)
+    judge_notes = models.TextField(verbose_name='Notes for Judge', blank=True)
 
     class Meta:
         permissions = (
@@ -278,20 +287,30 @@ class Project(models.Model):
     def student_str(self):
         return ', '.join(str(student) for student in self.student_set.all())
 
+    @classmethod
+    def create(
+            cls,
+            title,
+            abstract,
+            category,
+            subcategory,
+            division,
+            output_stream=None) -> 'Project':
+        """Create a project."""
+        def write_output(message):
+            if output_stream:
+                output_stream.write(message)
 
-def create_project(title, abstract, category, subcategory, division, output_stream=None):
-    def write_output(message):
-        if output_stream:
-            output_stream.write(message)
+        project = cls.objects.create(
+            title=title,
+            abstract=abstract,
+            category=category,
+            subcategory=subcategory,
+            division=division)
 
-    project = Project.objects.create(title=title,
-                                     abstract=abstract,
-                                     category=category,
-                                     subcategory=subcategory,
-                                     division=division)
-    write_output('Created project: %s' % project)
+        write_output('Created project: %s' % project)
 
-    return project
+        return project
 
 
 class JudgingInstance(models.Model):

@@ -19,7 +19,7 @@ from fair_categories.models import Category, Division, Subcategory, Ethnicity
 from fair_scoring_site.logic import get_judging_rubric
 from judges.models import Judge
 from rubrics.models import Rubric, QuestionResponse
-from .models import Project, JudgingInstance, create_student, create_project, Teacher
+from .models import Project, JudgingInstance, create_student, Teacher
 
 
 def get_rubric_name():
@@ -127,7 +127,7 @@ def process_project_import(reader, output_stream=None):
 
     for row in reader:
         project_data = ProjectData(**row)
-        project = create_project(project_data.title,
+        project = Project.create(project_data.title,
                                  project_data.abstract,
                                  project_data.category,
                                  project_data.subcategory,

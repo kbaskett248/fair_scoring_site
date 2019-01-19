@@ -50,5 +50,5 @@
         </div>
     {% endif %}
 
-    <div>{{ project.abstract }}</div>
+    <div>{{ project.abstract.strip | linebreaks }}</div>
 {% endblock %}

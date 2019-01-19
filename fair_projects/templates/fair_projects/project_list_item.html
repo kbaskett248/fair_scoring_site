@@ -1,5 +1,8 @@
 <a href="{{ item_url }}" class="row list-group-item {% if ji.complete %}list-group-item-success{% elif ji.has_response %}list-group-item-warning{% endif %}">
-    <div class="col-xs-2 col-sm-1 small">{{ project.number }}</div>
+    <div class="col-xs-2 col-sm-1 small">
+        {{ project.number }}
+        {% if show_needs_attention and project.requires_attention %}<span class="glyphicon glyphicon-flag" />{% endif %}
+    </div>
     <div class="col-xs-10 col-sm-11 col-md-4 col-lg-5 col-md-push-7 col-lg-push-6 small truncated">
         <div class="row">
             <div class="visible-xs col-xs-7 visible-md col-md-7 truncated">

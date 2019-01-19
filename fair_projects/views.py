@@ -50,7 +50,8 @@ class ProjectIndex(ListView):
 
 class ProjectModifyMixin(PermissionRequiredMixin):
     model = Project
-    fields = ('title', 'category', 'subcategory', 'division', 'abstract')
+    fields = ('title', 'category', 'subcategory',
+              'division', 'abstract', 'requires_attention', 'judge_notes')
     slug_url_kwarg = 'project_number'
     slug_field = 'number'
 
@@ -295,6 +296,7 @@ class JudgeDetail(SpecificUserRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super(JudgeDetail, self).get_context_data(**kwargs)
         context['judge'] = self.judge
+        context['show_needs_attention'] = True
         return context
 
 
