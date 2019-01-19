@@ -327,6 +327,7 @@ class JudgingInstance(models.Model):
         models.CASCADE,
         null=True, blank=True
     )
+    locked = models.BooleanField(default=False)
 
     def __init__(self, *args, **kwargs):
         rubric = kwargs.pop('rubric', None)
