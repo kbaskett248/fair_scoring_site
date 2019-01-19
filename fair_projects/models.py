@@ -345,3 +345,10 @@ class JudgingInstance(models.Model):
 
     def complete(self):
         return self.response.complete
+
+    class JudgingInstanceManager(models.Manager):
+        def get_queryset(self):
+            return super().get_queryset().select_related(
+                'judge', 'project', 'response')
+
+    objects = JudgingInstanceManager()
