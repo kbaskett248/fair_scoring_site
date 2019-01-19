@@ -80,10 +80,13 @@ def rubric_form_factory(rubric, override_required=None,
                         template_dict=RubricForm.DEFAULT_TEMPLATE_DICT):
     form_name = 'RubricForm%s' % rubric.pk
     form_bases = (RubricForm,)
+    field_order = []
     form_dict = {'title': rubric.name,
-                 'rubric': rubric}
+                 'rubric': rubric,
+                 'field_order': field_order}
     for question in rubric.ordered_question_set.all():
         name = 'question_%s' % question.pk
+        field_order.append(name)
         field = field_dict.get(question.question_type, default_field)(question, override_required)
         field.question_type = question.question_type
         field.template = template_dict.get(question.question_type,
