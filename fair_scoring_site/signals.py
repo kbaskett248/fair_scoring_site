@@ -27,9 +27,11 @@ def add_instances(queryset: QuerySet, minimum_instances: int, other_min: int, **
 
 
 def remove_nonmatching_instances(**kwargs) -> Iterator['ExistingInstanceHelper']:
+    """Remove Judging Instances that no longer match and aren't locked."""
     rubric = get_judging_rubric()
-    for instance in ExistingInstanceHelper.get_instances_for(rubric=rubric, **kwargs):
-        if not instance.attributes_match() and not instance.has_response():
+    for instance in ExistingInstanceHelper.get_instances_for(
+            rubric=rubric, locked=False, **kwargs):
+        if not instance.attributes_match():
             instance.remove()
             yield instance
 
@@ -57,9 +59,16 @@ def add_projects_to_judge(judge: Judge) -> None:
 
 
 def remove_excess_instances() -> None:
+    """Remove unlocked Judging Instances until below the limits.
+
+    Get the JudgingInstance objects where the number of projects for the
+    judge and the number of judges for the project exceed the limit. If there
+    are any, remove the first and then requery.
+
+    """
     rubric = get_judging_rubric()
     queryset = JudgingInstance.objects \
-        .filter(response__rubric=rubric) \
+        .filter(response__rubric=rubric, locked=False) \
         .annotate(num_projects=Count('judge__judginginstance',
                                      distinct=True),
                   num_judges=Count('project__judginginstance',
@@ -70,8 +79,9 @@ def remove_excess_instances() -> None:
         .reverse() \
         .select_related('response')
 
+    # Result needs to be a list so we can pop the first item
     def get_instances():
-        return [i for i in queryset.all() if not i.response.has_response]
+        return list(queryset.all())
 
     instances = get_instances()
 
@@ -119,8 +129,8 @@ def update_judging_instances_for_inactive_judges(sender: type, instance: User, *
             for project in projects_to_update:
                 add_judges_to_project(project)
             remove_excess_instances()
-        
-        
+
+
 class AssignmentHelper:
     @classmethod
     def get_instances_for(cls, queryset, **kwargs) -> Iterator['AssignmentHelper']:
@@ -185,6 +195,10 @@ class ExistingInstanceHelper:
     def project(self) -> Project:
         return self.judging_instance.project
 
+    @property
+    def locked(self) -> bool:
+        return self.judging_instance.locked
+
     def remove(self):
         self.judging_instance.delete()
 
@@ -193,5 +207,3 @@ class ExistingInstanceHelper:
                 (self.project.category in self.judge.categories.all()) and
                 (self.project.division in self.judge.divisions.all()))
 
-    def has_response(self):
-        return self.judging_instance.has_response()

@@ -323,9 +323,9 @@ def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
 
 
 def get_instances_that_can_be_reassigned(judge, rubric):
-    return filterfalse(lambda x: x.response.has_response,
-                       judge.judginginstance_set.filter(response__rubric=rubric)\
-                           .select_related('response', 'project'))
+    return judge.judginginstance_set \
+                .filter(response__rubric=rubric, locked=False) \
+                .select_related('response', 'project')
 
 
 def get_available_judge(project, rubric, possible_judges):
