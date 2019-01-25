@@ -76,10 +76,9 @@ class StudentResource(resources.ModelResource):
     ethnicity = fields.Field(attribute='ethnicity',
                              column_name='ethnicity',
                              widget=ForeignKeyWidget(Ethnicity, 'short_description'))
-    teacher = fields.Field(attribute='teacher__user',
+    teacher = fields.Field(attribute='teacher',
                            column_name='teacher',
-                           widget=ForeignKeyWidget(Teacher, 'last_name'),
-                           readonly=True)
+                           widget=ForeignKeyWidget(Teacher, 'user__last_name'))
     project_number = fields.Field(attribute='project',
                                   column_name='project number',
                                   widget=ForeignKeyWidget(Project, 'number'))
