@@ -64,6 +64,20 @@ class StudentResource(resources.ModelResource):
                         'grade_level', 'email', 'teacher', 'project_number', 'project_title')
         import_id_fields = ('first_name', 'last_name')
 
+    class TeacherForeignKeyWidget(ForeignKeyWidget):
+        """Allow value formats of <last name> or <first name> <last name>."""
+        def clean(self, value, row=None, *args, **kwargs):
+            result = None
+            try:
+                result = super().clean(value.split()[1], row, *args, **kwargs)
+            except IndexError:
+                pass
+            finally:
+                if result:
+                    return result
+                else:
+                    return super().clean(value, row, *args, **kwargs)
+
     first_name = fields.Field(attribute='first_name',
                               column_name='first name',
                               widget=CharWidget())
@@ -78,7 +92,7 @@ class StudentResource(resources.ModelResource):
                              widget=ForeignKeyWidget(Ethnicity, 'short_description'))
     teacher = fields.Field(attribute='teacher',
                            column_name='teacher',
-                           widget=ForeignKeyWidget(Teacher, 'user__last_name'))
+                           widget=TeacherForeignKeyWidget(Teacher, 'user__last_name'))
     project_number = fields.Field(attribute='project',
                                   column_name='project number',
                                   widget=ForeignKeyWidget(Project, 'number'))
