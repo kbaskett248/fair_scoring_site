@@ -171,6 +171,44 @@ class StudentAdmin(ImportExportMixin, admin.ModelAdmin):
             'project', 'teacher', 'teacher__user')
 
 
+@admin.register(JudgingInstance)
+class InstanceAdmin(admin.ModelAdmin):
+    model = JudgingInstance
+    list_display = ('project_number', 'project_title', 'judge_name', 'rubric_name', 'locked', 'has_response', 'complete', 'response_score')
+    ordering = ('project__number', 'project__title', 'judge__user__last_name')
+    readonly_fields = ('judge', 'response', 'project', 'locked')
+    search_fields = ('project__title', 'project__number')
+
+    def project_number(self, obj):
+        return obj.project.number
+    project_number.admin_order_field = 'project__number'
+
+    def project_title(self, obj):
+        return obj.project.title
+    project_title.admin_order_field = 'project__title'
+
+    def judge_name(self, obj):
+        return str(obj.judge.user.get_full_name())
+    judge_name.admin_order_field = 'judge__user__last_name'
+
+    def judge_last_name(self, obj):
+        return obj.judge.user.last_name
+
+    def rubric_name(self, obj):
+        return obj.response.rubric.name
+
+    def response_score(self, obj):
+        return obj.response.score()
+
+    def get_queryset(self, request):
+        return super().get_queryset(request) \
+            .select_related('project', 'judge', 'judge__user', 'response', 'response__rubric') \
+            .prefetch_related('response__questionresponse_set')
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 class TeacherInline(admin.StackedInline):
     model = Teacher
     can_delete = False
