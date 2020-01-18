@@ -40,6 +40,7 @@ class Teacher(models.Model):
         permissions = (
             ('is_teacher', 'Designate this user as a teacher'),
         )
+        ordering = ('user__last_name', 'user__first_name')
 
     def __str__(self):
         return self.user.first_name + ' ' + self.user.last_name
@@ -157,6 +158,9 @@ class Student(models.Model):
 
     def __str__(self):
         return self.full_name
+
+    class Meta:
+        ordering = ('last_name', 'first_name')
 
 
 def create_student(first_name, last_name, ethnicity, gender, grade_level, project,

@@ -89,10 +89,12 @@ class Judge(models.Model):
         permissions = (
             ('is_judge', 'Designates this user as a judge'),
         )
+        ordering = ('user__last_name', 'user__first_name')
 
     class WithUserManager(models.Manager):
         def get_queryset(self):
-            return super().get_queryset().select_related('user')
+            return super().get_queryset() \
+                          .select_related('user')
 
     objects = WithUserManager()
 
