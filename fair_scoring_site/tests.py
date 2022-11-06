@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.test import TestCase
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis.strategies import integers
 from hypothesis.extra.django import TransactionTestCase as HypTransTestCase
 from hypothesis.extra.django import TestCase as HypTestCase
@@ -406,6 +406,7 @@ class SequentialAssignmentTests(AssignmentTests, HypTransTestCase):
     def get_project():
         return Project.objects.first()
 
+    @settings(deadline=None, max_examples=50)
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_project_division_change(self, num_projects, num_judges):
         self.initialize_supporting_objects()
@@ -423,6 +424,7 @@ class SequentialAssignmentTests(AssignmentTests, HypTransTestCase):
             self.compute_expected_instances(num_projects - 1, num_judges)
         )
 
+    @settings(deadline=None, max_examples=50)
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_judge_category_change(self, num_projects, num_judges):
         self.initialize_supporting_objects()
@@ -440,6 +442,7 @@ class SequentialAssignmentTests(AssignmentTests, HypTransTestCase):
             self.compute_expected_instances(num_projects, num_judges - 1)
         )
 
+    @settings(deadline=None, max_examples=50)
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_judge_inactivation(self, num_projects, num_judges):
         self.initialize_supporting_objects()
