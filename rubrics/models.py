@@ -492,7 +492,7 @@ class SingleSelectionMixin(ChoiceSelectionMixin):
     def unweighted_score(self, response: QuestionResponse) -> float:
         try:
             value = float(response.choice_response)
-        except ValueError:
+        except (ValueError, TypeError):
             return 0.0
         else:
             return value
@@ -549,7 +549,7 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
         for x in responses:
             try:
                 value += float(x)
-            except ValueError:
+            except (ValueError, TypeError):
                 continue
         return value
 
