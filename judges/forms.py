@@ -1,5 +1,5 @@
 from django.contrib.auth.forms import UserCreationForm as UserForm
-from django.forms import Form, FileField, ModelForm
+from django.forms import FileField, Form, ModelForm
 
 from judges.models import Judge
 

@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from fair_categories.models import Division, Category, Subcategory, Ethnicity
-
+from fair_categories.models import Category, Division, Ethnicity, Subcategory
 
 CATEGORIES = [
     (

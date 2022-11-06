@@ -1,4 +1,4 @@
-from django.forms import inlineformset_factory, Form, ModelForm, FileField
+from django.forms import FileField, Form, ModelForm, inlineformset_factory
 
 from fair_projects.models import Project, Student
 

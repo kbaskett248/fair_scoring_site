@@ -1,8 +1,7 @@
-from django.contrib import admin
 import django.contrib.auth.admin
+from django.contrib import admin
 
-from .models import Judge, JudgeFairExperience, JudgeEducation
-
+from .models import Judge, JudgeEducation, JudgeFairExperience
 
 admin.site.register(JudgeFairExperience)
 admin.site.register(JudgeEducation)

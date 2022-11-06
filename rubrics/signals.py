@@ -1,10 +1,10 @@
 from functools import reduce
 
 from django.db import transaction
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from .models import Question, Choice, QuestionResponse, RubricResponse, Rubric
+from .models import Choice, Question, QuestionResponse, Rubric, RubricResponse
 
 
 @receiver(post_save, sender=Question)

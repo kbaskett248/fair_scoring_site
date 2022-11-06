@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.core.exceptions import FieldError, ValidationError
 from django.utils.translation import gettext as _
 
-from awards.models import Award, AwardRule, AwardInstance, In, NotIn
+from awards.models import Award, AwardInstance, AwardRule, In, NotIn
 
 
 def format_external_name(string: str):

@@ -1,9 +1,9 @@
 [
-	{"model": "judges.judgeeducation", "pk": 1, "fields": {"short_description": "High School", "long_description": "High School"}}, 
-	{"model": "judges.judgeeducation", "pk": 2, "fields": {"short_description": "Some college", "long_description": "Some college (1 - 4 years; no degree)"}}, 
-	{"model": "judges.judgeeducation", "pk": 3, "fields": {"short_description": "Associate's degree", "long_description": "Associate\u2019s degree (including occupational or academic degrees)"}}, 
-	{"model": "judges.judgeeducation", "pk": 4, "fields": {"short_description": "Bachelor's degree", "long_description": "Bachelor's degree"}}, 
-	{"model": "judges.judgeeducation", "pk": 5, "fields": {"short_description": "Master's degree", "long_description": "Master's degree"}}, 
-	{"model": "judges.judgeeducation", "pk": 6, "fields": {"short_description": "Professional degree", "long_description": "Professional school degree (MD, DDC, JD, etc)"}}, 
+	{"model": "judges.judgeeducation", "pk": 1, "fields": {"short_description": "High School", "long_description": "High School"}},
+	{"model": "judges.judgeeducation", "pk": 2, "fields": {"short_description": "Some college", "long_description": "Some college (1 - 4 years; no degree)"}},
+	{"model": "judges.judgeeducation", "pk": 3, "fields": {"short_description": "Associate's degree", "long_description": "Associate\u2019s degree (including occupational or academic degrees)"}},
+	{"model": "judges.judgeeducation", "pk": 4, "fields": {"short_description": "Bachelor's degree", "long_description": "Bachelor's degree"}},
+	{"model": "judges.judgeeducation", "pk": 5, "fields": {"short_description": "Master's degree", "long_description": "Master's degree"}},
+	{"model": "judges.judgeeducation", "pk": 6, "fields": {"short_description": "Professional degree", "long_description": "Professional school degree (MD, DDC, JD, etc)"}},
 	{"model": "judges.judgeeducation", "pk": 7, "fields": {"short_description": "Doctorate degree", "long_description": "Doctorate degree (PhD, EdD, etc)"}}
 ]

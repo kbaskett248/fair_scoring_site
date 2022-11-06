@@ -6,14 +6,15 @@ from django.db.models import Count, QuerySet
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from fair_projects.models import JudgingInstance, Project
+from judges.models import Judge
 from rubrics.models import Rubric
+
 from .logic import (
     get_judging_rubric,
     get_num_judges_per_project,
     get_num_projects_per_judge,
 )
-from fair_projects.models import Project, JudgingInstance
-from judges.models import Judge
 
 
 def add_instances(

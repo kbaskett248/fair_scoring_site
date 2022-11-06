@@ -1,35 +1,35 @@
 import random
-from typing import Optional
 import unittest
 from contextlib import contextmanager
 from datetime import datetime
+from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from hypothesis import given
 from hypothesis.extra.django import TestCase as HypTestCase
 from hypothesis.extra.django import from_model
-from hypothesis.strategies import SearchStrategy
 from hypothesis.strategies import (
+    SearchStrategy,
+    integers,
+    just,
+    lists,
+    none,
     one_of,
     sampled_from,
     text,
-    lists,
-    integers,
-    just,
     tuples,
-    none,
 )
 from model_mommy import mommy
 
 from rubrics.fixtures import make_test_rubric
 from rubrics.forms import ChoiceForm, QuestionForm
 from rubrics.models import (
-    Rubric,
-    Question,
     Choice,
-    RubricResponse,
+    Question,
     QuestionResponse,
+    Rubric,
+    RubricResponse,
     value_is_numeric,
 )
 
@@ -37,7 +37,7 @@ from rubrics.models import (
 def fixed_decimals(
     min_value: float = 0, max_value: float = 1, num_decimals=3
 ) -> SearchStrategy:
-    power_of_ten = 10 ** num_decimals
+    power_of_ten = 10**num_decimals
     return integers(
         min_value=(min_value * power_of_ten), max_value=(max_value * power_of_ten)
     ).map(lambda x: x / power_of_ten)

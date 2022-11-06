@@ -1,12 +1,11 @@
-from django.contrib.auth.models import User, Group, Permission
+from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.color import Style
-from django.db import models
-from django.db import transaction
-from django.db.models import QuerySet, Manager
+from django.db import models, transaction
+from django.db.models import Manager, QuerySet
 from django.urls.base import reverse
 
-from fair_categories.models import Ethnicity, Category, Subcategory, Division
+from fair_categories.models import Category, Division, Ethnicity, Subcategory
 from judges.models import Judge
 from rubrics.models import RubricResponse
 

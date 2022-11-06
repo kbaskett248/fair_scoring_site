@@ -12,29 +12,28 @@ from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.http import Http404
-from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404, redirect
-from django.views.decorators.csrf import csrf_protect
-from django.views.generic import DetailView, ListView
-from django.views.generic import TemplateView
-from django.views.generic.edit import UpdateView, CreateView, DeleteView
+from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.views.decorators.csrf import csrf_protect
+from django.views.generic import DetailView, ListView, TemplateView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
 from awards.models import Award
 from fair_projects.logic import get_rubric_name
 from judges.models import Judge
 from rubrics.forms import rubric_form_factory
 from rubrics.models import Question
-from .forms import UploadFileForm, StudentFormset
+
+from .forms import StudentFormset, UploadFileForm
 from .logic import (
-    handle_project_import,
+    assign_judges,
     email_teachers,
     get_projects_sorted_by_score,
-    assign_judges,
     get_question_feedback_dict,
+    handle_project_import,
 )
-from .models import Project, Student, JudgingInstance, Teacher
+from .models import JudgingInstance, Project, Student, Teacher
 
 logger = logging.getLogger(__name__)
 

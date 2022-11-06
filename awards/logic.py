@@ -1,4 +1,4 @@
-from awards.models import AwardInstance, Award
+from awards.models import Award, AwardInstance
 
 
 def assign_awards(queryset, instances):

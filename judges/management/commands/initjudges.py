@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from judges.models import JudgeFairExperience, JudgeEducation
-
+from judges.models import JudgeEducation, JudgeFairExperience
 
 FAIR_EXPERIENCES = [
     ("First time", "This is my first time judging"),

@@ -1,25 +1,25 @@
 import csv
 from collections import defaultdict
 from functools import reduce
-from itertools import product, filterfalse, groupby
+from itertools import filterfalse, groupby, product
 from operator import ior
 from typing import Generator
 
 from constance import config
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import EmailMultiAlternatives
-from django.core.mail import get_connection
+from django.core.mail import EmailMultiAlternatives, get_connection
 from django.db import transaction
-from django.db.models import Count, Q, Avg
+from django.db.models import Avg, Count, Q
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from fair_categories.models import Category, Division, Subcategory, Ethnicity
+from fair_categories.models import Category, Division, Ethnicity, Subcategory
 from fair_scoring_site.logic import get_judging_rubric
 from judges.models import Judge
-from rubrics.models import Rubric, QuestionResponse
-from .models import Project, JudgingInstance, create_student, Teacher
+from rubrics.models import QuestionResponse, Rubric
+
+from .models import JudgingInstance, Project, Teacher, create_student
 
 
 def get_rubric_name():

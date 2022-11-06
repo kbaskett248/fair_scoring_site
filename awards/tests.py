@@ -3,17 +3,22 @@ from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from hypothesis import assume
-from hypothesis import example
-from hypothesis import given
+from hypothesis import assume, example, given
 from hypothesis.extra.django import TestCase as HypTestCase
-from hypothesis.strategies import SearchStrategy
-from hypothesis.strategies import text, one_of, integers, booleans, floats, lists
+from hypothesis.strategies import (
+    SearchStrategy,
+    booleans,
+    floats,
+    integers,
+    lists,
+    one_of,
+    text,
+)
 from model_mommy import mommy
 
 from awards.admin import AwardRuleForm
 from awards.logic import InstanceBase
-from awards.models import Award, AwardRule, Is, Greater, NotIn, In, IsNot, Less
+from awards.models import Award, AwardRule, Greater, In, Is, IsNot, Less, NotIn
 
 
 def make_Award(**kwargs) -> Award:

@@ -23,7 +23,7 @@
             <div>{{ project.division.short_description }}</div>
             <div>{{ project.category.short_description }} - {{ project.subcategory.short_description }}</div>
         </div>
-    
+
         <ul class="list-group">
             {% for student in student_list %}
                 <li class="list-group-item">{{ student.first_name }} {{ student.last_name }} - {{ student.teacher.school.name }}</li>

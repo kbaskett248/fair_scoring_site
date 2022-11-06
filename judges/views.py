@@ -1,10 +1,10 @@
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
 
-from .forms import UserCreationForm, JudgeCreationForm
+from .forms import JudgeCreationForm, UserCreationForm
 
 
 class JudgeCreateView(CreateView):

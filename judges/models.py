@@ -1,8 +1,8 @@
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
-from django.dispatch import Signal
 from django.db import models, transaction
+from django.dispatch import Signal
 
 
 class PhoneField(models.CharField):

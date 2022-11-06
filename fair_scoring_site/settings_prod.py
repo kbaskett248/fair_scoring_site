@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 
 from .settings_common import *
 
-
 # SECURITY WARNING: keep the secret key used in production secret!
 # TODO: Configure Secret Key
 SECRET_KEY = "REPLACE ME"

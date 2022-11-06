@@ -15,14 +15,15 @@ Including another URLconf
 """
 import django.contrib.admin
 from django.conf import settings
-from django.urls import re_path, include
+from django.urls import include, re_path
 
 from fair_projects.views import (
+    delete_judge_assignments,
     import_projects,
     judge_assignment,
     notify_teachers,
-    delete_judge_assignments,
 )
+
 from . import admin  # This is needed to load the Awards admin
 from .views import *
 

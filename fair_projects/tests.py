@@ -2,12 +2,11 @@ from collections import OrderedDict
 from io import StringIO
 
 import tablib
-from django.contrib.auth.models import User, Group, Permission
+from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import call_command
-from django.test import Client
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 from model_mommy import mommy
 
@@ -19,17 +18,16 @@ from fair_projects.logic import (
     get_question_feedback_dict,
 )
 from fair_projects.models import (
-    School,
-    create_teacher,
-    Teacher,
-    create_teachers_group,
-    Student,
-    Project,
     JudgingInstance,
+    Project,
+    School,
+    Student,
+    Teacher,
+    create_teacher,
+    create_teachers_group,
 )
 from judges.models import Judge
-from rubrics.models import Question, Choice, Rubric
-from rubrics.models import RubricResponse
+from rubrics.models import Choice, Question, Rubric, RubricResponse
 
 
 def make_school(name: str = "Test School") -> School:

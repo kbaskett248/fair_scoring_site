@@ -1,7 +1,6 @@
 from django.contrib import admin
 
-
-from .models import Division, Category, Subcategory, Ethnicity
+from .models import Category, Division, Ethnicity, Subcategory
 
 
 class SubcategoryInline(admin.TabularInline):

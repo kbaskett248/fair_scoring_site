@@ -2,14 +2,15 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.test import TestCase
 from hypothesis import given, settings
-from hypothesis.strategies import integers
-from hypothesis.extra.django import TransactionTestCase as HypTransTestCase
 from hypothesis.extra.django import TestCase as HypTestCase
+from hypothesis.extra.django import TransactionTestCase as HypTransTestCase
+from hypothesis.strategies import integers
 from model_mommy import mommy
 
-from awards.models import Is, In
-from fair_categories.models import Category, Subcategory, Division
-from fair_projects.models import Project, JudgingInstance
+import rubrics.fixtures
+from awards.models import In, Is
+from fair_categories.models import Category, Division, Subcategory
+from fair_projects.models import JudgingInstance, Project
 from fair_scoring_site.admin import AwardRuleForm
 from fair_scoring_site.logic import (
     get_judging_rubric_name,
@@ -17,8 +18,6 @@ from fair_scoring_site.logic import (
     get_num_projects_per_judge,
 )
 from judges.models import Judge
-import rubrics.fixtures
-
 
 project_number_counter = 1000
 

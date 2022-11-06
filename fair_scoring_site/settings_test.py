@@ -14,7 +14,6 @@ from hypothesis import Verbosity, settings
 
 from .settings_common import *
 
-
 # SECURITY WARNING: keep the secret key used in production secret!
 # TODO: Configure Secret Key
 SECRET_KEY = "REPLACE ME"
@@ -29,7 +28,7 @@ ALLOWED_HOSTS = []
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 

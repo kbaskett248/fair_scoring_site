@@ -1,5 +1,4 @@
-from django.contrib import admin
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
 from django.core.exceptions import ValidationError
@@ -7,17 +6,16 @@ from django.db.models.base import Model
 from django.urls.base import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
-from import_export import resources, fields
+from import_export import fields, resources
 from import_export.admin import ExportMixin
 
 import awards.admin
 import fair_projects
 from awards.logic import InstanceBase, assign_awards
 from awards.models import Award, AwardInstance
-from fair_categories.models import Category, Subcategory, Division, Ethnicity
+from fair_categories.models import Category, Division, Ethnicity, Subcategory
 from fair_projects.logic import get_projects_sorted_by_score
 from fair_projects.models import Project, Student
-
 
 # This seems like a safe place to register signals
 from . import signals

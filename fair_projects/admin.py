@@ -1,22 +1,22 @@
 import django.contrib.auth.admin
 from django import forms
-from django.contrib import admin
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
-from import_export import resources, fields
+from import_export import fields, resources
 from import_export.admin import ImportExportMixin
-from import_export.widgets import ForeignKeyWidget, CharWidget, IntegerWidget
+from import_export.widgets import CharWidget, ForeignKeyWidget, IntegerWidget
 
-from fair_categories.models import Category, Subcategory, Division, Ethnicity
+from fair_categories.models import Category, Division, Ethnicity, Subcategory
 from fair_projects.logic import mass_email
 from fair_projects.models import JudgingInstance
 from fair_scoring_site.logic import get_judging_rubric
 from rubrics.models import RubricResponse
-from .models import School, Teacher, Student, Project
+
+from .models import Project, School, Student, Teacher
 
 
 class ProjectResource(resources.ModelResource):
@@ -313,7 +313,7 @@ django.contrib.auth.admin.UserAdmin.actions = [
 # Register your models here.
 admin.site.register(School)
 
-from .views import judge_assignment, delete_judge_assignments
+from .views import delete_judge_assignments, judge_assignment
 
 
 def do_judge_assignment(modeladmin, request, queryset):
