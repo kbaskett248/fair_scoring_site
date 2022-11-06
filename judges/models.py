@@ -48,7 +48,7 @@ class JudgeEducation(models.Model):
 
 
 class Judge(models.Model):
-    post_commit = Signal(providing_args=["instance"])
+    post_commit = Signal()
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     phone = PhoneField()
