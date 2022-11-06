@@ -305,7 +305,10 @@ def send_password_reset(modeladmin, request, queryset):
 
 
 send_password_reset.short_description = "Send password reset links to selected users"
-django.contrib.auth.admin.UserAdmin.actions.append(send_password_reset)
+django.contrib.auth.admin.UserAdmin.actions = [
+    *django.contrib.auth.admin.UserAdmin.actions,
+    send_password_reset,
+]
 
 # Register your models here.
 admin.site.register(School)
@@ -318,7 +321,10 @@ def do_judge_assignment(modeladmin, request, queryset):
 
 
 do_judge_assignment.short_description = "Assign Judges"
-ProjectAdmin.actions.append(do_judge_assignment)
+ProjectAdmin.actions = [
+    *ProjectAdmin.actions,
+    do_judge_assignment,
+]
 
 
 def do_judge_deletion(modeladmin, request, queryset):
