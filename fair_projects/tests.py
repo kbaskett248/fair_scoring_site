@@ -3,6 +3,7 @@ from io import StringIO
 
 import tablib
 from django.contrib.auth.models import User, Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import call_command
 from django.test import Client
@@ -40,7 +41,7 @@ class SchoolTests(TestCase):
         school = make_school("Test School")
         self.assertIsNotNone(school)
         self.assertIsInstance(school, School)
-        self.assertQuerysetEqual(School.objects.all(), ["<School: Test School>"])
+        self.assertEqual(School.objects.first(), school)
 
     def test_str(self, school_name: str = "Test School"):
         school = make_school(school_name)
@@ -65,17 +66,17 @@ class TeacherTests(TestCase):
         # Teacher is correct
         self.assertIsNotNone(teacher)
         self.assertIsInstance(teacher, Teacher)
-        self.assertQuerysetEqual(Teacher.objects.all(), [teacher_repr])
+        self.assertQuerysetEqual(Teacher.objects.all(), [teacher_repr], transform=repr)
 
         # User is correct
         self.assertIsInstance(teacher.user, User)
-        self.assertQuerysetEqual(User.objects.all(), [user_repr])
+        self.assertQuerysetEqual(User.objects.all(), [user_repr], transform=repr)
         self.assertIn(self.teachers_group, teacher.user.groups.all())
         self.assertTrue(teacher.user.has_perm("fair_projects.is_teacher"))
 
         # School is correct
         self.assertIsInstance(teacher.school, School)
-        self.assertQuerysetEqual(School.objects.all(), [school_repr])
+        self.assertQuerysetEqual(School.objects.all(), [school_repr], transform=repr)
 
     def create_and_test_teacher(self, data_dict: OrderedDict):
         teacher = create_teacher(*list(data_dict.values()))
@@ -112,7 +113,9 @@ class TeacherTests(TestCase):
         )
         # Establish initial state
         self.assertQuerysetEqual(
-            User.objects.all(), ["<User: {username}>".format(**data_dict)]
+            User.objects.all(),
+            ["<User: {username}>".format(**data_dict)],
+            transform=repr,
         )
 
         self.create_and_test_teacher(data_dict)
@@ -128,7 +131,9 @@ class TeacherTests(TestCase):
         School.objects.create(name=data_dict["school"])
         # Establish initial state
         self.assertQuerysetEqual(
-            School.objects.all(), ["<School: {school}>".format(**data_dict)]
+            School.objects.all(),
+            ["<School: {school}>".format(**data_dict)],
+            transform=repr,
         )
 
         self.create_and_test_teacher(data_dict)
@@ -152,6 +157,7 @@ class InitGroupsTest(TestCase):
                 "<Permission: judges | judge | Can change judge>",
                 "<Permission: judges | judge | Can delete judge>",
             ],
+            transform=repr,
         )
 
         judges_group = Group.objects.get(name="Judges")
@@ -159,6 +165,7 @@ class InitGroupsTest(TestCase):
         self.assertQuerysetEqual(
             judges_group.permissions.all(),
             ["<Permission: judges | judge | Designates this user as a judge>"],
+            transform=repr,
         )
 
         teachers_group = Group.objects.get(name="Teachers")
@@ -171,6 +178,7 @@ class InitGroupsTest(TestCase):
                 "<Permission: fair_projects | project | Can delete project>",
                 "<Permission: fair_projects | teacher | Designate this user as a teacher>",
             ],
+            transform=repr,
         )
 
 
@@ -309,13 +317,14 @@ class ProjectTests(TestCase):
 def make_rubric():
     rubric = mommy.make(Rubric, name="Test Rubric")
     default_weight = float("{0:.3f}".format(1 / len(Question.CHOICE_TYPES)))
-    for question_type in Question.available_types():
+    for idx, question_type in enumerate(Question.available_types(), start=1):
         question_is_choice_type = question_type in Question.CHOICE_TYPES
         weight = 0
         if question_is_choice_type:
             weight = default_weight
         question = mommy.make(
             Question,
+            id=idx,
             rubric=rubric,
             short_description="Question %s" % question_type,
             long_description="This is for question %s" % question_type,
@@ -445,6 +454,7 @@ class TestJudgeAssignmentAndProjectScoring(TestCase):
         self.assertQuerysetEqual(
             qs.all(),
             existing_instances,
+            transform=repr,
             msg="Judge assignment is not steady. Assigning again without changed inputs results in changed assignments.",
         )
 

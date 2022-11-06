@@ -3,7 +3,7 @@ import json
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.utils import timezone
 
 
@@ -319,8 +319,9 @@ class RubricResponse(models.Model):
 
     @property
     def has_response(self):
+        text_response_empty = Q(text_response__isnull=True) | Q(text_response="")
         return self.questionresponse_set.exclude(
-            choice_response__isnull=True, text_response__isnull=True
+            text_response_empty, choice_response__isnull=True
         ).exists()
 
     @property
