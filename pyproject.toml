@@ -6,7 +6,7 @@ authors = ["Kenny Baskett <kbaskett248@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.5"
-Django = "^2.1"
+Django = "^2.2"
 argon2-cffi = "^18.3"
 django-bootstrap3 = "^11.0"
 django-constance = "^2.3"
