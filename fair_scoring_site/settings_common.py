@@ -63,7 +63,7 @@ TEMPLATES = [
     },
 ]
 
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / "assets"]
 
 WSGI_APPLICATION = "fair_scoring_site.wsgi.application"
 

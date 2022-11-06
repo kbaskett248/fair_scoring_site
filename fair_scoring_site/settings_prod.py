@@ -56,6 +56,4 @@ X_FRAME_OPTIONS = "DENY"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-STATIC_ROOT = BASE_DIR / "static"
-
-STATICFILES_DIRS = []
+STATIC_ROOT = f"/var/www/fair_scoring_site/static/"
