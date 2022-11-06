@@ -261,6 +261,7 @@ class AwardRuleTests(HypTestCase):
 
     @given(text_lists(max_size=50), instance_values())
     @example([], "")
+    @example(["0"], 0)
     def test_allow_instance_In(self, rule_value: list, instance_value):
         assume(not (len(rule_value) == 1 and rule_value[0] == ""))
         assume("," not in str(instance_value))
@@ -271,7 +272,7 @@ class AwardRuleTests(HypTestCase):
             In.internal,
             formatted_rule_value,
             instance_value,
-            instance_value in rule_value,
+            str(instance_value) in rule_value,
         )
 
         rule_value.append(str(instance_value))
@@ -294,7 +295,7 @@ class AwardRuleTests(HypTestCase):
             NotIn.internal,
             formatted_rule_value,
             instance_value,
-            instance_value not in rule_value,
+            str(instance_value) not in rule_value,
         )
 
         rule_value.append(str(instance_value))
