@@ -15,7 +15,7 @@ django-picklefield = "^1.1"
 django-widget-tweaks = "^1.4"
 hypothesis = "^3.82"
 hypothesis-django = "^2.0"
-coverage = "^4.5"
+coverage = "^5.5"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.5"
