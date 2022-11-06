@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from io import StringIO
 
 import tablib
 from django.contrib.auth.models import User, Group, Permission
@@ -7,7 +8,6 @@ from django.core.management import call_command
 from django.test import Client
 from django.test import TestCase
 from django.urls import reverse
-from django.utils.six import StringIO
 from model_mommy import mommy
 
 from fair_categories.models import Category, Division, Subcategory

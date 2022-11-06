@@ -1,14 +1,15 @@
 import random
+from typing import Optional
 import unittest
 from contextlib import contextmanager
 from datetime import datetime
 
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from hypothesis import given, example, assume
+from hypothesis import given
 from hypothesis.extra.django import TestCase as HypTestCase
-from hypothesis.extra.django.models import models
-from hypothesis.searchstrategy import SearchStrategy
+from hypothesis.extra.django import from_model
+from hypothesis.strategies import SearchStrategy
 from hypothesis.strategies import (
     one_of,
     sampled_from,
@@ -42,12 +43,11 @@ def fixed_decimals(
     ).map(lambda x: x / power_of_ten)
 
 
-def sane_text(min_size=0, max_size=1024, average_size=None) -> SearchStrategy:
+def sane_text(min_size=0, max_size=1024) -> SearchStrategy:
     return text(
         alphabet=[chr(i) for i in range(33, 126)],
         min_size=min_size,
         max_size=max_size,
-        average_size=average_size,
     )
 
 
@@ -69,7 +69,7 @@ def question_type_and_weight() -> SearchStrategy:
 
 def questions(rubric: Rubric) -> SearchStrategy:
     def create_question(type_and_weight: tuple) -> SearchStrategy:
-        return models(
+        return from_model(
             Question,
             rubric=just(rubric),
             question_type=just(type_and_weight[0]),
@@ -81,18 +81,17 @@ def questions(rubric: Rubric) -> SearchStrategy:
 
 
 def rubric_with_questions(
-    min_questions: int = None, max_questions: int = None, average_questions: int = 10
+    min_questions: int = 0, max_questions: Optional[int] = None
 ) -> SearchStrategy:
     def add_questions(rubric: Rubric) -> SearchStrategy:
         return lists(
             elements=questions(rubric),
             min_size=min_questions,
             max_size=max_questions,
-            average_size=average_questions,
             unique=True,
         ).flatmap(lambda _: just(rubric))
 
-    return models(Rubric).flatmap(add_questions)
+    return from_model(Rubric).flatmap(add_questions)
 
 
 def create_rubric_with_questions_and_choices():

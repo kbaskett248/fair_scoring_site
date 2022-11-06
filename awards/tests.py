@@ -1,4 +1,5 @@
 from collections import namedtuple
+from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -6,7 +7,7 @@ from hypothesis import assume
 from hypothesis import example
 from hypothesis import given
 from hypothesis.extra.django import TestCase as HypTestCase
-from hypothesis.searchstrategy import SearchStrategy
+from hypothesis.strategies import SearchStrategy
 from hypothesis.strategies import text, one_of, integers, booleans, floats, lists
 from model_mommy import mommy
 
@@ -23,21 +24,19 @@ def make_AwardRule(**kwargs) -> AwardRule:
     return mommy.make(AwardRule, **kwargs)
 
 
-def sane_text(min_size=None, max_size=None, average_size=None) -> SearchStrategy:
+def sane_text(min_size: int = 0, max_size: Optional[int] = None) -> SearchStrategy:
     return text(
         alphabet=[chr(i) for i in range(33, 126)],
         min_size=min_size,
         max_size=max_size,
-        average_size=average_size,
     )
 
 
-def text_lists(min_size=None, max_size=None, average_size=None) -> SearchStrategy:
+def text_lists(min_size: int = 0, max_size: Optional[int] = None) -> SearchStrategy:
     return lists(
         elements=sane_text(),
         min_size=min_size,
         max_size=max_size,
-        average_size=average_size,
     )
 
 
@@ -50,7 +49,7 @@ def numeric_strings(min_value=None, max_value=None) -> SearchStrategy:
 
 def instance_values() -> SearchStrategy:
     return one_of(
-        sane_text(max_size=300, average_size=10),
+        sane_text(max_size=300),
         integers(),
         booleans(),
         floats(),
@@ -158,7 +157,7 @@ class AwardRuleTests(HypTestCase):
         instance = TestInstance(instance_value)
         test(rule.allow_instance(instance), expected_result)
 
-    @given(sane_text(max_size=300, average_size=10), instance_values())
+    @given(sane_text(max_size=300), instance_values())
     def test_allow_instance_Is(self, rule_value: str, instance_value):
         self.generic_operator_test(
             Is.internal, rule_value, instance_value, rule_value == str(instance_value)
@@ -168,7 +167,7 @@ class AwardRuleTests(HypTestCase):
             Is.internal, str(instance_value), instance_value, True
         )
 
-    @given(sane_text(max_size=300, average_size=10), instance_values())
+    @given(sane_text(max_size=300), instance_values())
     def test_allow_instance_IsNot(self, rule_value: str, instance_value):
         self.generic_operator_test(
             IsNot.internal,
@@ -181,7 +180,7 @@ class AwardRuleTests(HypTestCase):
             IsNot.internal, str(instance_value), instance_value, False
         )
 
-    @given(sane_text(max_size=300, average_size=10, min_size=1), instance_values())
+    @given(sane_text(max_size=300, min_size=1), instance_values())
     def test_allow_instance_Greater_string(self, rule_value: str, instance_value):
         if isinstance(instance_value, bool):
             test_value = instance_value > bool(rule_value)
@@ -219,7 +218,7 @@ class AwardRuleTests(HypTestCase):
         )
         self.generic_operator_test(Greater.internal, rule_value, "1" + rule_value, True)
 
-    @given(sane_text(max_size=300, average_size=10, min_size=1), instance_values())
+    @given(sane_text(max_size=300, min_size=1), instance_values())
     def test_allow_instance_Less_string(self, rule_value: str, instance_value):
         if isinstance(instance_value, bool):
             test_value = instance_value < bool(rule_value)
@@ -255,7 +254,7 @@ class AwardRuleTests(HypTestCase):
         )
         self.generic_operator_test(Less.internal, "1" + rule_value, rule_value, True)
 
-    @given(text_lists(max_size=50, average_size=10), instance_values())
+    @given(text_lists(max_size=50), instance_values())
     @example([], "")
     def test_allow_instance_In(self, rule_value: list, instance_value):
         assume(not (len(rule_value) == 1 and rule_value[0] == ""))
@@ -279,7 +278,7 @@ class AwardRuleTests(HypTestCase):
 
         self.generic_operator_test(In.internal, "happy,days", instance_value, False)
 
-    @given(text_lists(max_size=50, average_size=10), instance_values())
+    @given(text_lists(max_size=50), instance_values())
     def test_allow_instance_NotIn(self, rule_value: list, instance_value):
         assume(not (len(rule_value) == 1 and rule_value[0] == ""))
         assume("," not in str(instance_value))
