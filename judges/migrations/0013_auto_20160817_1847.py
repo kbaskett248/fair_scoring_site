@@ -4,29 +4,52 @@ from __future__ import unicode_literals
 
 import django.core.validators
 from django.db import migrations, models
+
 import judges.models
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judges', '0012_auto_20160816_1917'),
+        ("judges", "0012_auto_20160816_1917"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='judge',
-            name='categories',
-            field=models.ManyToManyField(to='fair_categories.Category', verbose_name='Which categories are you most comfortable judging?'),
+            model_name="judge",
+            name="categories",
+            field=models.ManyToManyField(
+                to="fair_categories.Category",
+                verbose_name="Which categories are you most comfortable judging?",
+            ),
         ),
         migrations.AlterField(
-            model_name='judge',
-            name='divisions',
-            field=models.ManyToManyField(to='fair_categories.Division', verbose_name='Which division(s) do you prefer to judge?'),
+            model_name="judge",
+            name="divisions",
+            field=models.ManyToManyField(
+                to="fair_categories.Division",
+                verbose_name="Which division(s) do you prefer to judge?",
+            ),
         ),
         migrations.AlterField(
-            model_name='judge',
-            name='phone',
-            field=judges.models.PhoneField(max_length=15, validators=[django.core.validators.RegexValidator(message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.", regex='^\\+?1?\\d{9,15}$'), django.core.validators.RegexValidator(message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.", regex='^\\+?1?\\d{9,15}$'), django.core.validators.RegexValidator(message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.", regex='^\\+?1?\\d{9,15}$')]),
+            model_name="judge",
+            name="phone",
+            field=judges.models.PhoneField(
+                max_length=15,
+                validators=[
+                    django.core.validators.RegexValidator(
+                        message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.",
+                        regex="^\\+?1?\\d{9,15}$",
+                    ),
+                    django.core.validators.RegexValidator(
+                        message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.",
+                        regex="^\\+?1?\\d{9,15}$",
+                    ),
+                    django.core.validators.RegexValidator(
+                        message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.",
+                        regex="^\\+?1?\\d{9,15}$",
+                    ),
+                ],
+            ),
         ),
     ]

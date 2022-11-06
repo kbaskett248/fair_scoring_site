@@ -13,7 +13,7 @@ class Award(models.Model):
     award_order = models.PositiveSmallIntegerField(blank=True, default=32767)
     award_count = models.PositiveIntegerField(default=1)
     percentage_count = models.BooleanField(default=False)
-    exclude_awards = models.ManyToManyField('self', symmetrical=True, blank=True)
+    exclude_awards = models.ManyToManyField("self", symmetrical=True, blank=True)
 
     def __str__(self) -> str:
         return self.name
@@ -21,8 +21,11 @@ class Award(models.Model):
     def assign(self, instances):
         self.delete_award_instances()
 
-        matching_instances = [instance for instance in instances
-                              if self.instance_passes_all_rules(instance)]
+        matching_instances = [
+            instance
+            for instance in instances
+            if self.instance_passes_all_rules(instance)
+        ]
         if not matching_instances:
             return
 
@@ -57,10 +60,11 @@ class Award(models.Model):
 
     def num_awards_str(self):
         if self.percentage_count:
-            return '{0}%'.format(self.award_count)
+            return "{0}%".format(self.award_count)
         else:
             return str(self.award_count)
-    num_awards_str.short_description = 'Award Count'
+
+    num_awards_str.short_description = "Award Count"
 
     def get_number_to_assign(self, num_instances):
         if self.percentage_count:
@@ -86,32 +90,32 @@ class Operator(ABC):
 
 
 class In(Operator):
-    internal = 'IN'
-    display = 'in'
+    internal = "IN"
+    display = "in"
 
     @classmethod
     def operate(cls, value1, value2) -> bool:
         if not value2:
             return False
-        value_2_list = str(value2).split(',')
+        value_2_list = str(value2).split(",")
         return str(value1) in value_2_list
 
 
 class NotIn(Operator):
-    internal = 'NOT_IN'
-    display = 'not in'
+    internal = "NOT_IN"
+    display = "not in"
 
     @classmethod
     def operate(cls, value1, value2) -> bool:
         if not value2:
             return True
-        value_2_list = value2.split(',')
+        value_2_list = value2.split(",")
         return str(value1) not in value_2_list
 
 
 class Is(Operator):
-    internal = 'IS'
-    display = 'is'
+    internal = "IS"
+    display = "is"
 
     @classmethod
     def operate(cls, value1, value2) -> bool:
@@ -119,8 +123,8 @@ class Is(Operator):
 
 
 class IsNot(Operator):
-    internal = 'IS_NOT'
-    display = 'is not'
+    internal = "IS_NOT"
+    display = "is not"
 
     @classmethod
     def operate(cls, value1, value2) -> bool:
@@ -128,8 +132,8 @@ class IsNot(Operator):
 
 
 class Greater(Operator):
-    internal = 'GREATER'
-    display = 'is greater than'
+    internal = "GREATER"
+    display = "is greater than"
 
     @classmethod
     def operate(cls, value1, value2) -> bool:
@@ -142,8 +146,8 @@ class Greater(Operator):
 
 
 class Less(Operator):
-    internal = 'LESS'
-    display = 'is less than'
+    internal = "LESS"
+    display = "is less than"
 
     @classmethod
     def operate(cls, value1, value2) -> bool:
@@ -171,7 +175,7 @@ class AwardRule(models.Model):
             self.set_operator()
 
     def __str__(self):
-        return '{0} {1} {2}'.format(self.trait, self.operator.display, self.value)
+        return "{0} {1} {2}".format(self.trait, self.operator.display, self.value)
 
     @property
     def operator(self) -> Operator:
@@ -186,14 +190,17 @@ class AwardRule(models.Model):
 
     def set_operator(self):
         if not self.operator_name:
-            raise ValueError('operator_name is not set')
+            raise ValueError("operator_name is not set")
 
         for op in self.OPERATORS:
             if self.operator_name == op.internal:
                 self._operator = op
                 break
         else:
-            raise ValueError('%s is not a valid operator. Must be one of %s' % (self.operator_name, self.OPERATORS))
+            raise ValueError(
+                "%s is not a valid operator. Must be one of %s"
+                % (self.operator_name, self.OPERATORS)
+            )
 
     def allow_instance(self, instance) -> bool:
         instance_value = getattr(instance, self.trait)
@@ -208,21 +215,23 @@ class AwardInstance(models.Model):
 
     def __str__(self):
         try:
-            return '{0} - {1}'.format(self.content_object, self.award)
+            return "{0} - {1}".format(self.content_object, self.award)
         except ObjectDoesNotExist:
             return self.content_object_str()
 
     def content_object_str(self):
         return str(self.content_object)
-    content_object_str.short_description = 'Item'
+
+    content_object_str.short_description = "Item"
 
     @classmethod
     def get_award_instance_queryset_for_object(cls, object_):
         cont_type = ContentType.objects.get_for_model(object_)
-        return AwardInstance.objects \
-            .filter(content_type=cont_type, object_id=object_.pk) \
-            .select_related('award') \
+        return (
+            AwardInstance.objects.filter(content_type=cont_type, object_id=object_.pk)
+            .select_related("award")
             .all()
+        )
 
     @classmethod
     def get_award_instances_for_object(cls, object_):
@@ -230,7 +239,7 @@ class AwardInstance(models.Model):
 
     @classmethod
     def get_awards_for_object(cls, object_):
-        return [instance.award for instance in
-                cls.get_award_instance_queryset_for_object(object_)]
-
-
+        return [
+            instance.award
+            for instance in cls.get_award_instance_queryset_for_object(object_)
+        ]

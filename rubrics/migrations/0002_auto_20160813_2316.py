@@ -8,28 +8,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('rubrics', '0001_initial'),
+        ("rubrics", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='choice',
-            name='order',
+            model_name="choice",
+            name="order",
             field=models.PositiveSmallIntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='question',
-            name='help_text',
+            model_name="question",
+            name="help_text",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='question',
-            name='long_description',
+            model_name="question",
+            name="long_description",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='question',
-            name='order',
+            model_name="question",
+            name="order",
             field=models.PositiveSmallIntegerField(blank=True, null=True),
         ),
     ]

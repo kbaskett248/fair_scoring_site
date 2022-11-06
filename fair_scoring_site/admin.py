@@ -1,5 +1,4 @@
-from django.contrib import admin
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
 from django.core.exceptions import ValidationError
@@ -7,17 +6,16 @@ from django.db.models.base import Model
 from django.urls.base import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
-from import_export import resources, fields
+from import_export import fields, resources
 from import_export.admin import ExportMixin
 
 import awards.admin
 import fair_projects
 from awards.logic import InstanceBase, assign_awards
 from awards.models import Award, AwardInstance
-from fair_categories.models import Category, Subcategory, Division, Ethnicity
+from fair_categories.models import Category, Division, Ethnicity, Subcategory
 from fair_projects.logic import get_projects_sorted_by_score
 from fair_projects.models import Project, Student
-
 
 # This seems like a safe place to register signals
 from . import signals
@@ -32,16 +30,19 @@ def assign_awards_to_projects(modeladmin, request, queryset):
     assign_awards(queryset, instances)
     for instance in instances:
         if instance.awards:
-            messages.add_message(request, messages.INFO,
-                                 'Assigned {0} to {1}'.format(instance.awards_str, instance.project))
-    messages.add_message(request, messages.INFO, 'Awards assigned')
+            messages.add_message(
+                request,
+                messages.INFO,
+                "Assigned {0} to {1}".format(instance.awards_str, instance.project),
+            )
+    messages.add_message(request, messages.INFO, "Awards assigned")
 
 
-assign_awards_to_projects.short_description = 'Assign selected awards to projects'
+assign_awards_to_projects.short_description = "Assign selected awards to projects"
 
 
 class ProjectInstance(InstanceBase):
-    model_attr = 'project'
+    model_attr = "project"
 
     def __init__(self, project):
         super().__init__()
@@ -58,7 +59,10 @@ class ProjectInstance(InstanceBase):
         return self.project.__str__()
 
     def calculate_grade_level(self):
-        return max((student.grade_level for student in self.project.student_set.all()), default=None)
+        return max(
+            (student.grade_level for student in self.project.student_set.all()),
+            default=None,
+        )
 
 
 class AwardInstanceResource(resources.ModelResource):
@@ -70,8 +74,8 @@ class AwardInstanceResource(resources.ModelResource):
 
     class Meta:
         model = AwardInstance
-        fields = ('award', 'project', 'students', 'category', 'division')
-        export_order = ('award', 'project', 'students', 'category', 'division')
+        fields = ("award", "project", "students", "category", "division")
+        export_order = ("award", "project", "students", "category", "division")
 
     def dehydrate_award(self, instance):
         return instance.award.name
@@ -90,40 +94,38 @@ class AwardInstanceResource(resources.ModelResource):
 
 
 class AwardRuleForm(awards.admin.AwardRuleForm):
-    traits = ('category',
-              'subcategory',
-              'division',
-              'number',
-              'grade_level')
+    traits = ("category", "subcategory", "division", "number", "grade_level")
 
     def generic_validation(self, model: Model, key: str, fields: dict):
         for value in self.individual_value_iterator(**fields):
             filters = {key: value}
             if not model.objects.filter(**filters).exists():
                 params = fields.copy()
-                params['value'] = value
+                params["value"] = value
                 self.raise_default_validation_error(params)
 
     def validate_category(self, **fields):
-        self.generic_validation(Category, 'short_description', fields)
+        self.generic_validation(Category, "short_description", fields)
 
     def validate_subcategory(self, **fields):
-        self.generic_validation(Subcategory, 'short_description', fields)
+        self.generic_validation(Subcategory, "short_description", fields)
 
     def validate_division(self, **fields):
-        self.generic_validation(Division, 'short_description', fields)
+        self.generic_validation(Division, "short_description", fields)
 
     def validate_number(self, **fields):
-        self.generic_validation(Project, 'number', fields)
+        self.generic_validation(Project, "number", fields)
 
     def validate_grade_level(self, **fields):
         for value in self.individual_value_iterator(**fields):
             if not value.isdecimal() or not 1 <= int(value) <= 12:
                 params = fields.copy()
-                params['value'] = value
-                raise ValidationError('Values for the %(trait)s trait must be numbers between 1 and 12',
-                                      code='invalid trait value',
-                                      params=params)
+                params["value"] = value
+                raise ValidationError(
+                    "Values for the %(trait)s trait must be numbers between 1 and 12",
+                    code="invalid trait value",
+                    params=params,
+                )
 
 
 class AwardRuleInline(awards.admin.AwardRuleInline):
@@ -131,13 +133,21 @@ class AwardRuleInline(awards.admin.AwardRuleInline):
 
 
 class AwardInstanceInline(awards.admin.AwardInstanceInline):
-    readonly_fields = ('project_number', 'project_title', 'project_students', 'project_category', 'project_division')
+    readonly_fields = (
+        "project_number",
+        "project_title",
+        "project_students",
+        "project_category",
+        "project_division",
+    )
 
     def admin_link(self, instance, text):
         return format_html(
             '<a href="{0}">{1}</a>',
-            reverse('admin:fair_projects_project_change', args=(instance.content_object.pk,)),
-            text
+            reverse(
+                "admin:fair_projects_project_change", args=(instance.content_object.pk,)
+            ),
+            text,
         )
 
     def project_title(self, instance):
@@ -156,7 +166,7 @@ class AwardInstanceInline(awards.admin.AwardInstanceInline):
         return instance.content_object.division
 
     def view_on_site(self, instance):
-        return reverse('fair_projects:detail', args=(instance.content_object.number,))
+        return reverse("fair_projects:detail", args=(instance.content_object.number,))
 
 
 class TraitListFilter(awards.admin.TraitListFilter):
@@ -175,10 +185,10 @@ class AwardAdmin(awards.admin.AwardAdmin):
 
 @admin.register(AwardInstance)
 class AwardInstanceAdmin(ExportMixin, awards.admin.AwardInstanceAdmin):
-    list_filter = ('award', TraitListFilter)
-    list_display = ('award', 'project', 'students', 'category', 'division')
-    fields = ('award', 'project', 'students', 'category', 'division')
-    readonly_fields = ('award', 'project', 'students', 'category', 'division')
+    list_filter = ("award", TraitListFilter)
+    list_display = ("award", "project", "students", "category", "division")
+    fields = ("award", "project", "students", "category", "division")
+    readonly_fields = ("award", "project", "students", "category", "division")
 
     resource_class = AwardInstanceResource
 
@@ -205,22 +215,22 @@ class ProjectAwardFormset(BaseGenericInlineFormSet):
         for form in self.forms:
             if not form.cleaned_data:
                 continue
-            elif form.cleaned_data['DELETE']:
+            elif form.cleaned_data["DELETE"]:
                 continue
-            self.clean_award(project_instance, form.cleaned_data['award'])
+            self.clean_award(project_instance, form.cleaned_data["award"])
 
     def clean_award(self, instance, award):
         if not award.instance_passes_all_rules(instance):
             raise ValidationError(
-                _('%(award)s is not valid for this project'),
-                code='invalid award for project',
-                params={'award': award}
+                _("%(award)s is not valid for this project"),
+                code="invalid award for project",
+                params={"award": award},
             )
         elif award.exclude_from_instance(instance):
             raise ValidationError(
-                _('Cannot assign %(award)s to this project due to excluded awards'),
-                code='excluded award for project',
-                params={'award': award}
+                _("Cannot assign %(award)s to this project due to excluded awards"),
+                code="excluded award for project",
+                params={"award": award},
             )
 
 

@@ -1,21 +1,23 @@
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.test import TestCase
-from hypothesis import given
-from hypothesis.strategies import integers
-from hypothesis.extra.django import TransactionTestCase as HypTransTestCase
+from hypothesis import given, settings
 from hypothesis.extra.django import TestCase as HypTestCase
+from hypothesis.extra.django import TransactionTestCase as HypTransTestCase
+from hypothesis.strategies import integers
 from model_mommy import mommy
 
-from awards.models import Is, In
-from fair_categories.models import Category, Subcategory, Division
-from fair_projects.models import Project, JudgingInstance
-from fair_scoring_site.admin import AwardRuleForm
-from fair_scoring_site.logic import get_judging_rubric_name, get_num_judges_per_project, \
-    get_num_projects_per_judge
-from judges.models import Judge
 import rubrics.fixtures
-
+from awards.models import In, Is
+from fair_categories.models import Category, Division, Subcategory
+from fair_projects.models import JudgingInstance, Project
+from fair_scoring_site.admin import AwardRuleForm
+from fair_scoring_site.logic import (
+    get_judging_rubric_name,
+    get_num_judges_per_project,
+    get_num_projects_per_judge,
+)
+from judges.models import Judge
 
 project_number_counter = 1000
 
@@ -25,9 +27,9 @@ def make_test_category(short_description: str) -> Category:
 
 
 def make_test_subcategory(category: Category, short_description: str) -> Subcategory:
-    return mommy.make(Subcategory,
-                      short_description=short_description,
-                      category=category)
+    return mommy.make(
+        Subcategory, short_description=short_description, category=category
+    )
 
 
 def make_test_division(short_description: str) -> Division:
@@ -35,8 +37,10 @@ def make_test_division(short_description: str) -> Division:
 
 
 @transaction.atomic()
-def make_test_judge(categories: [Category], divisions: [Division], active=True) -> Judge:
-    user = mommy.make(User, is_active=active, first_name='Test', last_name='Judge')
+def make_test_judge(
+    categories: [Category], divisions: [Division], active=True
+) -> Judge:
+    user = mommy.make(User, is_active=active, first_name="Test", last_name="Judge")
     judge = mommy.prepare(Judge, phone="770-867-5309", user=user)  # type: Judge
     judge.categories.set(categories)
     judge.divisions.set(divisions)
@@ -47,11 +51,13 @@ def make_test_judge(categories: [Category], divisions: [Division], active=True) 
 def make_test_project(subcategory: Subcategory, division: Division) -> Project:
     global project_number_counter
     project_number_counter += 1
-    return mommy.make(Project,
-                      number=project_number_counter,
-                      subcategory=subcategory,
-                      category=subcategory.category,
-                      division=division)
+    return mommy.make(
+        Project,
+        number=project_number_counter,
+        subcategory=subcategory,
+        category=subcategory.category,
+        division=division,
+    )
 
 
 def make_test_rubric():
@@ -62,71 +68,91 @@ class AwardRuleFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super(AwardRuleFormTests, cls).setUpClass()
-        Category.objects.create(short_description='Category 1')
-        Category.objects.create(short_description='Category 2')
+        Category.objects.create(short_description="Category 1")
+        Category.objects.create(short_description="Category 2")
 
-        mommy.make(Subcategory, short_description='Subcategory 1')
-        mommy.make(Subcategory, short_description='Subcategory 2')
+        mommy.make(Subcategory, short_description="Subcategory 1")
+        mommy.make(Subcategory, short_description="Subcategory 2")
 
-        Division.objects.create(short_description='Division 1')
-        Division.objects.create(short_description='Division 2')
+        Division.objects.create(short_description="Division 1")
+        Division.objects.create(short_description="Division 2")
 
         mommy.make(Project, number=1001)
         mommy.make(Project, number=1002)
 
     def success_test(self, trait: str, operator: str, value: str):
-        data = {'trait': trait,
-                'operator_name': operator,
-                'value': value}
+        data = {"trait": trait, "operator_name": operator, "value": value}
         form = AwardRuleForm(data)
         self.assertTrue(form.is_valid())
 
     def failed_test(self, trait: str, operator: str, value: str):
-        data = {'trait': trait,
-                'operator_name': operator,
-                'value': value}
+        data = {"trait": trait, "operator_name": operator, "value": value}
         form = AwardRuleForm(data)
         self.assertFalse(form.is_valid())
 
     def trait_validation_test(self, trait: str, good_values: list, bad_value: str):
-        with self.subTest('Validation succeeds for single {trait} when value exists'.format(
-                trait=trait)):
+        with self.subTest(
+            "Validation succeeds for single {trait} when value exists".format(
+                trait=trait
+            )
+        ):
             self.success_test(trait, Is.internal, good_values[0])
 
-        with self.subTest('Validation fails for single {trait} when value does not exist'.format(
-                trait=trait)):
+        with self.subTest(
+            "Validation fails for single {trait} when value does not exist".format(
+                trait=trait
+            )
+        ):
             self.failed_test(trait, Is.internal, bad_value)
 
-        with self.subTest('Validation succeeds for {trait} IN when single value exists'.format(
-                trait=trait)):
+        with self.subTest(
+            "Validation succeeds for {trait} IN when single value exists".format(
+                trait=trait
+            )
+        ):
             self.success_test(trait, In.internal, good_values[0])
 
-        with self.subTest('Validation fails for {trait} IN when single value does not exist'.format(
-                trait=trait)):
+        with self.subTest(
+            "Validation fails for {trait} IN when single value does not exist".format(
+                trait=trait
+            )
+        ):
             self.failed_test(trait, In.internal, bad_value)
 
-        with self.subTest('Validation succeeds for {trait} IN when all values exist'.format(
-                trait=trait)):
-            self.success_test(trait, In.internal, ', '.join(good_values))
+        with self.subTest(
+            "Validation succeeds for {trait} IN when all values exist".format(
+                trait=trait
+            )
+        ):
+            self.success_test(trait, In.internal, ", ".join(good_values))
 
-        with self.subTest('Validation fails for {trait} IN when any value does not exist'.format(
-                trait=trait)):
-            self.failed_test(trait, In.internal, ', '.join(good_values + [bad_value]))
+        with self.subTest(
+            "Validation fails for {trait} IN when any value does not exist".format(
+                trait=trait
+            )
+        ):
+            self.failed_test(trait, In.internal, ", ".join(good_values + [bad_value]))
 
     def test_category_validation(self):
-        self.trait_validation_test('category', ['Category 1', 'Category 2'], 'Category 0')
+        self.trait_validation_test(
+            "category", ["Category 1", "Category 2"], "Category 0"
+        )
 
     def test_subcategory_validation(self):
-        self.trait_validation_test('subcategory', ['Subcategory 1', 'Subcategory 2'], 'Subcategory 0')
+        self.trait_validation_test(
+            "subcategory", ["Subcategory 1", "Subcategory 2"], "Subcategory 0"
+        )
 
     def test_division_validation(self):
-        self.trait_validation_test('division', ['Division 1', 'Division 2'], 'Division 0')
+        self.trait_validation_test(
+            "division", ["Division 1", "Division 2"], "Division 0"
+        )
 
     def test_number_validation(self):
-        self.trait_validation_test('number', ['1001', '1002'], '2001')
+        self.trait_validation_test("number", ["1001", "1002"], "2001")
 
     def test_grade_validation(self):
-        self.trait_validation_test('grade_level', ['1', '6', '11', '12'], '13')
+        self.trait_validation_test("grade_level", ["1", "6", "11", "12"], "13")
 
 
 class AssignmentTests:
@@ -134,41 +160,47 @@ class AssignmentTests:
     def initialize_supporting_objects(cls) -> None:
         make_test_rubric()
 
-        cls.category1 = make_test_category('Category 1')
-        cls.category2 = make_test_category('Category 2')
+        cls.category1 = make_test_category("Category 1")
+        cls.category2 = make_test_category("Category 2")
 
-        cls.subcategory1 = make_test_subcategory(cls.category1, 'Subcategory 1')
-        cls.subcategory2 = make_test_subcategory(cls.category2, 'Subcategory 2')
+        cls.subcategory1 = make_test_subcategory(cls.category1, "Subcategory 1")
+        cls.subcategory2 = make_test_subcategory(cls.category2, "Subcategory 2")
 
-        cls.division1 = make_test_division('Division 1')
-        cls.division2 = make_test_division('Division 2')
+        cls.division1 = make_test_division("Division 1")
+        cls.division2 = make_test_division("Division 2")
 
     @staticmethod
     def _instance_exists(project: Project, judge: Judge) -> bool:
         return JudgingInstance.objects.filter(project=project, judge=judge).exists()
 
-    def assertOnlyOneJudgingInstance(self, project: Project, judge: Judge, msg: str=None) -> None:
+    def assertOnlyOneJudgingInstance(
+        self, project: Project, judge: Judge, msg: str = None
+    ) -> None:
         if not msg:
-            msg = 'There is not 1 JudgingInstnace for Project ({}) and judge ({})'.format(
-                project, judge
+            msg = (
+                "There is not 1 JudgingInstnace for Project ({}) and judge ({})".format(
+                    project, judge
+                )
             )
-        self.assertEqual(self.get_judging_instance_count(project=project, judge=judge), 1, msg)
+        self.assertEqual(
+            self.get_judging_instance_count(project=project, judge=judge), 1, msg
+        )
 
-    def assertProjectAssignedToJudge(self, project: Project, judge: Judge, msg: str=None) -> None:
+    def assertProjectAssignedToJudge(
+        self, project: Project, judge: Judge, msg: str = None
+    ) -> None:
         if not msg:
-            msg = 'Project ({}) not assigned to judge ({})'.format(
-                project, judge
-            )
+            msg = "Project ({}) not assigned to judge ({})".format(project, judge)
         self.assertTrue(self._instance_exists(project, judge), msg)
 
-    def assertProjectNotAssignedToJudge(self, project: Project, judge: Judge, msg: str=None) -> None:
+    def assertProjectNotAssignedToJudge(
+        self, project: Project, judge: Judge, msg: str = None
+    ) -> None:
         if not msg:
-            msg = 'Project ({}) assigned to judge ({})'.format(
-                project, judge
-            )
+            msg = "Project ({}) assigned to judge ({})".format(project, judge)
         self.assertFalse(self._instance_exists(project, judge), msg)
 
-    def assertNumInstances(self, count, msg: str=None, **kwargs) -> None:
+    def assertNumInstances(self, count, msg: str = None, **kwargs) -> None:
         self.assertEqual(self.get_judging_instance_count(**kwargs), count, msg)
 
     @staticmethod
@@ -194,12 +226,16 @@ class JudgeAssignmentTests(AssignmentTests, HypTestCase):
     def setUpClass(cls) -> None:
         super(JudgeAssignmentTests, cls).setUpClass()
         cls.initialize_supporting_objects()
-        cls.judge = make_test_judge(categories=[cls.category1], divisions=[cls.division1])
-        cls.inactive_judge = make_test_judge(categories=[cls.category2],
-                                             divisions=[cls.division2],
-                                             active=False)
-        cls.multiple_judge = make_test_judge(categories=[cls.category1, cls.category2],
-                                             divisions=[cls.division1, cls.division2])
+        cls.judge = make_test_judge(
+            categories=[cls.category1], divisions=[cls.division1]
+        )
+        cls.inactive_judge = make_test_judge(
+            categories=[cls.category2], divisions=[cls.division2], active=False
+        )
+        cls.multiple_judge = make_test_judge(
+            categories=[cls.category1, cls.category2],
+            divisions=[cls.division1, cls.division2],
+        )
 
     # An existing judge is assigned to a new project if the category and division match
     def test_judge_assigned_for_matching_category_and_division(self):
@@ -254,7 +290,10 @@ class JudgeAssignmentTests(AssignmentTests, HypTestCase):
 
     def test_sequential_project_assignment(self):
         def make_project():
-            return make_test_project(subcategory=self.subcategory1, division=self.division1)
+            return make_test_project(
+                subcategory=self.subcategory1, division=self.division1
+            )
+
         projects = []
         for _ in range(1, 5):
             projects.append(make_project())
@@ -294,14 +333,16 @@ class ProjectAssignmentTests(AssignmentTests, HypTransTestCase):
 
     # An existing project is not assigned to a new inactive judge
     def test_project_not_assigned_to_inactive_judge(self):
-        judge = make_test_judge(categories=[self.category1],
-                                divisions=[self.division1],
-                                active=False)
+        judge = make_test_judge(
+            categories=[self.category1], divisions=[self.division1], active=False
+        )
         self.assertProjectNotAssignedToJudge(self.project, judge)
 
     def test_project_assigned_to_judge_with_multiple_categories_and_divisions(self):
-        judge = make_test_judge(categories=[self.category1, self.category2],
-                                divisions=[self.division1, self.division2])
+        judge = make_test_judge(
+            categories=[self.category1, self.category2],
+            divisions=[self.division1, self.division2],
+        )
         self.assertProjectAssignedToJudge(self.project, judge)
         self.assertOnlyOneJudgingInstance(self.project, judge)
 
@@ -331,7 +372,10 @@ class ProjectAssignmentTests(AssignmentTests, HypTransTestCase):
 
     def test_sequential_judge_assignment(self):
         def make_judge():
-            return make_test_judge(categories=[self.category1], divisions=[self.division1])
+            return make_test_judge(
+                categories=[self.category1], divisions=[self.division1]
+            )
+
         judges = []
         for _ in range(1, 5):
             judges.append(make_judge())
@@ -349,8 +393,9 @@ class SequentialAssignmentTests(AssignmentTests, HypTransTestCase):
         if num_projects < projects_per_judge or num_judges < judges_per_project:
             return num_projects * num_judges
         else:
-            return max(num_projects * judges_per_project,
-                       num_judges * projects_per_judge)
+            return max(
+                num_projects * judges_per_project, num_judges * projects_per_judge
+            )
 
     @staticmethod
     def get_active_judge():
@@ -360,41 +405,56 @@ class SequentialAssignmentTests(AssignmentTests, HypTransTestCase):
     def get_project():
         return Project.objects.first()
 
+    @settings(deadline=None, max_examples=50)
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_project_division_change(self, num_projects, num_judges):
         self.initialize_supporting_objects()
 
         self.make_projects(num_projects)
         self.make_judges(num_judges)
-        self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
+        self.assertNumInstances(
+            self.compute_expected_instances(num_projects, num_judges)
+        )
 
         project = self.get_project()
         project.division = self.division2
         project.save()
-        self.assertNumInstances(self.compute_expected_instances(num_projects-1, num_judges))
+        self.assertNumInstances(
+            self.compute_expected_instances(num_projects - 1, num_judges)
+        )
 
+    @settings(deadline=None, max_examples=50)
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_judge_category_change(self, num_projects, num_judges):
         self.initialize_supporting_objects()
 
         self.make_projects(num_projects)
         self.make_judges(num_judges)
-        self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
+        self.assertNumInstances(
+            self.compute_expected_instances(num_projects, num_judges)
+        )
 
         judge = self.get_active_judge()
         judge.categories.set([self.category2])
         judge.save()
-        self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges-1))
+        self.assertNumInstances(
+            self.compute_expected_instances(num_projects, num_judges - 1)
+        )
 
+    @settings(deadline=None, max_examples=50)
     @given(integers(min_value=1, max_value=10), integers(min_value=1, max_value=10))
     def test_generic_with_judge_inactivation(self, num_projects, num_judges):
         self.initialize_supporting_objects()
 
         self.make_projects(num_projects)
         self.make_judges(num_judges)
-        self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges))
+        self.assertNumInstances(
+            self.compute_expected_instances(num_projects, num_judges)
+        )
 
         judge = self.get_active_judge()
         judge.user.is_active = False
         judge.user.save()
-        self.assertNumInstances(self.compute_expected_instances(num_projects, num_judges-1))
+        self.assertNumInstances(
+            self.compute_expected_instances(num_projects, num_judges - 1)
+        )

@@ -5,4 +5,4 @@ register = template.Library()
 
 @register.filter
 def dictkey(dictionary: dict, key):
-    return dictionary.get(key, '')
+    return dictionary.get(key, "")

@@ -8,13 +8,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('rubrics', '0003_auto_20160817_1847'),
+        ("rubrics", "0003_auto_20160817_1847"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='question',
-            name='required',
+            model_name="question",
+            name="required",
             field=models.BooleanField(default=True),
         ),
     ]

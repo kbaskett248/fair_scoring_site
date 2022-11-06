@@ -7,17 +7,17 @@ from fair_projects.logic import process_project_import
 
 
 class Command(BaseCommand):
-    help = 'Imports a csv file of projects'
+    help = "Imports a csv file of projects"
 
     def add_arguments(self, parser):
-        parser.add_argument('csv_path', type=str)
+        parser.add_argument("csv_path", type=str)
 
     def handle(self, *args, **options):
-        csv_path = options['csv_path']
+        csv_path = options["csv_path"]
         if not os.path.isfile(csv_path):
             raise CommandError('File "%s" does not exist')
 
-        with open(csv_path, newline='') as csv_file:
+        with open(csv_path, newline="") as csv_file:
             self.read_file(csv_file)
 
     def read_file(self, csv_file):

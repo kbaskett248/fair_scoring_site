@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.core.exceptions import FieldError, ValidationError
 from django.utils.translation import gettext as _
 
-from awards.models import Award, AwardRule, AwardInstance, In, NotIn
+from awards.models import Award, AwardInstance, AwardRule, In, NotIn
 
 
 def format_external_name(string: str):
@@ -24,14 +24,14 @@ def build_trait_list(traits):
             trait_list.append((internal, external))
     trait_list.sort()
     if insert_none:
-        trait_list.insert(0, (None, '---------'))
+        trait_list.insert(0, (None, "---------"))
     return trait_list
 
 
 class AwardRuleForm(forms.ModelForm):
     class Meta:
         model = AwardRule
-        fields = ('trait', 'operator_name', 'value')
+        fields = ("trait", "operator_name", "value")
 
     traits = None
 
@@ -40,7 +40,7 @@ class AwardRuleForm(forms.ModelForm):
 
         choices = self.__class__.get_possible_traits()
         if choices:
-            self.fields['trait'] = forms.ChoiceField(choices=choices)
+            self.fields["trait"] = forms.ChoiceField(choices=choices)
 
     @classmethod
     def get_possible_traits(cls):
@@ -51,18 +51,20 @@ class AwardRuleForm(forms.ModelForm):
 
     @staticmethod
     def get_validator_name(trait: str) -> str:
-        return 'validate_' + trait
+        return "validate_" + trait
 
     def clean(self):
         cleaned_data = super(AwardRuleForm, self).clean()
 
-        operator_name = cleaned_data.get('operator_name', None)
+        operator_name = cleaned_data.get("operator_name", None)
         if operator_name == In.internal or operator_name == NotIn.internal:
-            cleaned_data['value'] = ','.join(
-                item.strip() for item in self.individual_value_iterator(**cleaned_data)
-                if item.strip())
+            cleaned_data["value"] = ",".join(
+                item.strip()
+                for item in self.individual_value_iterator(**cleaned_data)
+                if item.strip()
+            )
 
-        trait = cleaned_data.get('trait', None)
+        trait = cleaned_data.get("trait", None)
         if trait is not None:
             validator_name = self.get_validator_name(trait)
             if hasattr(self, validator_name):
@@ -70,33 +72,39 @@ class AwardRuleForm(forms.ModelForm):
 
         return cleaned_data
 
-    def individual_value_iterator(self, operator_name=None, value=None, **additional_fields):
-        if (operator_name == In.internal or operator_name == NotIn.internal) and value is not None:
-            for item in value.split(','):
+    def individual_value_iterator(
+        self, operator_name=None, value=None, **additional_fields
+    ):
+        if (
+            operator_name == In.internal or operator_name == NotIn.internal
+        ) and value is not None:
+            for item in value.split(","):
                 yield item
         else:
             yield value
 
     @staticmethod
     def raise_default_validation_error(params):
-        raise ValidationError('%(value)s is not a valid value for the %(trait)s trait',
-                              code='invalid trait value',
-                              params=params)
+        raise ValidationError(
+            "%(value)s is not a valid value for the %(trait)s trait",
+            code="invalid trait value",
+            params=params,
+        )
 
 
 class AwardRuleInline(admin.TabularInline):
     model = AwardRule
     form = AwardRuleForm
     can_delete = True
-    verbose_name = 'Rule'
-    verbose_name_plural = 'Rules'
+    verbose_name = "Rule"
+    verbose_name_plural = "Rules"
 
 
 class AwardInstanceInline(admin.TabularInline):
     model = AwardInstance
     can_delete = True
-    exclude = ('content_type', 'object_id')
-    readonly_fields = ('content_object_str', )
+    exclude = ("content_type", "object_id")
+    readonly_fields = ("content_object_str",)
 
     def has_add_permission(self, request):
         return False
@@ -106,34 +114,39 @@ class AwardInstanceInline(admin.TabularInline):
 class AwardAdmin(admin.ModelAdmin):
     model = Award
     inlines = (AwardRuleInline, AwardInstanceInline)
-    list_display = ('name', 'award_order', 'num_awards_str')
-    ordering = ('award_order', 'name')
-    list_filter = ('awardrule__trait', )
+    list_display = ("name", "award_order", "num_awards_str")
+    ordering = ("award_order", "name")
+    list_filter = ("awardrule__trait",)
 
 
 @admin.register(AwardInstance)
 class AwardInstanceAdmin(admin.ModelAdmin):
     model = AwardInstance
-    fields = ('award', 'content_object')
-    readonly_fields = ('award', 'content_object')
-    list_display = ('award', 'content_object')
-    ordering = ('award', )
-    list_filter = ('award', 'award__awardrule__trait')
+    fields = ("award", "content_object")
+    readonly_fields = ("award", "content_object")
+    list_display = ("award", "content_object")
+    ordering = ("award",)
+    list_filter = ("award", "award__awardrule__trait")
 
     def has_add_permission(self, request):
         return False
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('award', 'content_type').prefetch_related('content_object')
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("award", "content_type")
+            .prefetch_related("content_object")
+        )
 
 
 class TraitListFilter(admin.SimpleListFilter):
     # Human-readable title which will be displayed in the
     # right admin sidebar just above the filter options.
-    title = _('rule trait')
+    title = _("rule trait")
 
     # Parameter for the filter that will be used in the URL query.
-    parameter_name = 'trait'
+    parameter_name = "trait"
 
     award_rule_form_class = AwardRuleForm
 

@@ -8,15 +8,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fair_categories', '0002_subcategory_abbreviation'),
+        ("fair_categories", "0002_subcategory_abbreviation"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Ethnicity',
+            name="Ethnicity",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('short_description', models.CharField(max_length=50, verbose_name='Ethnicity name')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "short_description",
+                    models.CharField(max_length=50, verbose_name="Ethnicity name"),
+                ),
             ],
         ),
     ]

@@ -8,14 +8,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fair_categories', '0001_initial'),
+        ("fair_categories", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='subcategory',
-            name='abbreviation',
-            field=models.CharField(default='', max_length=10, verbose_name='Abbreviation'),
+            model_name="subcategory",
+            name="abbreviation",
+            field=models.CharField(
+                default="", max_length=10, verbose_name="Abbreviation"
+            ),
             preserve_default=False,
         ),
     ]

@@ -10,3 +10,6 @@
 fair_scoring_site/settings.py
 /.mypy_cache
 /*.egg-info
+.python-version
+/static
+/.venv

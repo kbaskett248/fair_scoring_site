@@ -2,31 +2,53 @@ import random
 import unittest
 from contextlib import contextmanager
 from datetime import datetime
+from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from hypothesis import given, example, assume
+from hypothesis import given
 from hypothesis.extra.django import TestCase as HypTestCase
-from hypothesis.extra.django.models import models
-from hypothesis.searchstrategy import SearchStrategy
-from hypothesis.strategies import one_of, sampled_from, text, lists, integers, \
-    just, tuples, none
+from hypothesis.extra.django import from_model
+from hypothesis.strategies import (
+    SearchStrategy,
+    integers,
+    just,
+    lists,
+    none,
+    one_of,
+    sampled_from,
+    text,
+    tuples,
+)
 from model_mommy import mommy
 
 from rubrics.fixtures import make_test_rubric
 from rubrics.forms import ChoiceForm, QuestionForm
-from rubrics.models import Rubric, Question, Choice, RubricResponse, QuestionResponse, value_is_numeric
+from rubrics.models import (
+    Choice,
+    Question,
+    QuestionResponse,
+    Rubric,
+    RubricResponse,
+    value_is_numeric,
+)
 
 
-def fixed_decimals(min_value: float=0, max_value: float=1, num_decimals=3) -> SearchStrategy:
-    power_of_ten = 10 ** num_decimals
-    return integers(min_value=(min_value*power_of_ten),
-                    max_value=(max_value*power_of_ten)).map(lambda x: x / power_of_ten)
+def fixed_decimals(
+    min_value: float = 0, max_value: float = 1, num_decimals=3
+) -> SearchStrategy:
+    power_of_ten = 10**num_decimals
+    return integers(
+        min_value=(min_value * power_of_ten), max_value=(max_value * power_of_ten)
+    ).map(lambda x: x / power_of_ten)
 
 
-def sane_text(min_size=0, max_size=1024, average_size=None) -> SearchStrategy:
-    return text(alphabet=[chr(i) for i in range(33, 126)],
-                min_size=min_size, max_size=max_size, average_size=average_size)
+def sane_text(min_size=0, max_size=1024) -> SearchStrategy:
+    return text(
+        alphabet=[chr(i) for i in range(33, 126)],
+        min_size=min_size,
+        max_size=max_size,
+    )
 
 
 def question_type() -> SearchStrategy:
@@ -35,32 +57,41 @@ def question_type() -> SearchStrategy:
 
 def question_type_and_weight() -> SearchStrategy:
     return one_of(
-        tuples(sampled_from(Question.CHOICE_TYPES),
-               fixed_decimals()),
-        tuples(sampled_from(sorted(set(Question.available_types()) - set(Question.CHOICE_TYPES))),
-               just(0))
+        tuples(sampled_from(Question.CHOICE_TYPES), fixed_decimals()),
+        tuples(
+            sampled_from(
+                sorted(set(Question.available_types()) - set(Question.CHOICE_TYPES))
+            ),
+            just(0),
+        ),
     )
 
 
 def questions(rubric: Rubric) -> SearchStrategy:
     def create_question(type_and_weight: tuple) -> SearchStrategy:
-        return models(Question,
-                      rubric=just(rubric),
-                      question_type=just(type_and_weight[0]),
-                      weight=just(type_and_weight[1]),
-                      short_description=sane_text())
+        return from_model(
+            Question,
+            rubric=just(rubric),
+            question_type=just(type_and_weight[0]),
+            weight=just(type_and_weight[1]),
+            short_description=sane_text(),
+        )
+
     return question_type_and_weight().flatmap(create_question)
 
 
-def rubric_with_questions(min_questions: int=None, max_questions: int=None,
-                          average_questions: int=10) -> SearchStrategy:
+def rubric_with_questions(
+    min_questions: int = 0, max_questions: Optional[int] = None
+) -> SearchStrategy:
     def add_questions(rubric: Rubric) -> SearchStrategy:
-        return lists(elements=questions(rubric),
-                     min_size=min_questions,
-                     max_size=max_questions,
-                     average_size=average_questions,
-                     unique=True).flatmap(lambda _: just(rubric))
-    return models(Rubric).flatmap(add_questions)
+        return lists(
+            elements=questions(rubric),
+            min_size=min_questions,
+            max_size=max_questions,
+            unique=True,
+        ).flatmap(lambda _: just(rubric))
+
+    return from_model(Rubric).flatmap(add_questions)
 
 
 def create_rubric_with_questions_and_choices():
@@ -81,15 +112,22 @@ class TestBase(HypTestCase):
         try:
             yield
         except exception_type:
-            self.fail('%s exception type raised' % exception_type)
+            self.fail("%s exception type raised" % exception_type)
 
 
 class RubricTests(HypTestCase):
-    @given(sane_text())
+    @given(sane_text(min_size=1))
     def test_create_rubric(self, name: str):
         rubric = Rubric.objects.create(name=name)
         self.assertEqual(rubric.name, name)
-        self.assertQuerysetEqual(Rubric.objects.all(), ['<Rubric: %s>' % name])
+        self.assertQuerysetEqual(
+            Rubric.objects.all(), ["<Rubric: %s>" % name], transform=repr
+        )
+
+    def test_create_rubric_fails_for_empty_name(self):
+        with self.assertRaises(ValidationError):
+            Rubric.objects.create(name="")
+        self.assertQuerysetEqual(Rubric.objects.all(), [])
 
 
 class QuestionTests(HypTestCase):
@@ -108,45 +146,65 @@ class QuestionTests(HypTestCase):
 
     def test_num_choices(self):
         for number, question in enumerate(self.rubric.question_set.all(), start=1):
-            with self.subTest('Question %(number)s', number=number):
+            with self.subTest("Question %(number)s", number=number):
                 if question.show_choices():
                     self.assertIsInstance(question.num_choices_display(), int)
                     self.assertEqual(question.num_choices_display(), 5)
                 else:
-                    self.assertEqual(question.num_choices_display(), '-')
+                    self.assertEqual(question.num_choices_display(), "-")
 
     @given(question_type=sane_text())
     def test_invalid_question_type_raises_error(self, question_type):
         with self.assertRaises(ValidationError):
             mommy.make(Question, rubric=self.rubric, question_type=question_type)
 
-    @given(sort_option=one_of(sane_text().filter(lambda x: x != 'A' and x != 'M'),
-                              none()))
+    @given(
+        sort_option=one_of(sane_text().filter(lambda x: x != "A" and x != "M"), none())
+    )
     def test_invalid_sort_option_raises_error(self, sort_option):
-        with self.assertRaises(ValidationError,
-                               msg="No error raised for sort_option {}".format(sort_option)):
-            mommy.make(Question, rubric=self.rubric, question_type=Question.LONG_TEXT,
-                       choice_sort=sort_option)
+        with self.assertRaises(
+            ValidationError,
+            msg="No error raised for sort_option {}".format(sort_option),
+        ):
+            mommy.make(
+                Question,
+                rubric=self.rubric,
+                question_type=Question.LONG_TEXT,
+                choice_sort=sort_option,
+            )
 
     @given(fixed_decimals(min_value=0.001))
-    def test_unweighted_question_type_with_non_zero_weight_raises_value_error(self, weight):
+    def test_unweighted_question_type_with_non_zero_weight_raises_value_error(
+        self, weight
+    ):
         with self.assertRaises(ValidationError):
-            mommy.make(Question, rubric=self.rubric, question_type=Question.LONG_TEXT,
-                       weight=weight)
+            mommy.make(
+                Question,
+                rubric=self.rubric,
+                question_type=Question.LONG_TEXT,
+                weight=weight,
+            )
 
     def test_add_choice(self):
         def add_choices(question):
-            question.add_choice(1, 'Low')
-            question.add_choice(10, 'High')
+            question.add_choice(1, "Low")
+            question.add_choice(10, "High")
 
-        with self.subTest('%(type)s question', type=Question.SCALE_TYPE):
-            question = mommy.make(Question, question_type=Question.SCALE_TYPE, rubric=self.rubric)
+        with self.subTest("%(type)s question", type=Question.SCALE_TYPE):
+            question = mommy.make(
+                Question, question_type=Question.SCALE_TYPE, rubric=self.rubric
+            )
             add_choices(question)
-            self.assertQuerysetEqual(question.choice_set.order_by('description').all(),
-                                     ['<Choice: High>', '<Choice: Low>'])
+            self.assertQuerysetEqual(
+                question.choice_set.order_by("description").all(),
+                ["<Choice: High>", "<Choice: Low>"],
+                transform=repr,
+            )
 
-        with self.subTest('%(type)s question', type=Question.LONG_TEXT):
-            question = mommy.make(Question, question_type=Question.LONG_TEXT, rubric=self.rubric)
+        with self.subTest("%(type)s question", type=Question.LONG_TEXT):
+            question = mommy.make(
+                Question, question_type=Question.LONG_TEXT, rubric=self.rubric
+            )
             with self.assertRaises(ValidationError):
                 add_choices(question)
 
@@ -163,7 +221,9 @@ class QuestionTests(HypTestCase):
             self.assertTrue(question.question_type_changed())
 
     @given(question_type_and_weight(), question_type_and_weight())
-    def test_question_type_changed_compatibility(self, q1: (str, float), q2: (str, float)):
+    def test_question_type_changed_compatibility(
+        self, q1: (str, float), q2: (str, float)
+    ):
         compatible_types = (Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE)
         question = mommy.make(Question, question_type=q1[0], weight=0)  # type: Question
         self.assertEqual(question.question_type, q1[0])
@@ -183,37 +243,41 @@ class QuestionFormTests(HypTestCase):
     def setUpClass(cls):
         super(QuestionFormTests, cls).setUpClass()
         cls.rubric = mommy.make(Rubric)  # type: Rubric
-        cls.data = {'rubric': cls.rubric.pk,
-                    'order': 1,
-                    'short_description': 'Test Question',
-                    'long_description': 'This question is very important',
-                    'help_text': 'This is help text for the question',
-                    'weight': 0,
-                    'question_type': Question.SCALE_TYPE,
-                    'choice_sort': Question.MANUAL_SORT,
-                    'required': True}
+        cls.data = {
+            "rubric": cls.rubric.pk,
+            "order": 1,
+            "short_description": "Test Question",
+            "long_description": "This question is very important",
+            "help_text": "This is help text for the question",
+            "weight": 0,
+            "question_type": Question.SCALE_TYPE,
+            "choice_sort": Question.MANUAL_SORT,
+            "required": True,
+        }
         data = cls.data.copy()
-        data['rubric'] = cls.rubric
+        data["rubric"] = cls.rubric
         cls.question = Question.objects.create(**data)  # type: Question
 
-    def get_test_data_and_form(self, updated_data: dict, instance: Question=None) -> tuple:
+    def get_test_data_and_form(
+        self, updated_data: dict, instance: Question = None
+    ) -> tuple:
         data = self.data.copy()
         if updated_data:
             data.update(updated_data)
         form = QuestionForm(data, instance=instance)
         return data, form
 
-    def success_test(self, instance: Question=None, **updated_data):
+    def success_test(self, instance: Question = None, **updated_data):
         data, form = self.get_test_data_and_form(updated_data, instance=instance)
         self.assertTrue(form.is_valid())
         question = form.save(commit=False)
         for key, value in data.items():
-            if key == 'rubric':
+            if key == "rubric":
                 self.assertEqual(value, question.rubric.pk)
             else:
                 self.assertEqual(value, getattr(question, key, None))
 
-    def failed_test(self, instance: Question=None, **updated_data):
+    def failed_test(self, instance: Question = None, **updated_data):
         data, form = self.get_test_data_and_form(updated_data, instance=instance)
         self.assertFalse(form.is_valid())
         with self.assertRaises(ValueError):
@@ -223,10 +287,10 @@ class QuestionFormTests(HypTestCase):
         self.success_test()
 
     def test_invalid_question_type(self):
-        self.failed_test(question_type='invalid question type')
+        self.failed_test(question_type="invalid question type")
 
     def test_invalid_sort(self):
-        self.failed_test(choice_sort='Q')
+        self.failed_test(choice_sort="Q")
 
     def test_negative_weight(self):
         self.failed_test(weight=-0.5)
@@ -237,25 +301,25 @@ class QuestionFormTests(HypTestCase):
     def test_instance_with_numeric_choices_and_zero_weight(self):
         self.question.weight = 1
         self.question.save()
-        mommy.make(Choice, question=self.question, key='1')
+        mommy.make(Choice, question=self.question, key="1")
         self.success_test(instance=self.question, weight=0)
 
     def test_instance_with_numeric_choices_and_positive_weight(self):
         self.question.weight = 0
         self.question.save()
-        mommy.make(Choice, question=self.question, key='1')
+        mommy.make(Choice, question=self.question, key="1")
         self.success_test(instance=self.question, weight=1)
 
     def test_instance_with_non_numeric_choices_and_zero_weight(self):
         self.question.weight = 0
         self.question.save()
-        mommy.make(Choice, question=self.question, key='test')
+        mommy.make(Choice, question=self.question, key="test")
         self.success_test(instance=self.question, weight=0)
 
     def test_instance_with_non_numeric_choices_and_positive_weight(self):
         self.question.weight = 0
         self.question.save()
-        mommy.make(Choice, question=self.question, key='test')
+        mommy.make(Choice, question=self.question, key="test")
         self.failed_test(instance=self.question, weight=1)
 
 
@@ -267,7 +331,12 @@ class ChoiceTests(TestBase):
 
     def choice_test_with_positive_weight(self, key):
         self.question.weight = 1.000
-        kwargs = {'question': self.question, 'order': 1, 'key': key, 'description': 'description'}
+        kwargs = {
+            "question": self.question,
+            "order": 1,
+            "key": key,
+            "description": "description",
+        }
         if not value_is_numeric(key):
             with self.assertRaises(ValidationError):
                 Choice.validate(**kwargs)
@@ -276,14 +345,21 @@ class ChoiceTests(TestBase):
                 c.save()
         else:
             with self.assertNoException(ValidationError):
-                Choice.validate(question=self.question, order=1, key=key, description='description')
+                Choice.validate(
+                    question=self.question, order=1, key=key, description="description"
+                )
             c = Choice(**kwargs)
             with self.assertNoException(ValidationError):
                 c.save()
 
     def choice_test_with_zero_weight(self, key):
         self.question.weight = 0
-        kwargs = {'question': self.question, 'order': 1, 'key': key, 'description': 'description'}
+        kwargs = {
+            "question": self.question,
+            "order": 1,
+            "key": key,
+            "description": "description",
+        }
         with self.assertNoException(ValidationError):
             Choice.validate(**kwargs)
         c = Choice(**kwargs)
@@ -323,7 +399,12 @@ class ChoiceTests(TestBase):
     def test_long_text_question_disallows_choices(self):
         self.question.question_type = Question.LONG_TEXT
         self.question.weight = 0
-        kwargs = {'question': self.question, 'order': 1, 'key': 'key', 'description': 'description'}
+        kwargs = {
+            "question": self.question,
+            "order": 1,
+            "key": "key",
+            "description": "description",
+        }
         with self.assertRaises(ValidationError):
             Choice.validate(**kwargs)
         c = Choice(**kwargs)
@@ -344,9 +425,9 @@ class ChoiceFormTests(HypTestCase):
         form = ChoiceForm(data)
         self.assertTrue(form.is_valid())
         choice = form.save()
-        self.assertEqual(choice.order, data['order'])
-        self.assertEqual(choice.key, data['key'])
-        self.assertEqual(choice.description, data['description'])
+        self.assertEqual(choice.order, data["order"])
+        self.assertEqual(choice.key, data["key"])
+        self.assertEqual(choice.description, data["description"])
 
     def failed_test(self, data):
         form = ChoiceForm(data)
@@ -357,55 +438,115 @@ class ChoiceFormTests(HypTestCase):
     def test_scale_question_with_positive_weight(self):
         self.update_question(Question.SCALE_TYPE, 1.000)
 
-        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 1,
+            "key": "1",
+            "description": "description",
+        }
         self.success_test(data)
 
-        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 2,
+            "key": "key",
+            "description": "description",
+        }
         self.failed_test(data)
 
     def test_scale_question_with_zero_weight(self):
         self.update_question(Question.SCALE_TYPE, 0)
 
-        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 1,
+            "key": "1",
+            "description": "description",
+        }
         self.success_test(data)
 
-        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 2,
+            "key": "key",
+            "description": "description",
+        }
         self.success_test(data)
 
     def test_single_select_question_with_positive_weight(self):
         self.update_question(Question.SINGLE_SELECT_TYPE, 1.000)
 
-        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 1,
+            "key": "1",
+            "description": "description",
+        }
         self.success_test(data)
 
-        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 2,
+            "key": "key",
+            "description": "description",
+        }
         self.failed_test(data)
 
     def test_single_select_question_with_zero_weight(self):
         self.update_question(Question.SINGLE_SELECT_TYPE, 0)
 
-        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 1,
+            "key": "1",
+            "description": "description",
+        }
         self.success_test(data)
 
-        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 2,
+            "key": "key",
+            "description": "description",
+        }
         self.success_test(data)
 
     def test_multi_select_question_with_positive_weight(self):
         self.update_question(Question.MULTI_SELECT_TYPE, 1.000)
 
-        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 1,
+            "key": "1",
+            "description": "description",
+        }
         self.success_test(data)
 
-        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 2,
+            "key": "key",
+            "description": "description",
+        }
         self.failed_test(data)
 
     def test_multi_select_question_with_zero_weight(self):
         self.update_question(Question.MULTI_SELECT_TYPE, 0)
 
-        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 1,
+            "key": "1",
+            "description": "description",
+        }
         self.success_test(data)
 
-        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 2,
+            "key": "key",
+            "description": "description",
+        }
         self.success_test(data)
 
     def test_long_text_question_with_positive_weight(self):
@@ -415,10 +556,20 @@ class ChoiceFormTests(HypTestCase):
     def test_long_text_question_with_zero_weight(self):
         self.update_question(Question.LONG_TEXT, 0)
 
-        data = {'question': self.question.pk, 'order': 1, 'key': '1', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 1,
+            "key": "1",
+            "description": "description",
+        }
         self.failed_test(data)
 
-        data = {'question': self.question.pk, 'order': 2, 'key': 'key', 'description': 'description'}
+        data = {
+            "question": self.question.pk,
+            "order": 2,
+            "key": "key",
+            "description": "description",
+        }
         self.failed_test(data)
 
 
@@ -460,7 +611,9 @@ class RubricResponseTests(HypTestCase):
         self.assertTrue(q_resp.question_answered)
         self.assertFalse(rubric_response.complete)
 
-        for q_resp in rubric_response.questionresponse_set.filter(question__required=True):
+        for q_resp in rubric_response.questionresponse_set.filter(
+            question__required=True
+        ):
             self.answer_question(q_resp)
 
         self.assertTrue(rubric_response.complete)
@@ -469,7 +622,7 @@ class RubricResponseTests(HypTestCase):
     def answer_question(question_resp):
         question = question_resp.question
         if question.question_type == Question.LONG_TEXT:
-            question_resp.update_response('This is some long text')
+            question_resp.update_response("This is some long text")
         elif question.question_type == Question.MULTI_SELECT_TYPE:
             choices = [choice[0] for choice in question.choices()]
             question_resp.update_response(choices)
@@ -491,13 +644,15 @@ class RubricResponseTests(HypTestCase):
     def test_score(self):
         rub_response = make_rubric_response()
 
-        self.assertEqual(rub_response.score(), 0,
-                         "Score is not zero before answering the Rubric")
+        self.assertEqual(
+            rub_response.score(), 0, "Score is not zero before answering the Rubric"
+        )
 
         answer_rubric_response(rub_response)
 
-        self.assertAlmostEqual(rub_response.score(), 1.665, 3,
-                               "Score incorrect after answering the Rubric")
+        self.assertAlmostEqual(
+            rub_response.score(), 1.665, 3, "Score incorrect after answering the Rubric"
+        )
 
 
 def make_rubric_response(rubric=None):
@@ -509,76 +664,102 @@ def make_rubric_response(rubric=None):
 def answer_rubric_response(rubric_response):
     for q_resp in rubric_response.questionresponse_set.all():
         if q_resp.question.question_type == Question.MULTI_SELECT_TYPE:
-            q_resp.update_response(['1', '2'])
+            q_resp.update_response(["1", "2"])
         elif q_resp.question.question_type == Question.LONG_TEXT:
-            q_resp.update_response('This is a long text response.\nThis is a second line')
+            q_resp.update_response(
+                "This is a long text response.\nThis is a second line"
+            )
         else:
-            q_resp.update_response('1')
+            q_resp.update_response("1")
 
 
 class QuestionResponseTests(HypTestCase):
     def test_empty_responses(self):
         rub_response = make_rubric_response()
-        for response in rub_response.questionresponse_set.select_related('question').all():
+        for response in rub_response.questionresponse_set.select_related(
+            "question"
+        ).all():
             if response.question.question_type == Question.MULTI_SELECT_TYPE:
                 self.assertEqual(
-                    response.response, [],
-                    'Empty response not equal to %s for question type %s' %
-                    ([], response.question.question_type)
+                    response.response,
+                    [],
+                    "Empty response not equal to %s for question type %s"
+                    % ([], response.question.question_type),
                 )
             else:
                 self.assertEqual(
-                    response.response, None,
-                    'Empty response not equal to %s for question type %s' %
-                    (None, response.question.question_type))
+                    response.response,
+                    None,
+                    "Empty response not equal to %s for question type %s"
+                    % (None, response.question.question_type),
+                )
 
     def test_empty_responses_external(self):
         rub_response = make_rubric_response()
-        for response in rub_response.questionresponse_set.select_related('question').all():
+        for response in rub_response.questionresponse_set.select_related(
+            "question"
+        ).all():
             if response.question.question_type == Question.MULTI_SELECT_TYPE:
                 self.assertEqual(
-                    response.response_external(), [],
-                    'Empty external response not equal to %s for question type %s' %
-                    ([], response.question.question_type)
+                    response.response_external(),
+                    [],
+                    "Empty external response not equal to %s for question type %s"
+                    % ([], response.question.question_type),
                 )
             else:
                 self.assertEqual(
-                    response.response_external(), None,
-                    'Empty external response not equal to %s for question type %s' %
-                    (None, response.question.question_type))
+                    response.response_external(),
+                    None,
+                    "Empty external response not equal to %s for question type %s"
+                    % (None, response.question.question_type),
+                )
 
     def generic_response_test(self, check_response: callable):
         rub_response = make_rubric_response()
         answer_rubric_response(rub_response)
 
-        for response in rub_response.questionresponse_set.select_related('question').all():
+        for response in rub_response.questionresponse_set.select_related(
+            "question"
+        ).all():
             check_response(response)
 
     def test_response(self):
-        value_dict = {Question.LONG_TEXT: 'This is a long text response.\nThis is a second line',
-                      Question.MULTI_SELECT_TYPE: ['1', '2'],
-                      'default': '1'}
+        value_dict = {
+            Question.LONG_TEXT: "This is a long text response.\nThis is a second line",
+            Question.MULTI_SELECT_TYPE: ["1", "2"],
+            "default": "1",
+        }
 
         def check_response(response: QuestionResponse):
-            value = value_dict.get(response.question.question_type, value_dict['default'])
+            value = value_dict.get(
+                response.question.question_type, value_dict["default"]
+            )
             self.assertEqual(
-                response.response, value,
-                'Response not equal to %s for question type %s' %
-                (value, response.question.question_type))
+                response.response,
+                value,
+                "Response not equal to %s for question type %s"
+                % (value, response.question.question_type),
+            )
 
         self.generic_response_test(check_response)
 
     def test_response_external(self):
-        value_dict = {Question.LONG_TEXT: 'This is a long text response.\nThis is a second line',
-                      Question.MULTI_SELECT_TYPE: ['Choice 1', 'Choice 2'],
-                      'default': 'Choice 1'}
+        value_dict = {
+            Question.LONG_TEXT: "This is a long text response.\nThis is a second line",
+            Question.MULTI_SELECT_TYPE: ["Choice 1", "Choice 2"],
+            "default": "Choice 1",
+        }
 
         def check_response(response: QuestionResponse):
-            value = value_dict.get(response.question.question_type, value_dict['default'])
+            value = value_dict.get(
+                response.question.question_type, value_dict["default"]
+            )
             self.assertEqual(
-                response.response_external(), value,
-                'Response not equal to %s for question type %s' %
-                (value, response.question.question_type))
+                response.response_external(),
+                value,
+                "Response not equal to %s for question type %s"
+                % (value, response.question.question_type),
+            )
 
         self.generic_response_test(check_response)
 
@@ -604,49 +785,63 @@ class QuestionResponseTests(HypTestCase):
         rub_response = make_rubric_response(rubric)
 
         question_type = Question.SINGLE_SELECT_TYPE
-        question = mommy.make(Question,
-                              rubric=rubric,
-                              short_description='Question %s' % question_type,
-                              long_description='This is for question %s' % question_type,
-                              help_text='This is help text for question %s' % question_type,
-                              weight=1,
-                              question_type=question_type,
-                              required=True)
+        question = mommy.make(
+            Question,
+            rubric=rubric,
+            short_description="Question %s" % question_type,
+            long_description="This is for question %s" % question_type,
+            help_text="This is help text for question %s" % question_type,
+            weight=1,
+            question_type=question_type,
+            required=True,
+        )
         choices = mommy.make(Choice, _quantity=4, question=question)
-        q_resp = mommy.make(QuestionResponse,
-                            rubric_response=rub_response,
-                            question=question)
+        q_resp = mommy.make(
+            QuestionResponse, rubric_response=rub_response, question=question
+        )
         q_resp.update_response(choices[0].key)
-        self.assertEqual(q_resp.score(), 0,
-                         msg='Score should be zero for questions with non-numeric choices')
+        self.assertEqual(
+            q_resp.score(),
+            0,
+            msg="Score should be zero for questions with non-numeric choices",
+        )
 
         question_type = Question.MULTI_SELECT_TYPE
-        question = mommy.make(Question,
-                              rubric=rubric,
-                              short_description='Question %s' % question_type,
-                              long_description='This is for question %s' % question_type,
-                              help_text='This is help text for question %s' % question_type,
-                              weight=1,
-                              question_type=question_type,
-                              required=True)
+        question = mommy.make(
+            Question,
+            rubric=rubric,
+            short_description="Question %s" % question_type,
+            long_description="This is for question %s" % question_type,
+            help_text="This is help text for question %s" % question_type,
+            weight=1,
+            question_type=question_type,
+            required=True,
+        )
         choices = mommy.make(Choice, _quantity=4, question=question)
-        q_resp = mommy.make(QuestionResponse,
-                            rubric_response=rub_response,
-                            question=question)
+        q_resp = mommy.make(
+            QuestionResponse, rubric_response=rub_response, question=question
+        )
         q_resp.update_response([choices[0].key, choices[1].key])
-        self.assertEqual(q_resp.score(), 0,
-                         msg='Score should be zero for questions with non-numeric choices')
+        self.assertEqual(
+            q_resp.score(),
+            0,
+            msg="Score should be zero for questions with non-numeric choices",
+        )
 
     def test_last_saved_date(self):
         rub_response = make_rubric_response()
 
-        for response in rub_response.questionresponse_set.select_related('question').all():
+        for response in rub_response.questionresponse_set.select_related(
+            "question"
+        ).all():
             self.assertIsNone(response.last_submitted)
 
         answer_rubric_response(rub_response)
         now = timezone.now()
 
-        for response in rub_response.questionresponse_set.select_related('question').all():
+        for response in rub_response.questionresponse_set.select_related(
+            "question"
+        ).all():
             self.assertIsNotNone(response.last_submitted)
             self.assertIsInstance(response.last_submitted, datetime)
             elapsed_seconds = (now - response.last_submitted).seconds
@@ -665,14 +860,21 @@ class QuestionResponseTests(HypTestCase):
     def test_new_question_is_added_to_response(self):
         rub_response = make_rubric_response()  # type: RubricResponse
 
-        question = mommy.make(Question, rubric=rub_response.rubric, short_description="Additional test question")  # type: Question
+        question = mommy.make(
+            Question,
+            rubric=rub_response.rubric,
+            short_description="Additional test question",
+        )  # type: Question
 
-        self.assertTrue(rub_response.questionresponse_set\
-                        .filter(question__short_description="Additional test question")\
-                        .exists())
+        self.assertTrue(
+            rub_response.questionresponse_set.filter(
+                question__short_description="Additional test question"
+            ).exists()
+        )
 
-        response = rub_response.questionresponse_set\
-                   .get(question__short_description="Additional test question")  # type: QuestionResponse
+        response = rub_response.questionresponse_set.get(
+            question__short_description="Additional test question"
+        )  # type: QuestionResponse
         self.assertEqual(question, response.question)
 
     def test_deleted_question_is_removed_from_response(self):
@@ -682,12 +884,15 @@ class QuestionResponseTests(HypTestCase):
         question = rub_response.questionresponse_set.first().question  # type: Question
 
         question.delete()
-        self.assertEqual(rub_response.questionresponse_set.count(),
-                         num_question_responses-1)
-        self.assertQuerysetEqual(rub_response.questionresponse_set.all(),
-                                 ['Question SINGLE SELECT', 'Question MULTI SELECT', 'Question LONG TEXT'],
-                                 transform=lambda x: x.question.__str__(),
-                                 ordered=False)
+        self.assertEqual(
+            rub_response.questionresponse_set.count(), num_question_responses - 1
+        )
+        self.assertQuerysetEqual(
+            rub_response.questionresponse_set.all(),
+            ["Question SINGLE SELECT", "Question MULTI SELECT", "Question LONG TEXT"],
+            transform=lambda x: x.question.__str__(),
+            ordered=False,
+        )
 
 
 class QuestionResponseClearingTests(HypTestCase):
@@ -701,12 +906,15 @@ class QuestionResponseClearingTests(HypTestCase):
         self.rub_response = make_rubric_response(self.rubric)
         answer_rubric_response(self.rub_response)
 
-    def get_question_and_response(self, question_type: str) -> (Question, QuestionResponse):
-        question = self.rub_response.rubric.question_set \
-            .filter(question_type=question_type) \
-            .first()  # type: Question
-        response = self.rub_response.questionresponse_set \
-            .get(question_id=question.id)  # type: QuestionResponse
+    def get_question_and_response(
+        self, question_type: str
+    ) -> (Question, QuestionResponse):
+        question = self.rub_response.rubric.question_set.filter(
+            question_type=question_type
+        ).first()  # type: Question
+        response = self.rub_response.questionresponse_set.get(
+            question_id=question.id
+        )  # type: QuestionResponse
 
         self.assertTrue(response.question_answered)
 
@@ -757,9 +965,11 @@ class QuestionResponseClearingTests(HypTestCase):
     def test_responses_are_not_cleared_for_special_case(self):
         # Scale type and Single select type are the same with different widgets, so nothing
         # is cleared in this special case.
-        for starting_type, new_type in ((Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE),
-                                        (Question.SINGLE_SELECT_TYPE, Question.SCALE_TYPE)):
-            with self.subTest('{} -> {}'.format(starting_type, new_type)):
+        for starting_type, new_type in (
+            (Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE),
+            (Question.SINGLE_SELECT_TYPE, Question.SCALE_TYPE),
+        ):
+            with self.subTest("{} -> {}".format(starting_type, new_type)):
                 question, response = self.get_question_and_response(starting_type)
                 self.update_question_type(question, new_type)
                 self.assertNoResponsesCleared()
