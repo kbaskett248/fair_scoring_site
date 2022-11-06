@@ -116,11 +116,18 @@ class TestBase(HypTestCase):
 
 
 class RubricTests(HypTestCase):
-    @given(sane_text())
+    @given(sane_text(min_size=1))
     def test_create_rubric(self, name: str):
         rubric = Rubric.objects.create(name=name)
         self.assertEqual(rubric.name, name)
-        self.assertQuerysetEqual(Rubric.objects.all(), ["<Rubric: %s>" % name])
+        self.assertQuerysetEqual(
+            Rubric.objects.all(), ["<Rubric: %s>" % name], transform=repr
+        )
+
+    def test_create_rubric_fails_for_empty_name(self):
+        with self.assertRaises(ValidationError):
+            Rubric.objects.create(name="")
+        self.assertQuerysetEqual(Rubric.objects.all(), [])
 
 
 class QuestionTests(HypTestCase):
@@ -191,6 +198,7 @@ class QuestionTests(HypTestCase):
             self.assertQuerysetEqual(
                 question.choice_set.order_by("description").all(),
                 ["<Choice: High>", "<Choice: Low>"],
+                transform=repr,
             )
 
         with self.subTest("%(type)s question", type=Question.LONG_TEXT):

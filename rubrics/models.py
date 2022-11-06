@@ -49,7 +49,7 @@ class ValidatedModel(models.Model):
         pass
 
 
-class Rubric(models.Model):
+class Rubric(ValidatedModel):
     name = models.CharField(max_length=200)
 
     def __str__(self):
@@ -58,6 +58,12 @@ class Rubric(models.Model):
     @property
     def ordered_question_set(self):
         return self.question_set.order_by("order")
+
+    @classmethod
+    def validate(cls, **fields):
+        super().validate(**fields)
+        if not fields.get("name", None):
+            raise ValidationError("name required for Rubric")
 
 
 class Question(ValidatedModel):
