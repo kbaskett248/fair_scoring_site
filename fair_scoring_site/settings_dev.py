@@ -38,7 +38,7 @@ ALLOWED_HOSTS = []
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -47,7 +47,9 @@ INTERNAL_IPS = ["127.0.0.1"]
 # Email
 # https://docs.djangoproject.com/en/1.10/topics/email/#email-backends
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-EMAIL_FILE_PATH = os.path.join(BASE_DIR, "app-messages")
+EMAIL_FILE_PATH = BASE_DIR / "app-messages"
+
+STATIC_ROOT = BASE_DIR / "static"
 
 settings.register_profile("dev", settings(max_examples=20))
 settings.register_profile(
