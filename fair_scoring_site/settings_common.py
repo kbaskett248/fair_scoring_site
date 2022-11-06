@@ -144,3 +144,5 @@ CONSTANCE_CONFIG_FIELDSETS = {
     ),
 }
 CONSTANCE_DATABASE_PREFIX = "constance:fair_scoring_site:"
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
