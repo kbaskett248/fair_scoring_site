@@ -25,16 +25,17 @@ from .models import Project, JudgingInstance, create_student, Teacher
 def get_rubric_name():
     return config.RUBRIC_NAME
 
+
 class StudentData:
     def __init__(self, **kwargs):
         self.row_data = kwargs
-        self.set_if_contains('first_name', 'First Name')
-        self.set_if_contains('last_name', 'Last Name')
-        self.set_if_contains('grade_level', 'Grade')
-        self.set_if_contains('email', 'Email')
-        self.set_if_contains('_ethnicity', 'Ethnicity')
-        self.set_if_contains('_gender', 'Gender')
-        self.set_if_contains('_teacher', 'Teacher')
+        self.set_if_contains("first_name", "First Name")
+        self.set_if_contains("last_name", "Last Name")
+        self.set_if_contains("grade_level", "Grade")
+        self.set_if_contains("email", "Email")
+        self.set_if_contains("_ethnicity", "Ethnicity")
+        self.set_if_contains("_gender", "Gender")
+        self.set_if_contains("_teacher", "Teacher")
 
     def set_if_contains(self, attr: str, label: str):
         for key, value in self.row_data.items():
@@ -52,10 +53,10 @@ class StudentData:
 
     @property
     def gender(self):
-        if self._gender[0].lower() == 'm':
-            return 'M'
+        if self._gender[0].lower() == "m":
+            return "M"
         else:
-            return 'F'
+            return "F"
 
     @property
     def teacher(self):
@@ -63,27 +64,38 @@ class StudentData:
 
 
 class ProjectData:
-    STUDENT_FIELDS = ('first name', 'last name', 'ethnicity', 'gender', 'teacher', 'grade', 'email')
+    STUDENT_FIELDS = (
+        "first name",
+        "last name",
+        "ethnicity",
+        "gender",
+        "teacher",
+        "grade",
+        "email",
+    )
+
     def __init__(self, **kwargs):
         self.row_data = kwargs
         print(self.row_data)
-        self.title = self.row_data['Title']
-        self.abstract = self.row_data.get('Abstract', '')
+        self.title = self.row_data["Title"]
+        self.abstract = self.row_data.get("Abstract", "")
 
     @property
     def category(self):
-        if 'Category' in self.row_data:
-            return self.row_data['Category']
+        if "Category" in self.row_data:
+            return self.row_data["Category"]
         else:
             return self.subcategory.category
 
     @property
     def subcategory(self):
-        return Subcategory.objects.get(short_description__contains=self.row_data['Subcategory'])
+        return Subcategory.objects.get(
+            short_description__contains=self.row_data["Subcategory"]
+        )
 
     @property
     def division(self):
-        return Division.objects.get(short_description=self.row_data['Division'])
+        return Division.objects.get(short_description=self.row_data["Division"])
 
     @property
     def students(self) -> Generator[StudentData, None, None]:
@@ -114,7 +126,7 @@ def handle_project_import(file_):
     contents = []
     for chu in file_.chunks():
         contents.append(chu.decode())
-    contents = ''.join(contents).split('\r\n')
+    contents = "".join(contents).split("\r\n")
 
     dialect = csv.Sniffer().sniff(contents[0])
     reader = csv.DictReader(contents[1:], dialect=dialect)
@@ -127,24 +139,28 @@ def process_project_import(reader, output_stream=None):
 
     for row in reader:
         project_data = ProjectData(**row)
-        project = Project.create(project_data.title,
-                                 project_data.abstract,
-                                 project_data.category,
-                                 project_data.subcategory,
-                                 project_data.division,
-                                 output_stream=output_stream)
+        project = Project.create(
+            project_data.title,
+            project_data.abstract,
+            project_data.category,
+            project_data.subcategory,
+            project_data.division,
+            output_stream=output_stream,
+        )
         if not project:
             continue
 
         for student_data in project_data.students:
-            create_student(student_data.first_name,
-                           student_data.last_name,
-                           student_data.ethnicity,
-                           student_data.gender,
-                           student_data.grade_level,
-                           project,
-                           student_data.teacher,
-                           output_stream=output_stream)
+            create_student(
+                student_data.first_name,
+                student_data.last_name,
+                student_data.ethnicity,
+                student_data.gender,
+                student_data.grade_level,
+                project,
+                student_data.teacher,
+                output_stream=output_stream,
+            )
 
 
 def assign_judges():
@@ -184,25 +200,33 @@ def create_judging_instance(judge, project, rubric):
 
 
 def delete_instances_for_inactive_judges(rubric):
-    JudgingInstance.objects.filter(judge__user__is_active=False, response__rubric=rubric).delete()
+    JudgingInstance.objects.filter(
+        judge__user__is_active=False, response__rubric=rubric
+    ).delete()
 
 
 def assign_new_projects(rubric, judge_set):
-    project_set = Project.objects.annotate(num_judges=Count('judginginstance')) \
-        .order_by('num_judges')
+    project_set = Project.objects.annotate(
+        num_judges=Count("judginginstance")
+    ).order_by("num_judges")
 
-    judge_set = judge_set.annotate(num_projects=Count('judginginstance'),
-                                       num_categories=Count('categories'),
-                                       num_divisions=Count('divisions')) \
-        .order_by('num_projects', 'num_categories', 'num_divisions')
+    judge_set = judge_set.annotate(
+        num_projects=Count("judginginstance"),
+        num_categories=Count("categories"),
+        num_divisions=Count("divisions"),
+    ).order_by("num_projects", "num_categories", "num_divisions")
 
     for project in project_set.filter(num_judges__lt=get_minimum_judges_per_project()):
         num_judges = get_minimum_judges_per_project() - project.num_judges
-        judges = judge_set.filter(categories=project.category,
-                                  divisions=project.division)
+        judges = judge_set.filter(
+            categories=project.category, divisions=project.division
+        )
 
         for judge in judges.all():
-            judge_projects = [ji.project for ji in judge.judginginstance_set.select_related('project').all()]
+            judge_projects = [
+                ji.project
+                for ji in judge.judginginstance_set.select_related("project").all()
+            ]
             if project in judge_projects:
                 continue
             else:
@@ -225,11 +249,21 @@ def get_minimum_projects_per_judge():
 def balance_judges(rubric, judge_queryset):
     quotients = build_quotient_array(judge_queryset)
 
-    judge_set = judge_queryset.annotate(num_projects=Count('judginginstance', distinct=True))
+    judge_set = judge_queryset.annotate(
+        num_projects=Count("judginginstance", distinct=True)
+    )
     lower_bound = get_project_balancing_lower_bound(judge_set)
 
-    for judge in judge_set.filter(num_projects__gt=lower_bound).order_by('-num_projects'):
-        balance_judge(judge, rubric, judge_set.filter(num_projects__lt=lower_bound).order_by('num_projects'), lower_bound, quotients)
+    for judge in judge_set.filter(num_projects__gt=lower_bound).order_by(
+        "-num_projects"
+    ):
+        balance_judge(
+            judge,
+            rubric,
+            judge_set.filter(num_projects__lt=lower_bound).order_by("num_projects"),
+            lower_bound,
+            quotients,
+        )
 
 
 def build_quotient_array(judge_queryset):
@@ -243,17 +277,25 @@ def build_quotient_array(judge_queryset):
             return self.num_projects / self.num_judges
 
         def __str__(self):
-            return 'Projects: {0}; Judges: {1}; Quotient: {2}'.format(self.num_projects,
-                                                                      self.num_judges,
-                                                                      self.projects_per_judge)
+            return "Projects: {0}; Judges: {1}; Quotient: {2}".format(
+                self.num_projects, self.num_judges, self.projects_per_judge
+            )
 
         def __repr__(self):
             return self.__str__()
 
-    proj_counts = {(d['category'], d['division']): d['count'] for d in
-                   Project.objects.values('category', 'division').annotate(count=Count('category'))}
-    judge_counts = {(d['categories'], d['divisions']): d['count'] for d in
-                    judge_queryset.values('categories', 'divisions').annotate(count=Count('categories'))}
+    proj_counts = {
+        (d["category"], d["division"]): d["count"]
+        for d in Project.objects.values("category", "division").annotate(
+            count=Count("category")
+        )
+    }
+    judge_counts = {
+        (d["categories"], d["divisions"]): d["count"]
+        for d in judge_queryset.values("categories", "divisions").annotate(
+            count=Count("categories")
+        )
+    }
 
     quotient_array = defaultdict(dict)
     for cat, div in product(Category.objects.all(), Division.objects.all()):
@@ -277,13 +319,13 @@ def get_project_balancing_lower_bound(judge_set):
     # print('Median: ', median)
     minimum = get_minimum_projects_per_judge()
     # print('Minimum: ', minimum)
-    average = judge_set.aggregate(avg_projects=Avg('num_projects'))['avg_projects']
+    average = judge_set.aggregate(avg_projects=Avg("num_projects"))["avg_projects"]
     # print('Average: ', average)
     return max(median, minimum, average)
 
 
 def get_median_projects_per_judge(judge_set):
-    return median_value(judge_set, 'num_projects')
+    return median_value(judge_set, "num_projects")
 
 
 def median_value(queryset, term):
@@ -292,7 +334,7 @@ def median_value(queryset, term):
     if count % 2 == 1:
         return values[int(round(count / 2))]
     else:
-        return sum(values[count / 2 - 1:count / 2 + 1]) / 2.0
+        return sum(values[count / 2 - 1 : count / 2 + 1]) / 2.0
 
 
 def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
@@ -306,7 +348,9 @@ def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
         project = judging_instance.project
         return quotients[project.category][project.division].projects_per_judge
 
-    instances = sorted(get_instances_that_can_be_reassigned(judge, rubric), key=sort_value)
+    instances = sorted(
+        get_instances_that_can_be_reassigned(judge, rubric), key=sort_value
+    )
     for ji in instances:
         avail_judge = get_available_judge(ji.project, rubric, possible_judges)
         if avail_judge:
@@ -314,7 +358,7 @@ def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
                 num_to_reassign -= 1
 
                 # for j in possible_judges.filter(cat_Q, div_Q):
-                    # print(j, j.num_projects)
+                # print(j, j.num_projects)
 
                 if num_to_reassign <= 0:
                     break
@@ -323,14 +367,18 @@ def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
 
 
 def get_instances_that_can_be_reassigned(judge, rubric):
-    return judge.judginginstance_set \
-                .filter(response__rubric=rubric, locked=False) \
-                .select_related('response', 'project')
+    return judge.judginginstance_set.filter(
+        response__rubric=rubric, locked=False
+    ).select_related("response", "project")
 
 
 def get_available_judge(project, rubric, possible_judges):
-    for judge in possible_judges.filter(categories=project.category, divisions=project.division):
-        if judge.judginginstance_set.filter(project=project, response__rubric=rubric).exists():
+    for judge in possible_judges.filter(
+        categories=project.category, divisions=project.division
+    ):
+        if judge.judginginstance_set.filter(
+            project=project, response__rubric=rubric
+        ).exists():
             # The judge has already been assigned this project, so continue
             continue
         else:
@@ -341,7 +389,9 @@ def get_available_judge(project, rubric, possible_judges):
 @transaction.atomic()
 def reassign_project(judging_instance, to_judge):
     # print("Reassigning {0} from {1} to {2}".format(judging_instance.project.number, judging_instance.judge, to_judge))
-    new_instance = create_judging_instance(to_judge, judging_instance.project, judging_instance.response.rubric)
+    new_instance = create_judging_instance(
+        to_judge, judging_instance.project, judging_instance.response.rubric
+    )
     judging_instance.delete()
     return new_instance
 
@@ -349,27 +399,33 @@ def reassign_project(judging_instance, to_judge):
 def email_teachers(site_name, domain, use_https=False):
     messages = []
     context = {
-        'domain': domain,
-        'site_name': site_name,
-        'protocol': 'https' if use_https else 'http',
+        "domain": domain,
+        "site_name": site_name,
+        "protocol": "https" if use_https else "http",
     }
     for teacher in get_teachers():
         context.update(
-            {'email': teacher.email,
-             'uid': urlsafe_base64_encode(force_bytes(teacher.pk)),
-             'user': teacher,
-             'token': default_token_generator.make_token(teacher)}
+            {
+                "email": teacher.email,
+                "uid": urlsafe_base64_encode(force_bytes(teacher.pk)),
+                "user": teacher,
+                "token": default_token_generator.make_token(teacher),
+            }
         )
 
-        subject = render_to_string('fair_projects/email/teacher_signup_subject.txt', context)
+        subject = render_to_string(
+            "fair_projects/email/teacher_signup_subject.txt", context
+        )
         # Email subject *must not* contain newlines
-        subject = ''.join(subject.splitlines())
+        subject = "".join(subject.splitlines())
 
-        body = render_to_string('fair_projects/email/teacher_signup.txt', context)
-        html_email = render_to_string('fair_projects/email/teacher_signup.html', context)
+        body = render_to_string("fair_projects/email/teacher_signup.txt", context)
+        html_email = render_to_string(
+            "fair_projects/email/teacher_signup.html", context
+        )
 
         email_message = EmailMultiAlternatives(subject, body, to=[teacher.email])
-        email_message.attach_alternative(html_email, 'text/html')
+        email_message.attach_alternative(html_email, "text/html")
 
         messages.append(email_message)
 
@@ -378,7 +434,7 @@ def email_teachers(site_name, domain, use_https=False):
 
 
 def get_teachers():
-    for teacher in Teacher.objects.select_related('user').all():
+    for teacher in Teacher.objects.select_related("user").all():
         if teacher.user.is_superuser:
             continue
 
@@ -387,24 +443,30 @@ def get_teachers():
 
 def get_projects_sorted_by_score() -> list:
     def sort_func(project: Project):
-        return ((project.average_score() * -1, project.num_scores() * -1), project.number)
+        return (
+            (project.average_score() * -1, project.num_scores() * -1),
+            project.number,
+        )
+
     project_list = list(Project.objects.all())
     project_list.sort(key=sort_func)
     return project_list
 
 
-def mass_email(targets: list, subject_template: str, text_template: str, html_template: str):
+def mass_email(
+    targets: list, subject_template: str, text_template: str, html_template: str
+):
     messages = []
     for email, context in targets:
         subject = render_to_string(subject_template, context)
         # Email subject *must not* contain newlines
-        subject = ''.join(subject.splitlines())
+        subject = "".join(subject.splitlines())
 
         body = render_to_string(text_template, context)
         html_email = render_to_string(html_template, context)
 
         email_message = EmailMultiAlternatives(subject, body, to=[email])
-        email_message.attach_alternative(html_email, 'text/html')
+        email_message.attach_alternative(html_email, "text/html")
 
         messages.append(email_message)
 
@@ -413,17 +475,25 @@ def mass_email(targets: list, subject_template: str, text_template: str, html_te
 
 
 def get_question_feedback_dict(project: Project) -> dict:
-    judging_instances = JudgingInstance.objects.filter(project=project).select_related('response').all()
+    judging_instances = (
+        JudgingInstance.objects.filter(project=project).select_related("response").all()
+    )
     rubric_responses = [instance.response for instance in judging_instances]
-    question_responses = QuestionResponse.objects\
-        .filter(rubric_response__in=rubric_responses)\
-        .select_related('question')\
-        .order_by('question__short_description')\
+    question_responses = (
+        QuestionResponse.objects.filter(rubric_response__in=rubric_responses)
+        .select_related("question")
+        .order_by("question__short_description")
         .all()
-    question_responses = filter(lambda x: x.rubric_response.has_response, question_responses)
-    question_responses = groupby(question_responses, lambda x: x.question.short_description)
-    question_dict = {key: FeedbackQuestion(list(responses)) for key, responses in
-                     question_responses}
+    )
+    question_responses = filter(
+        lambda x: x.rubric_response.has_response, question_responses
+    )
+    question_responses = groupby(
+        question_responses, lambda x: x.question.short_description
+    )
+    question_dict = {
+        key: FeedbackQuestion(list(responses)) for key, responses in question_responses
+    }
 
     return question_dict
 
@@ -457,7 +527,7 @@ class FeedbackQuestion:
         for resp in list_to_combine:
             if not resp:
                 continue
-            elif hasattr(resp, '__iter__'):
+            elif hasattr(resp, "__iter__"):
                 combined_set.update(resp)
             else:
                 combined_set.add(resp)
@@ -498,4 +568,4 @@ class FeedbackQuestion:
             return None
 
     def __str__(self):
-        return '{0} responses'.format(len(self.responses))
+        return "{0} responses".format(len(self.responses))

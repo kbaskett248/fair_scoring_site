@@ -6,20 +6,20 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fair_categories', '0004_auto_20160807_1402'),
+        ("fair_categories", "0004_auto_20160807_1402"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='category',
-            options={'verbose_name_plural': 'categories'},
+            name="category",
+            options={"verbose_name_plural": "categories"},
         ),
         migrations.AlterModelOptions(
-            name='ethnicity',
-            options={'verbose_name_plural': 'ethnicities'},
+            name="ethnicity",
+            options={"verbose_name_plural": "ethnicities"},
         ),
         migrations.AlterModelOptions(
-            name='subcategory',
-            options={'verbose_name_plural': 'subcategories'},
+            name="subcategory",
+            options={"verbose_name_plural": "subcategories"},
         ),
     ]

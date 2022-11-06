@@ -10,30 +10,68 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Category',
+            name="Category",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('short_description', models.CharField(max_length=100, verbose_name='Category name')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "short_description",
+                    models.CharField(max_length=100, verbose_name="Category name"),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Division',
+            name="Division",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('short_description', models.CharField(max_length=100, verbose_name='Division name')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "short_description",
+                    models.CharField(max_length=100, verbose_name="Division name"),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Subcategory',
+            name="Subcategory",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('short_description', models.CharField(max_length=100, verbose_name='Subcategory name')),
-                ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='fair_categories.Category')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "short_description",
+                    models.CharField(max_length=100, verbose_name="Subcategory name"),
+                ),
+                (
+                    "category",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="fair_categories.Category",
+                    ),
+                ),
             ],
         ),
     ]

@@ -11,7 +11,7 @@ admin.site.register(JudgeEducation)
 # Provide the ability to register and display conditional inlines.
 def get_inline_instances(self, request, obj=None):
     inline_instances = []
-    if hasattr(self, 'inlines'):
+    if hasattr(self, "inlines"):
         inlines = list(self.inlines)
     else:
         inlines = []
@@ -23,9 +23,11 @@ def get_inline_instances(self, request, obj=None):
     for inline_class in inlines:
         inline = inline_class(self.model, self.admin_site)
         if request:
-            if not (inline.has_add_permission(request, obj) or
-                    inline.has_change_permission(request, obj) or
-                    inline.has_delete_permission(request, obj)):
+            if not (
+                inline.has_add_permission(request, obj)
+                or inline.has_change_permission(request, obj)
+                or inline.has_delete_permission(request, obj)
+            ):
                 continue
             if not inline.has_add_permission(request, obj):
                 inline.max_num = 0
@@ -47,7 +49,9 @@ def register_conditional_inline(cls, inline):
 django.contrib.auth.admin.UserAdmin.conditional_inlines = []
 django.contrib.auth.admin.UserAdmin.get_inline_instances = get_inline_instances
 django.contrib.auth.admin.UserAdmin.get_formsets = get_formsets
-django.contrib.auth.admin.UserAdmin.register_conditional_inline = classmethod(register_conditional_inline)
+django.contrib.auth.admin.UserAdmin.register_conditional_inline = classmethod(
+    register_conditional_inline
+)
 
 
 # Add JudgeInline as a conditional inline
@@ -55,11 +59,11 @@ class JudgeInline(admin.StackedInline):
     model = Judge
     can_delete = False
     max_num = 1
-    verbose_name_plural = 'Judge Information'
+    verbose_name_plural = "Judge Information"
 
     @classmethod
     def condition(cls, request, obj=None):
-        return obj and obj.has_perm('judges.is_judge')
+        return obj and obj.has_perm("judges.is_judge")
 
 
 django.contrib.auth.admin.UserAdmin.register_conditional_inline(JudgeInline)

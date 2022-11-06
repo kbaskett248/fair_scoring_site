@@ -7,12 +7,18 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from rubrics.models import Rubric
-from .logic import get_judging_rubric, get_num_judges_per_project, get_num_projects_per_judge
+from .logic import (
+    get_judging_rubric,
+    get_num_judges_per_project,
+    get_num_projects_per_judge,
+)
 from fair_projects.models import Project, JudgingInstance
 from judges.models import Judge
 
 
-def add_instances(queryset: QuerySet, minimum_instances: int, other_min: int, **kwargs) -> None:
+def add_instances(
+    queryset: QuerySet, minimum_instances: int, other_min: int, **kwargs
+) -> None:
     rubric = get_judging_rubric()
     for instance in AssignmentHelper.get_instances_for(queryset, **kwargs):
         if not instance.exists(rubric):
@@ -21,41 +27,49 @@ def add_instances(queryset: QuerySet, minimum_instances: int, other_min: int, **
             if AssignmentHelper.instance_count(rubric, **kwargs) < minimum_instances:
                 continue
 
-            other_count = AssignmentHelper.instance_count(rubric, **instance.other_kwarg(**kwargs))
+            other_count = AssignmentHelper.instance_count(
+                rubric, **instance.other_kwarg(**kwargs)
+            )
             if other_count > other_min:
                 break
 
 
-def remove_nonmatching_instances(**kwargs) -> Iterator['ExistingInstanceHelper']:
+def remove_nonmatching_instances(**kwargs) -> Iterator["ExistingInstanceHelper"]:
     """Remove Judging Instances that no longer match and aren't locked."""
     rubric = get_judging_rubric()
     for instance in ExistingInstanceHelper.get_instances_for(
-            rubric=rubric, locked=False, **kwargs):
+        rubric=rubric, locked=False, **kwargs
+    ):
         if not instance.attributes_match():
             instance.remove()
             yield instance
 
 
 def add_judges_to_project(project: Project) -> None:
-    available_judges = Judge.objects.filter(user__is_active=True,
-                                            categories=project.category,
-                                            divisions=project.division)
-    add_instances(available_judges,
-                  get_num_judges_per_project(),
-                  get_num_projects_per_judge(),
-                  project=project)
+    available_judges = Judge.objects.filter(
+        user__is_active=True, categories=project.category, divisions=project.division
+    )
+    add_instances(
+        available_judges,
+        get_num_judges_per_project(),
+        get_num_projects_per_judge(),
+        project=project,
+    )
 
 
 def add_projects_to_judge(judge: Judge) -> None:
     if judge.user.is_active:
-        categories = list(judge.categories.values_list('pk', flat=True))
-        divisions = list(judge.divisions.values_list('pk', flat=True))
-        available_projects = Project.objects.filter(category__in=categories,
-                                                    division__in=divisions)
-        add_instances(available_projects,
-                      get_num_projects_per_judge(),
-                      get_num_judges_per_project(),
-                      judge=judge)
+        categories = list(judge.categories.values_list("pk", flat=True))
+        divisions = list(judge.divisions.values_list("pk", flat=True))
+        available_projects = Project.objects.filter(
+            category__in=categories, division__in=divisions
+        )
+        add_instances(
+            available_projects,
+            get_num_projects_per_judge(),
+            get_num_judges_per_project(),
+            judge=judge,
+        )
 
 
 def remove_excess_instances() -> None:
@@ -67,17 +81,20 @@ def remove_excess_instances() -> None:
 
     """
     rubric = get_judging_rubric()
-    queryset = JudgingInstance.objects \
-        .filter(response__rubric=rubric, locked=False) \
-        .annotate(num_projects=Count('judge__judginginstance',
-                                     distinct=True),
-                  num_judges=Count('project__judginginstance',
-                                   distinct=True)) \
-        .filter(num_projects__gt=get_num_projects_per_judge(),
-                num_judges__gt=get_num_judges_per_project()) \
-        .order_by('num_judges', 'num_projects') \
-        .reverse() \
-        .select_related('response')
+    queryset = (
+        JudgingInstance.objects.filter(response__rubric=rubric, locked=False)
+        .annotate(
+            num_projects=Count("judge__judginginstance", distinct=True),
+            num_judges=Count("project__judginginstance", distinct=True),
+        )
+        .filter(
+            num_projects__gt=get_num_projects_per_judge(),
+            num_judges__gt=get_num_judges_per_project(),
+        )
+        .order_by("num_judges", "num_projects")
+        .reverse()
+        .select_related("response")
+    )
 
     # Result needs to be a list so we can pop the first item
     def get_instances():
@@ -92,8 +109,12 @@ def remove_excess_instances() -> None:
             instances = get_instances()
 
 
-@receiver(post_save, sender=Project, dispatch_uid='update_judging_instances_for_project')
-def update_judging_instances_for_project(sender: type, instance: Project, **kwargs) -> None:
+@receiver(
+    post_save, sender=Project, dispatch_uid="update_judging_instances_for_project"
+)
+def update_judging_instances_for_project(
+    sender: type, instance: Project, **kwargs
+) -> None:
     # Remove non-matching judges and any judges that are no longer active
     deleted_instances = list(remove_nonmatching_instances(project=instance))
     judges_to_update = {i.judge for i in deleted_instances}
@@ -104,7 +125,9 @@ def update_judging_instances_for_project(sender: type, instance: Project, **kwar
     remove_excess_instances()
 
 
-@receiver(Judge.post_commit, sender=Judge, dispatch_uid='update_judging_instances_for_judge')
+@receiver(
+    Judge.post_commit, sender=Judge, dispatch_uid="update_judging_instances_for_judge"
+)
 def update_judging_instances_for_judge(sender: type, instance: Judge, **kwargs) -> None:
     # Remove nonmatching projects
     deleted_instances = list(remove_nonmatching_instances(judge=instance))
@@ -116,8 +139,12 @@ def update_judging_instances_for_judge(sender: type, instance: Judge, **kwargs) 
     remove_excess_instances()
 
 
-@receiver(post_save, sender=User, dispatch_uid='update_judging_instances_for_inactive_judges')
-def update_judging_instances_for_inactive_judges(sender: type, instance: User, **kwargs) -> None:
+@receiver(
+    post_save, sender=User, dispatch_uid="update_judging_instances_for_inactive_judges"
+)
+def update_judging_instances_for_inactive_judges(
+    sender: type, instance: User, **kwargs
+) -> None:
     if not instance.is_active:
         try:
             judge = Judge.objects.get(pk=instance.pk)
@@ -133,11 +160,12 @@ def update_judging_instances_for_inactive_judges(sender: type, instance: User, *
 
 class AssignmentHelper:
     @classmethod
-    def get_instances_for(cls, queryset, **kwargs) -> Iterator['AssignmentHelper']:
-        queryset = queryset.annotate(num_existing=Count('judginginstance'))\
-                           .order_by('num_existing')
+    def get_instances_for(cls, queryset, **kwargs) -> Iterator["AssignmentHelper"]:
+        queryset = queryset.annotate(num_existing=Count("judginginstance")).order_by(
+            "num_existing"
+        )
         for item in queryset.all():
-            kw_args = {'project': item, 'judge': item}
+            kw_args = {"project": item, "judge": item}
             kw_args.update(kwargs)
             yield cls(**kw_args)
 
@@ -146,17 +174,17 @@ class AssignmentHelper:
         self.judge = judge
 
     def assign(self, rubric: Rubric) -> JudgingInstance:
-        return JudgingInstance.objects.create(judge=self.judge,
-                                              project=self.project,
-                                              rubric=rubric)
+        return JudgingInstance.objects.create(
+            judge=self.judge, project=self.project, rubric=rubric
+        )
 
     def exists(self, rubric: Rubric) -> bool:
-        return JudgingInstance.objects.filter(judge=self.judge,
-                                              project=self.project,
-                                              response__rubric=rubric.pk).exists()
+        return JudgingInstance.objects.filter(
+            judge=self.judge, project=self.project, response__rubric=rubric.pk
+        ).exists()
 
     def kwargs(self) -> dict:
-        return {'project': self.project, 'judge': self.judge}
+        return {"project": self.project, "judge": self.judge}
 
     def other_kwarg(self, **kwargs) -> dict:
         d = self.kwargs()
@@ -166,21 +194,28 @@ class AssignmentHelper:
 
     @staticmethod
     def instance_count(rubric: Rubric, **kwargs):
-        return JudgingInstance.objects.filter(response__rubric=rubric.pk, **kwargs)\
-                                      .count()
+        return JudgingInstance.objects.filter(
+            response__rubric=rubric.pk, **kwargs
+        ).count()
 
 
 class ExistingInstanceHelper:
     @classmethod
-    def get_instances_for(cls, **kwargs) -> Iterator['ExistingInstanceHelper']:
-        rubric = kwargs.pop('rubric', None)
+    def get_instances_for(cls, **kwargs) -> Iterator["ExistingInstanceHelper"]:
+        rubric = kwargs.pop("rubric", None)
         if rubric:
-            kwargs['response__rubric'] = rubric
-        queryset = JudgingInstance.objects\
-                                  .filter(**kwargs)\
-                                  .select_related('judge', 'project', 'project__category',
-                                                  'project__division', 'judge__user')\
-                                  .prefetch_related('judge__categories', 'judge__divisions')
+            kwargs["response__rubric"] = rubric
+        queryset = (
+            JudgingInstance.objects.filter(**kwargs)
+            .select_related(
+                "judge",
+                "project",
+                "project__category",
+                "project__division",
+                "judge__user",
+            )
+            .prefetch_related("judge__categories", "judge__divisions")
+        )
         for judging_instance in queryset.all():
             yield cls(judging_instance)
 
@@ -203,7 +238,8 @@ class ExistingInstanceHelper:
         self.judging_instance.delete()
 
     def attributes_match(self) -> bool:
-        return (self.judge.user.is_active and
-                (self.project.category in self.judge.categories.all()) and
-                (self.project.division in self.judge.divisions.all()))
-
+        return (
+            self.judge.user.is_active
+            and (self.project.category in self.judge.categories.all())
+            and (self.project.division in self.judge.divisions.all())
+        )

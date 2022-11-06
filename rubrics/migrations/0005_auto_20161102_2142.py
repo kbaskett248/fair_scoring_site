@@ -8,18 +8,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('rubrics', '0004_question_required'),
+        ("rubrics", "0004_question_required"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='questionresponse',
-            name='last_submitted',
+            model_name="questionresponse",
+            name="last_submitted",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='question',
-            name='weight',
+            model_name="question",
+            name="weight",
             field=models.DecimalField(decimal_places=3, max_digits=4, null=True),
         ),
     ]

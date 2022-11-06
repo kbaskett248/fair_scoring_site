@@ -2,18 +2,20 @@ from awards.models import AwardInstance, Award
 
 
 def assign_awards(queryset, instances):
-    for award in queryset.order_by('award_order', 'name'):
+    for award in queryset.order_by("award_order", "name"):
         award.assign(instances)
 
 
 class InstanceMixin:
     def assign_award(self, award: Award) -> None:
-        raise NotImplementedError('{0} does not implement assign'.format(
-            self.__class__.__name__))
+        raise NotImplementedError(
+            "{0} does not implement assign".format(self.__class__.__name__)
+        )
 
     def get_awards(self, award: Award) -> list:
-        raise NotImplementedError('{0} does not implement get_awards'.format(
-            self.__class__.__name__))
+        raise NotImplementedError(
+            "{0} does not implement get_awards".format(self.__class__.__name__)
+        )
 
     @classmethod
     def create_award_instance(cls, award: Award, content_object) -> AwardInstance:
@@ -21,7 +23,7 @@ class InstanceMixin:
 
 
 class InstanceBase(InstanceMixin):
-    model_attr = 'None'
+    model_attr = "None"
 
     def __init__(self):
         self.awards = []
@@ -40,4 +42,4 @@ class InstanceBase(InstanceMixin):
 
     @property
     def awards_str(self) -> str:
-        return ', '.join(str(award) for award in self.get_awards())
+        return ", ".join(str(award) for award in self.get_awards())

@@ -9,18 +9,30 @@ import judges.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judges', '0013_auto_20160817_1847'),
+        ("judges", "0013_auto_20160817_1847"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='judge',
-            name='education',
-            field=models.ForeignKey(help_text='Which option best describes your level of education? We are required to compile this information for ISEF reporting purposes.', null=True, on_delete=django.db.models.deletion.SET_NULL, to='judges.JudgeEducation', verbose_name='Level of education'),
+            model_name="judge",
+            name="education",
+            field=models.ForeignKey(
+                help_text="Which option best describes your level of education? We are required to compile this information for ISEF reporting purposes.",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="judges.JudgeEducation",
+                verbose_name="Level of education",
+            ),
         ),
         migrations.AlterField(
-            model_name='judge',
-            name='fair_experience',
-            field=models.ForeignKey(help_text='How many years have you judged science fairs at the county level or higher?', null=True, on_delete=django.db.models.deletion.SET_NULL, to='judges.JudgeFairExperience', verbose_name='Years of experience'),
+            model_name="judge",
+            name="fair_experience",
+            field=models.ForeignKey(
+                help_text="How many years have you judged science fairs at the county level or higher?",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="judges.JudgeFairExperience",
+                verbose_name="Years of experience",
+            ),
         ),
     ]

@@ -8,17 +8,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fair_projects', '0005_judginginstance_response'),
+        ("fair_projects", "0005_judginginstance_response"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='project',
-            options={'permissions': (('can_view_results', 'Can view project results'),)},
+            name="project",
+            options={
+                "permissions": (("can_view_results", "Can view project results"),)
+            },
         ),
         migrations.AlterField(
-            model_name='student',
-            name='email',
+            model_name="student",
+            name="email",
             field=models.EmailField(blank=True, max_length=254, null=True),
         ),
     ]

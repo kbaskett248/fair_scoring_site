@@ -9,32 +9,47 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judges', '0008_auto_20160323_2121'),
-        ('fair_projects', '0002_auto_20160321_2223'),
+        ("judges", "0008_auto_20160323_2121"),
+        ("fair_projects", "0002_auto_20160321_2223"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='JudgingInstance',
+            name="JudgingInstance",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('judge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='judges.Judge')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "judge",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="judges.Judge"
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='project',
-            name='number',
+            model_name="project",
+            name="number",
             field=models.CharField(blank=True, max_length=5),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='abstract',
-            field=models.TextField(blank=True, default=''),
+            model_name="project",
+            name="abstract",
+            field=models.TextField(blank=True, default=""),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='judginginstance',
-            name='project',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='fair_projects.Project'),
+            model_name="judginginstance",
+            name="project",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="fair_projects.Project"
+            ),
         ),
     ]

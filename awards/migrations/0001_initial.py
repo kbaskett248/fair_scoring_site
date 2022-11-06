@@ -10,30 +10,55 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Award',
+            name="Award",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=200)),
-                ('description', models.TextField(blank=True)),
-                ('award_order', models.PositiveSmallIntegerField(blank=True)),
-                ('award_count', models.PositiveIntegerField()),
-                ('percentage_count', models.BooleanField()),
-                ('exclude_awards', models.ManyToManyField(related_name='_award_exclude_awards_+', to='awards.Award')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=200)),
+                ("description", models.TextField(blank=True)),
+                ("award_order", models.PositiveSmallIntegerField(blank=True)),
+                ("award_count", models.PositiveIntegerField()),
+                ("percentage_count", models.BooleanField()),
+                (
+                    "exclude_awards",
+                    models.ManyToManyField(
+                        related_name="_award_exclude_awards_+", to="awards.Award"
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='AwardRule',
+            name="AwardRule",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('trait', models.CharField(max_length=50)),
-                ('operator_name', models.CharField(max_length=20)),
-                ('value', models.CharField(max_length=300)),
-                ('award', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='awards.Award')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("trait", models.CharField(max_length=50)),
+                ("operator_name", models.CharField(max_length=20)),
+                ("value", models.CharField(max_length=300)),
+                (
+                    "award",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="awards.Award"
+                    ),
+                ),
             ],
         ),
     ]

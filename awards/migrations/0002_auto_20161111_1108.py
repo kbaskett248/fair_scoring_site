@@ -8,13 +8,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('awards', '0001_initial'),
+        ("awards", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='awardrule',
-            name='operator_name',
-            field=models.CharField(choices=[('IS', 'is'), ('IS_NOT', 'is not'), ('GREATER', 'is greater than'), ('LESS', 'is less than'), ('IN', 'in'), ('NOT_IN', 'not in')], max_length=20),
+            model_name="awardrule",
+            name="operator_name",
+            field=models.CharField(
+                choices=[
+                    ("IS", "is"),
+                    ("IS_NOT", "is not"),
+                    ("GREATER", "is greater than"),
+                    ("LESS", "is less than"),
+                    ("IN", "in"),
+                    ("NOT_IN", "not in"),
+                ],
+                max_length=20,
+            ),
         ),
     ]

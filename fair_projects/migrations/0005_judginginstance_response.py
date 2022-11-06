@@ -9,14 +9,19 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('rubrics', '0003_auto_20160817_1847'),
-        ('fair_projects', '0004_auto_20160813_2104'),
+        ("rubrics", "0003_auto_20160817_1847"),
+        ("fair_projects", "0004_auto_20160813_2104"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='judginginstance',
-            name='response',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='rubrics.RubricResponse'),
+            model_name="judginginstance",
+            name="response",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="rubrics.RubricResponse",
+            ),
         ),
     ]
