@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class AwardsConfig(AppConfig):
-    name = "awards"
+    name = "apps.awards"
     verbose_name = "Awards"

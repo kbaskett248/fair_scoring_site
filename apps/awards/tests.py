@@ -16,9 +16,9 @@ from hypothesis.strategies import (
 )
 from model_mommy import mommy
 
-from awards.admin import AwardRuleForm
-from awards.logic import InstanceBase
-from awards.models import Award, AwardRule, Greater, In, Is, IsNot, Less, NotIn
+from apps.awards.admin import AwardRuleForm
+from apps.awards.logic import InstanceBase
+from apps.awards.models import Award, AwardRule, Greater, In, Is, IsNot, Less, NotIn
 
 
 def make_Award(**kwargs) -> Award:

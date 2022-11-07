@@ -8,7 +8,7 @@ from hypothesis.strategies import integers
 from model_mommy import mommy
 
 import rubrics.fixtures
-from awards.models import In, Is
+from apps.awards.models import In, Is
 from fair_categories.models import Category, Division, Subcategory
 from fair_projects.models import JudgingInstance, Project
 from fair_scoring_site.admin import AwardRuleForm

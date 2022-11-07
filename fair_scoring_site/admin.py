@@ -9,10 +9,10 @@ from django.utils.translation import gettext as _
 from import_export import fields, resources
 from import_export.admin import ExportMixin
 
-import awards.admin
+import apps.awards.admin
 import fair_projects
-from awards.logic import InstanceBase, assign_awards
-from awards.models import Award, AwardInstance
+from apps.awards.logic import InstanceBase, assign_awards
+from apps.awards.models import Award, AwardInstance
 from fair_categories.models import Category, Division, Ethnicity, Subcategory
 from fair_projects.logic import get_projects_sorted_by_score
 from fair_projects.models import Project, Student
@@ -93,7 +93,7 @@ class AwardInstanceResource(resources.ModelResource):
         return instance.content_object.division
 
 
-class AwardRuleForm(awards.admin.AwardRuleForm):
+class AwardRuleForm(apps.awards.admin.AwardRuleForm):
     traits = ("category", "subcategory", "division", "number", "grade_level")
 
     def generic_validation(self, model: Model, key: str, fields: dict):
@@ -128,11 +128,11 @@ class AwardRuleForm(awards.admin.AwardRuleForm):
                 )
 
 
-class AwardRuleInline(awards.admin.AwardRuleInline):
+class AwardRuleInline(apps.awards.admin.AwardRuleInline):
     form = AwardRuleForm
 
 
-class AwardInstanceInline(awards.admin.AwardInstanceInline):
+class AwardInstanceInline(apps.awards.admin.AwardInstanceInline):
     readonly_fields = (
         "project_number",
         "project_title",
@@ -169,12 +169,12 @@ class AwardInstanceInline(awards.admin.AwardInstanceInline):
         return reverse("fair_projects:detail", args=(instance.content_object.number,))
 
 
-class TraitListFilter(awards.admin.TraitListFilter):
+class TraitListFilter(apps.awards.admin.TraitListFilter):
     award_rule_form_class = AwardRuleForm
 
 
 @admin.register(Award)
-class AwardAdmin(awards.admin.AwardAdmin):
+class AwardAdmin(apps.awards.admin.AwardAdmin):
     actions = (assign_awards_to_projects,)
     inlines = (AwardRuleInline, AwardInstanceInline)
     list_filter = (TraitListFilter,)
@@ -184,7 +184,7 @@ class AwardAdmin(awards.admin.AwardAdmin):
 
 
 @admin.register(AwardInstance)
-class AwardInstanceAdmin(ExportMixin, awards.admin.AwardInstanceAdmin):
+class AwardInstanceAdmin(ExportMixin, apps.awards.admin.AwardInstanceAdmin):
     list_filter = ("award", TraitListFilter)
     list_display = ("award", "project", "students", "category", "division")
     fields = ("award", "project", "students", "category", "division")

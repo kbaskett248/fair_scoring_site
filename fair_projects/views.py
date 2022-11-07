@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.generic import DetailView, ListView, TemplateView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
-from awards.models import Award
+from apps.awards.models import Award
 from fair_projects.logic import get_rubric_name
 from judges.models import Judge
 from rubrics.forms import rubric_form_factory
