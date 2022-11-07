@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 
-from hypothesis import settings
+import os
+
+from hypothesis import Verbosity, settings
 
 from .settings_common import *
 
@@ -37,4 +39,8 @@ DATABASES = {
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 settings.register_profile("ci", settings(max_examples=1000))
-settings.load_profile("ci")
+settings.register_profile("dev", settings(max_examples=20))
+settings.register_profile(
+    "debug", settings(max_examples=10, verbosity=Verbosity.verbose)
+)
+settings.load_profile(os.getenv("HYPOTHESIS_PROFILE", "dev").lower())
