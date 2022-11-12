@@ -3,7 +3,7 @@ import os
 
 from django.core.management.base import BaseCommand, CommandError
 
-from fair_categories.models import Category, Division
+from apps.fair_categories.models import Category, Division
 from judges.models import JudgeEducation, JudgeFairExperience, create_judge
 
 

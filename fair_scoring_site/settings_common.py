@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).absolute().parent.parent
 INSTALLED_APPS = [
     "apps.awards.apps.AwardsConfig",
     "judges.apps.JudgesConfig",
-    "fair_categories.apps.FairCategoriesConfig",
+    "apps.fair_categories.apps.FairCategoriesConfig",
     "fair_projects.apps.FairProjectsConfig",
     "apps.rubrics.apps.RubricsConfig",
     "django.contrib.admin",

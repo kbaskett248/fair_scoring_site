@@ -14,8 +14,8 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
+from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
 from apps.rubrics.models import QuestionResponse, Rubric
-from fair_categories.models import Category, Division, Ethnicity, Subcategory
 from fair_scoring_site.logic import get_judging_rubric
 from judges.models import Judge
 

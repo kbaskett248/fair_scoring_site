@@ -13,7 +13,7 @@ import apps.awards.admin
 import fair_projects
 from apps.awards.logic import InstanceBase, assign_awards
 from apps.awards.models import Award, AwardInstance
-from fair_categories.models import Category, Division, Ethnicity, Subcategory
+from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
 from fair_projects.logic import get_projects_sorted_by_score
 from fair_projects.models import Project, Student
 

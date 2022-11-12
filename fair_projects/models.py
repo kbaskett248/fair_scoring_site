@@ -5,8 +5,8 @@ from django.db import models, transaction
 from django.db.models import Manager, QuerySet
 from django.urls.base import reverse
 
+from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
 from apps.rubrics.models import RubricResponse
-from fair_categories.models import Category, Division, Ethnicity, Subcategory
 from judges.models import Judge
 
 
