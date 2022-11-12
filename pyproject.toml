@@ -30,3 +30,7 @@ mysql = ["mysqlclient"]
 
 [tool.isort]
 profile = "black"
+
+[tool.pytest.ini_options]
+python_files = "tests.py test_*.py *_tests.py"
+DJANGO_SETTINGS_MODULE = "fair_scoring_site.settings_test"

@@ -7,17 +7,17 @@ from hypothesis.extra.django import TransactionTestCase as HypTransTestCase
 from hypothesis.strategies import integers
 from model_mommy import mommy
 
-import rubrics.fixtures
-from awards.models import In, Is
-from fair_categories.models import Category, Division, Subcategory
-from fair_projects.models import JudgingInstance, Project
+import apps.rubrics.fixtures
+from apps.awards.models import In, Is
+from apps.fair_categories.models import Category, Division, Subcategory
+from apps.fair_projects.models import JudgingInstance, Project
+from apps.judges.models import Judge
 from fair_scoring_site.admin import AwardRuleForm
 from fair_scoring_site.logic import (
     get_judging_rubric_name,
     get_num_judges_per_project,
     get_num_projects_per_judge,
 )
-from judges.models import Judge
 
 project_number_counter = 1000
 
@@ -61,7 +61,7 @@ def make_test_project(subcategory: Subcategory, division: Division) -> Project:
 
 
 def make_test_rubric():
-    return rubrics.fixtures.make_test_rubric(get_judging_rubric_name())
+    return apps.rubrics.fixtures.make_test_rubric(get_judging_rubric_name())
 
 
 class AwardRuleFormTests(TestCase):

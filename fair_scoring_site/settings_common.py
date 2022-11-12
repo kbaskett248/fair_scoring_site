@@ -16,11 +16,11 @@ BASE_DIR = Path(__file__).absolute().parent.parent
 
 # Application definition
 INSTALLED_APPS = [
-    "awards.apps.AwardsConfig",
-    "judges.apps.JudgesConfig",
-    "fair_categories.apps.FairCategoriesConfig",
-    "fair_projects.apps.FairProjectsConfig",
-    "rubrics.apps.RubricsConfig",
+    "apps.awards.apps.AwardsConfig",
+    "apps.judges.apps.JudgesConfig",
+    "apps.fair_categories.apps.FairCategoriesConfig",
+    "apps.fair_projects.apps.FairProjectsConfig",
+    "apps.rubrics.apps.RubricsConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
