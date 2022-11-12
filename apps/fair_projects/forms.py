@@ -1,6 +1,6 @@
 from django.forms import FileField, Form, ModelForm, inlineformset_factory
 
-from fair_projects.models import Project, Student
+from apps.fair_projects.models import Project, Student
 
 
 class UploadFileForm(Form):

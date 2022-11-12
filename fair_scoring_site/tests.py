@@ -10,8 +10,8 @@ from model_mommy import mommy
 import apps.rubrics.fixtures
 from apps.awards.models import In, Is
 from apps.fair_categories.models import Category, Division, Subcategory
+from apps.fair_projects.models import JudgingInstance, Project
 from apps.judges.models import Judge
-from fair_projects.models import JudgingInstance, Project
 from fair_scoring_site.admin import AwardRuleForm
 from fair_scoring_site.logic import (
     get_judging_rubric_name,

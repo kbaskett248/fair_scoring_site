@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
 
-from fair_projects.models import create_teachers_group
+from apps.fair_projects.models import create_teachers_group
 
 GROUPS = [
     (

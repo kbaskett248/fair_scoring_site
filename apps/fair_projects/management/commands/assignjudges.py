@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from fair_projects.logic import assign_judges
+from apps.fair_projects.logic import assign_judges
 
 
 class Command(BaseCommand):

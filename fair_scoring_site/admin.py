@@ -10,12 +10,12 @@ from import_export import fields, resources
 from import_export.admin import ExportMixin
 
 import apps.awards.admin
-import fair_projects
+import apps.fair_projects
 from apps.awards.logic import InstanceBase, assign_awards
 from apps.awards.models import Award, AwardInstance
 from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
-from fair_projects.logic import get_projects_sorted_by_score
-from fair_projects.models import Project, Student
+from apps.fair_projects.logic import get_projects_sorted_by_score
+from apps.fair_projects.models import Project, Student
 
 # This seems like a safe place to register signals
 from . import signals
@@ -240,5 +240,5 @@ class ProjectAwardInline(GenericTabularInline):
 
 
 @admin.register(Project)
-class ProjectAdmin(fair_projects.admin.ProjectAdmin):
-    inlines = list(fair_projects.admin.ProjectAdmin.inlines) + [ProjectAwardInline]
+class ProjectAdmin(apps.fair_projects.admin.ProjectAdmin):
+    inlines = list(apps.fair_projects.admin.ProjectAdmin.inlines) + [ProjectAwardInline]

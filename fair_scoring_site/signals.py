@@ -6,9 +6,9 @@ from django.db.models import Count, QuerySet
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from apps.fair_projects.models import JudgingInstance, Project
 from apps.judges.models import Judge
 from apps.rubrics.models import Rubric
-from fair_projects.models import JudgingInstance, Project
 
 from .logic import (
     get_judging_rubric,

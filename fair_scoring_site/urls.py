@@ -17,7 +17,7 @@ import django.contrib.admin
 from django.conf import settings
 from django.urls import include, re_path
 
-from fair_projects.views import (
+from apps.fair_projects.views import (
     delete_judge_assignments,
     import_projects,
     judge_assignment,
@@ -42,7 +42,7 @@ urlpatterns = [
     re_path(r"^accounts/profile/", profile, name="profile"),
     re_path(r"^accounts/", include("django.contrib.auth.urls")),
     re_path(r"^$", home, name="home"),
-    re_path(r"^projects/", include("fair_projects.urls")),
+    re_path(r"^projects/", include("apps.fair_projects.urls")),
     re_path(r"^judges/", include("apps.judges.urls")),
 ]
 

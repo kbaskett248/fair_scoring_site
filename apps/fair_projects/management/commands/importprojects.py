@@ -3,7 +3,7 @@ import os
 
 from django.core.management.base import BaseCommand, CommandError
 
-from fair_projects.logic import process_project_import
+from apps.fair_projects.logic import process_project_import
 
 
 class Command(BaseCommand):

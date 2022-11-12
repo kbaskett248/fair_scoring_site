@@ -4,7 +4,7 @@ import os
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand, CommandError
 
-from fair_projects.models import create_teacher
+from apps.fair_projects.models import create_teacher
 
 
 class Command(BaseCommand):
