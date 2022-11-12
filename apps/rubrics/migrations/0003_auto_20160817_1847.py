@@ -54,7 +54,8 @@ class Migration(migrations.Migration):
                 (
                     "rubric",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="rubrics.Rubric"
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="rubrics.Rubric",
                     ),
                 ),
             ],
@@ -63,7 +64,8 @@ class Migration(migrations.Migration):
             model_name="questionresponse",
             name="rubric_response",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="rubrics.RubricResponse"
+                on_delete=django.db.models.deletion.CASCADE,
+                to="rubrics.RubricResponse",
             ),
         ),
     ]

@@ -10,11 +10,11 @@ from import_export import fields, resources
 from import_export.admin import ImportExportMixin
 from import_export.widgets import CharWidget, ForeignKeyWidget, IntegerWidget
 
+from apps.rubrics.models import RubricResponse
 from fair_categories.models import Category, Division, Ethnicity, Subcategory
 from fair_projects.logic import mass_email
 from fair_projects.models import JudgingInstance
 from fair_scoring_site.logic import get_judging_rubric
-from rubrics.models import RubricResponse
 
 from .models import Project, School, Student, Teacher
 

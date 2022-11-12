@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from rubrics.forms import ChoiceForm, QuestionForm
+from apps.rubrics.forms import ChoiceForm, QuestionForm
 
 from .models import Choice, Question, Rubric
 

@@ -10,6 +10,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from model_mommy import mommy
 
+from apps.rubrics.models import Choice, Question, Rubric, RubricResponse
 from fair_categories.models import Category, Division, Subcategory
 from fair_projects.admin import ProjectResource
 from fair_projects.logic import (
@@ -27,7 +28,6 @@ from fair_projects.models import (
     create_teachers_group,
 )
 from judges.models import Judge
-from rubrics.models import Choice, Question, Rubric, RubricResponse
 
 
 def make_school(name: str = "Test School") -> School:

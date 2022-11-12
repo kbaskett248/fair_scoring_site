@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class RubricsConfig(AppConfig):
-    name = "rubrics"
+    name = "apps.rubrics"
 
     def ready(self) -> None:
         """Initializes signals for the app."""

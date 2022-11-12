@@ -20,7 +20,7 @@ INSTALLED_APPS = [
     "judges.apps.JudgesConfig",
     "fair_categories.apps.FairCategoriesConfig",
     "fair_projects.apps.FairProjectsConfig",
-    "rubrics.apps.RubricsConfig",
+    "apps.rubrics.apps.RubricsConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

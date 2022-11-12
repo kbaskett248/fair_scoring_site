@@ -22,9 +22,9 @@ from hypothesis.strategies import (
 )
 from model_mommy import mommy
 
-from rubrics.fixtures import make_test_rubric
-from rubrics.forms import ChoiceForm, QuestionForm
-from rubrics.models import (
+from apps.rubrics.fixtures import make_test_rubric
+from apps.rubrics.forms import ChoiceForm, QuestionForm
+from apps.rubrics.models import (
     Choice,
     Question,
     QuestionResponse,
