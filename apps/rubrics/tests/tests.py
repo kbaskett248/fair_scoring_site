@@ -32,6 +32,7 @@ from apps.rubrics.models.rubric import (
     RubricResponse,
     value_is_numeric,
 )
+from apps.rubrics.tests.base import TestBase
 
 
 def fixed_decimals(
@@ -104,15 +105,6 @@ def create_rubric_with_questions_and_choices():
                 mommy.make(Choice, question=question)
 
     return rubric
-
-
-class TestBase(HypTestCase):
-    @contextmanager
-    def assertNoException(self, exception_type):
-        try:
-            yield
-        except exception_type:
-            self.fail("%s exception type raised" % exception_type)
 
 
 class RubricTests(HypTestCase):
