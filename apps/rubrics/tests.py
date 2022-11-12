@@ -24,7 +24,7 @@ from model_mommy import mommy
 
 from apps.rubrics.fixtures import make_test_rubric
 from apps.rubrics.forms import ChoiceForm, QuestionForm
-from apps.rubrics.models import (
+from apps.rubrics.models.rubric import (
     Choice,
     Question,
     QuestionResponse,

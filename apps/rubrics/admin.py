@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from apps.rubrics.forms import ChoiceForm, QuestionForm
 
-from .models import Choice, Question, Rubric
+from .models.rubric import Choice, Question, Rubric
 
 
 class ChoiceInline(admin.TabularInline):

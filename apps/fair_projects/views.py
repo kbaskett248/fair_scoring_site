@@ -23,7 +23,7 @@ from apps.awards.models import Award
 from apps.fair_projects.logic import get_rubric_name
 from apps.judges.models import Judge
 from apps.rubrics.forms import rubric_form_factory
-from apps.rubrics.models import Question
+from apps.rubrics.models.rubric import Question
 
 from .forms import StudentFormset, UploadFileForm
 from .logic import (

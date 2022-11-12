@@ -1,7 +1,7 @@
 from django import forms
 from django.forms.models import ModelForm
 
-from .models import Choice, Question
+from .models.rubric import Choice, Question
 
 
 def default_field(question, override_required=None):

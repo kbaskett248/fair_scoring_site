@@ -1,7 +1,7 @@
 from constance import config
 from django.core.exceptions import ObjectDoesNotExist
 
-from apps.rubrics.models import Rubric
+from apps.rubrics.models.rubric import Rubric
 
 
 def get_judging_rubric_name() -> str:

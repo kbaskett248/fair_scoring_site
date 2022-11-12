@@ -1,6 +1,6 @@
 from model_mommy import mommy
 
-from apps.rubrics.models import Choice, Question, Rubric
+from apps.rubrics.models.rubric import Choice, Question, Rubric
 
 
 def make_test_rubric(name: str = "Test Rubric") -> Rubric:

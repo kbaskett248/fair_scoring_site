@@ -13,7 +13,7 @@ from import_export.widgets import CharWidget, ForeignKeyWidget, IntegerWidget
 from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
 from apps.fair_projects.logic import mass_email
 from apps.fair_projects.models import JudgingInstance
-from apps.rubrics.models import RubricResponse
+from apps.rubrics.models.rubric import RubricResponse
 from fair_scoring_site.logic import get_judging_rubric
 
 from .models import Project, School, Student, Teacher

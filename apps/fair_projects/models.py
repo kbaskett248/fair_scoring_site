@@ -7,7 +7,7 @@ from django.urls.base import reverse
 
 from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
 from apps.judges.models import Judge
-from apps.rubrics.models import RubricResponse
+from apps.rubrics.models.rubric import RubricResponse
 
 
 class School(models.Model):
