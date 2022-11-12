@@ -7,7 +7,7 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
-import judges.models
+import apps.judges.models
 
 
 class Migration(migrations.Migration):
@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "phone",
-                    judges.models.PhoneField(
+                    apps.judges.models.PhoneField(
                         max_length=15,
                         validators=[
                             django.core.validators.RegexValidator(

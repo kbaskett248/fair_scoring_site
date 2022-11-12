@@ -11,6 +11,7 @@ from django.urls import reverse
 from model_mommy import mommy
 
 from apps.fair_categories.models import Category, Division, Subcategory
+from apps.judges.models import Judge
 from apps.rubrics.models import Choice, Question, Rubric, RubricResponse
 from fair_projects.admin import ProjectResource
 from fair_projects.logic import (
@@ -27,7 +28,6 @@ from fair_projects.models import (
     create_teacher,
     create_teachers_group,
 )
-from judges.models import Judge
 
 
 def make_school(name: str = "Test School") -> School:

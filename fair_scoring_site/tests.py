@@ -10,6 +10,7 @@ from model_mommy import mommy
 import apps.rubrics.fixtures
 from apps.awards.models import In, Is
 from apps.fair_categories.models import Category, Division, Subcategory
+from apps.judges.models import Judge
 from fair_projects.models import JudgingInstance, Project
 from fair_scoring_site.admin import AwardRuleForm
 from fair_scoring_site.logic import (
@@ -17,7 +18,6 @@ from fair_scoring_site.logic import (
     get_num_judges_per_project,
     get_num_projects_per_judge,
 )
-from judges.models import Judge
 
 project_number_counter = 1000
 

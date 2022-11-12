@@ -1,7 +1,7 @@
 from django.contrib.auth.forms import UserCreationForm as UserForm
 from django.forms import FileField, Form, ModelForm
 
-from judges.models import Judge
+from apps.judges.models import Judge
 
 
 class UploadFileForm(Form):

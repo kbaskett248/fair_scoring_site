@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import django.core.validators
 from django.db import migrations, models
 
-import judges.models
+import apps.judges.models
 
 
 class Migration(migrations.Migration):
@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="judge",
             name="phone",
-            field=judges.models.PhoneField(
+            field=apps.judges.models.PhoneField(
                 max_length=15,
                 validators=[
                     django.core.validators.RegexValidator(

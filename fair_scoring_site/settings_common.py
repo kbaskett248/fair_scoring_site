@@ -17,7 +17,7 @@ BASE_DIR = Path(__file__).absolute().parent.parent
 # Application definition
 INSTALLED_APPS = [
     "apps.awards.apps.AwardsConfig",
-    "judges.apps.JudgesConfig",
+    "apps.judges.apps.JudgesConfig",
     "apps.fair_categories.apps.FairCategoriesConfig",
     "fair_projects.apps.FairProjectsConfig",
     "apps.rubrics.apps.RubricsConfig",

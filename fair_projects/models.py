@@ -6,8 +6,8 @@ from django.db.models import Manager, QuerySet
 from django.urls.base import reverse
 
 from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
+from apps.judges.models import Judge
 from apps.rubrics.models import RubricResponse
-from judges.models import Judge
 
 
 class School(models.Model):

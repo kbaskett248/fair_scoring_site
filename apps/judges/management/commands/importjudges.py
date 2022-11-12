@@ -4,7 +4,7 @@ import os
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.fair_categories.models import Category, Division
-from judges.models import JudgeEducation, JudgeFairExperience, create_judge
+from apps.judges.models import JudgeEducation, JudgeFairExperience, create_judge
 
 
 class DefaultDictReader(csv.DictReader):

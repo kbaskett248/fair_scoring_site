@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class JudgesConfig(AppConfig):
-    name = "judges"
+    name = "apps.judges"

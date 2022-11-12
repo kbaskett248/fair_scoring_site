@@ -43,7 +43,7 @@ urlpatterns = [
     re_path(r"^accounts/", include("django.contrib.auth.urls")),
     re_path(r"^$", home, name="home"),
     re_path(r"^projects/", include("fair_projects.urls")),
-    re_path(r"^judges/", include("judges.urls")),
+    re_path(r"^judges/", include("apps.judges.urls")),
 ]
 
 if settings.DEBUG:
