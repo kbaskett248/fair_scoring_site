@@ -23,7 +23,7 @@ class ValidatedModel(models.Model):
     def get_field_dict(self) -> dict:
         data = {}
         for field in self._meta.fields:
-            data[field.name] = getattr(self, field.name)
+            data[field.name] = getattr(self, field.name, None)
         return data
 
     def validate_instance(self, **fields):
