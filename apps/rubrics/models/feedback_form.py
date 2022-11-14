@@ -96,3 +96,8 @@ class MarkdownFeedbackModule(FeedbackModule):
 
     def get_html(self):
         return self._meta.get_field("content").value_to_html(self)
+
+    def __str__(self):
+        l = min(50, self.content.find("\n"))
+        first_line = self.content[:l]
+        return f"Markdown module ({self.order}) - {first_line}"

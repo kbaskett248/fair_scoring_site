@@ -1,8 +1,21 @@
-from django.contrib import admin
+from typing import Any, Optional
 
+from django import forms
+from django.contrib import admin
+from django.db import models
+from django.http import HttpRequest
+
+from apps.rubrics.constants import FeedbackFormModuleType
 from apps.rubrics.forms import ChoiceForm, QuestionForm
 
-from .models.rubric import Choice, Question, Rubric
+from .models import (
+    Choice,
+    FeedbackForm,
+    FeedbackModule,
+    MarkdownFeedbackModule,
+    Question,
+    Rubric,
+)
 
 
 class ChoiceInline(admin.TabularInline):
@@ -41,3 +54,79 @@ class QuestionAdmin(admin.ModelAdmin):
     )
 
     ordering = ("rubric", "order", "short_description")
+
+
+class FeedbackModuleInline(admin.StackedInline):
+    can_delete = True
+    fields = ("order", "module_type")
+    instance = None
+    model = FeedbackModule
+    verbose_name_plural = "Add more feedback modules"
+
+    def get_readonly_fields(
+        self, request: HttpRequest, obj: Optional[FeedbackModule] = ...
+    ) -> list[str] | tuple[Any, ...]:
+        if self.instance:
+            return ["module_type"]
+        return []
+
+    def get_queryset(self, request: HttpRequest) -> models.QuerySet[Any]:
+        qs = super().get_queryset(request)
+        if self.instance:
+            return qs.filter(pk=self.instance.pk)
+        return qs.filter(pk__isnull=True)
+
+    def get_extra(
+        self, request: HttpRequest, obj: Optional[FeedbackForm] = ..., **kwargs: Any
+    ) -> int:
+        if self.instance:
+            return 0
+        return super().get_extra(request, obj, **kwargs)
+
+    def has_add_permission(self, request: HttpRequest, obj) -> bool:
+        if self.instance:
+            return False
+        return super().has_add_permission(request, obj)
+
+
+class MarkdownFeedbackModuleInline(FeedbackModuleInline):
+    fields = ["order", "content"]
+    model = MarkdownFeedbackModule
+    max_num = 1
+    verbose_name = "Change Markdown Module"
+    verbose_name_plural = "Markdown Module"
+
+
+@admin.register(FeedbackForm)
+class FeedbackFormAdmin(admin.ModelAdmin):
+    model = FeedbackForm
+
+    def get_inlines(self, request, obj: FeedbackForm):
+        inlines = []
+        for module in obj.modules.all():
+            if (module_type := module.module_type) == FeedbackFormModuleType.MARKDOWN:
+                base_inline = MarkdownFeedbackModuleInline
+            else:
+                continue
+
+            inlines.append(
+                type(
+                    f"Single{base_inline.__name__}",
+                    (base_inline,),
+                    {"instance": module},
+                )
+            )
+
+        inlines.append(FeedbackModuleInline)
+
+        return inlines
+
+    def save_related(self, request: Any, form: Any, formsets: Any, change: Any) -> None:
+        super().save_related(request, form, formsets, change)
+
+        # Iterate over the modules in the form and update order where needed
+        feedback_form = form.instance
+        for order, module in enumerate(feedback_form.modules.all(), start=1):
+            if module.order != order:
+                module.order = order
+                module.save()
