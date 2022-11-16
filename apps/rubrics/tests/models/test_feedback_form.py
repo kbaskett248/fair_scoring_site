@@ -18,10 +18,32 @@ from apps.rubrics.tests.tests import make_rubric_response
 
 
 class FeedbackFormTests(HypTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.rubric = make_test_rubric()
+        cls.rubric_response = make_rubric_response(cls.rubric)
+
     @given(from_model(Rubric))
     def test_create(self, rubric: Rubric):
         feedback_form = FeedbackForm(rubric=rubric)
         self.assertIn(rubric.name, str(feedback_form))
+
+    def test_render_html(self):
+        feedback_form = FeedbackForm(rubric=self.rubric)
+        feedback_form.save()
+
+        module = MarkdownFeedbackModule(
+            feedback_form=feedback_form,
+            order=1,
+            module_type=FeedbackFormModuleType.MARKDOWN,
+        )
+        module.save()
+
+        rendered_html = feedback_form.render_html(RubricResponse.objects.all())
+
+        self.assertIsInstance(rendered_html, SafeString)
 
 
 class FeedbackModuleTests(TestCase):

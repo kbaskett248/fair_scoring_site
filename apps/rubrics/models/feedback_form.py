@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Generator, Optional
 
 import mistletoe
 from django.core.exceptions import ValidationError
@@ -33,10 +33,37 @@ class MarkdownField(models.TextField):
 
 
 class FeedbackForm(models.Model):
+    TEMPLATE = "rubrics/feedback_form.html"
+
     rubric = models.ForeignKey("Rubric", on_delete=models.CASCADE)
 
     def __str__(self):
         return f"Feedback Form for {self.rubric.name}"
+
+    def get_typed_modules(self) -> Generator["FeedbackModule", None, None]:
+        for module in self.modules.all():
+            yield module.get_typed_module()
+
+    def get_template(self) -> str:
+        return self.TEMPLATE
+
+    def get_context(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> dict[str, Any]:
+        return {
+            "modules": [
+                module.render_html(rubric_responses)
+                for module in self.get_typed_modules()
+            ]
+        }
+
+    def render_html(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> SafeString:
+        rubric_responses = rubric_responses.filter(rubric=self.rubric)
+        return mark_safe(
+            render_to_string(self.get_template(), self.get_context(rubric_responses))
+        )
 
 
 class FeedbackModule(ValidatedModel):
@@ -87,6 +114,11 @@ class FeedbackModule(ValidatedModel):
             "module_type": self.module_type,
             "order": self.order,
         }
+
+    def get_typed_module(self) -> "FeedbackModule":
+        if self.module_type == FeedbackFormModuleType.MARKDOWN:
+            return self.markdownfeedbackmodule
+        return self
 
     def get_template(self) -> str:
         return self.TEMPLATE
