@@ -1,8 +1,9 @@
-from typing import Any, Generator, Optional
+from typing import Any, Generator, NamedTuple, Optional
 
 import mistletoe
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.db.models import QuerySet
 from django.template.loader import render_to_string
 from django.utils.safestring import SafeString, mark_safe
 
@@ -35,6 +36,10 @@ class MarkdownField(models.TextField):
 class FeedbackForm(models.Model):
     TEMPLATE = "rubrics/feedback_form.html"
 
+    class FeedbackFormContext(NamedTuple):
+        form: "FeedbackForm"
+        html: SafeString
+
     rubric = models.ForeignKey("Rubric", on_delete=models.CASCADE)
 
     def __str__(self):
@@ -64,6 +69,40 @@ class FeedbackForm(models.Model):
         return mark_safe(
             render_to_string(self.get_template(), self.get_context(rubric_responses))
         )
+
+    class FeedbackFormManager(models.Manager):
+        def get_queryset(self) -> QuerySet["FeedbackForm"]:
+            return (
+                super()
+                .get_queryset()
+                .select_related("rubric")
+                .prefetch_related("modules")
+            )
+
+        def for_rubric_responses(
+            self, rubric_responses: QuerySet[RubricResponse]
+        ) -> QuerySet["FeedbackForm"]:
+            """
+            Args:
+                rubric_responses (QuerySet[RubricResponse]): a queryset of rubric responses
+
+            Returns:
+                QuerySet[RubricResponse]: a queryset of FeedbackForms for the
+                    given queryset of RubricResponses
+            """
+            rubric_set = set(rubric_responses.values_list("rubric__id", flat=True))
+            return self.get_queryset().filter(rubric__in=rubric_set)
+
+        def render_html_for_responses(
+            self, rubric_responses: QuerySet[RubricResponse]
+        ) -> Generator["FeedbackForm.FeedbackFormContext", None, None]:
+            """Render html for each feedback form associated with the rubric responses."""
+            for feedback_form in self.for_rubric_responses(rubric_responses):
+                yield FeedbackForm.FeedbackFormContext(
+                    feedback_form, feedback_form.render_html(rubric_responses)
+                )
+
+    objects = FeedbackFormManager()
 
 
 class FeedbackModule(ValidatedModel):

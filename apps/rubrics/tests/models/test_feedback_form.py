@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils.safestring import SafeString
 from hypothesis import given
+from hypothesis import strategies as st
 from hypothesis.extra.django import TestCase as HypTestCase
 from hypothesis.extra.django import from_model
 
@@ -44,6 +45,44 @@ class FeedbackFormTests(HypTestCase):
         rendered_html = feedback_form.render_html(RubricResponse.objects.all())
 
         self.assertIsInstance(rendered_html, SafeString)
+
+
+class FeedbackFormManagerTests(HypTestCase):
+    @given(st.sets(from_model(Rubric), min_size=0, max_size=10))
+    def test_for_rubric_responses(self, rubrics: set[Rubric]):
+        responses = {make_rubric_response(rubric) for rubric in rubrics}
+        response_ids = {response.id for response in responses}
+
+        expected_forms = {
+            FeedbackForm.objects.create(rubric=rubric) for rubric in rubrics
+        }
+        response_queryset = RubricResponse.objects.filter(id__in=response_ids)
+
+        actual_forms = set(FeedbackForm.objects.for_rubric_responses(response_queryset))
+
+        self.assertEqual(expected_forms, actual_forms)
+
+    @given(st.sets(from_model(Rubric), min_size=0, max_size=10))
+    def test_render_html_responses(self, rubrics: set[Rubric]):
+        responses = {make_rubric_response(rubric) for rubric in rubrics}
+        response_ids = {response.id for response in responses}
+
+        expected_forms = {
+            FeedbackForm.objects.create(rubric=rubric) for rubric in rubrics
+        }
+        response_queryset = RubricResponse.objects.filter(id__in=response_ids)
+
+        feedback_contexts = list(
+            FeedbackForm.objects.render_html_for_responses(response_queryset)
+        )
+
+        actual_forms = set()
+        for context in feedback_contexts:
+            self.assertIsInstance(context, FeedbackForm.FeedbackFormContext)
+            actual_forms.add(context.form)
+            self.assertIsInstance(context.html, SafeString)
+
+        self.assertEqual(expected_forms, actual_forms)
 
 
 class FeedbackModuleTests(TestCase):
