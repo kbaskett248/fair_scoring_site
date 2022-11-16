@@ -25,6 +25,10 @@
 
 {% block content %}
 
-{% include feedback_template %}
+{% for form in forms %}
+<h2>{{ form.form }}</h2>
+
+{{ form.html }}
+{% endfor %}
 
 {% endblock %}
