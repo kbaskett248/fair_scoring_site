@@ -3,10 +3,12 @@ from typing import Any, Optional
 import mistletoe
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.forms import model_to_dict
+from django.template.loader import render_to_string
+from django.utils.safestring import SafeString, mark_safe
 
 from apps.rubrics.constants import FeedbackFormModuleType
 from apps.rubrics.models.base import ValidatedModel
+from apps.rubrics.models.rubric import RubricResponse
 
 
 class MarkdownField(models.TextField):
@@ -39,6 +41,7 @@ class FeedbackForm(models.Model):
 
 class FeedbackModule(ValidatedModel):
     MODULE_TYPE = None
+    TEMPLATE = ""
 
     feedback_form = models.ForeignKey(
         "FeedbackForm", on_delete=models.CASCADE, related_name="modules"
@@ -85,6 +88,21 @@ class FeedbackModule(ValidatedModel):
             "order": self.order,
         }
 
+    def get_template(self) -> str:
+        return self.TEMPLATE
+
+    def get_context(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> dict[str, Any]:
+        raise NotImplementedError
+
+    def render_html(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> SafeString:
+        return mark_safe(
+            render_to_string(self.get_template(), self.get_context(rubric_responses))
+        )
+
 
 class MarkdownFeedbackModule(FeedbackModule):
     MODULE_TYPE = FeedbackFormModuleType.MARKDOWN
@@ -101,3 +119,6 @@ class MarkdownFeedbackModule(FeedbackModule):
         l = min(50, self.content.find("\n"))
         first_line = self.content[:l]
         return f"Markdown module ({self.order}) - {first_line}"
+
+    def render_html(self, rubric_responses: models.QuerySet[RubricResponse]):
+        return mark_safe(self.get_html())

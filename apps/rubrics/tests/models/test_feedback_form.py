@@ -1,17 +1,20 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils.safestring import SafeString
 from hypothesis import given
 from hypothesis.extra.django import TestCase as HypTestCase
 from hypothesis.extra.django import from_model
 
 from apps.rubrics.constants import FeedbackFormModuleType
 from apps.rubrics.fixtures import make_test_rubric
-from apps.rubrics.models.feedback_form import (
+from apps.rubrics.models import (
     FeedbackForm,
     FeedbackModule,
     MarkdownFeedbackModule,
+    Rubric,
+    RubricResponse,
 )
-from apps.rubrics.models.rubric import Rubric
+from apps.rubrics.tests.tests import make_rubric_response
 
 
 class FeedbackFormTests(HypTestCase):
@@ -99,3 +102,17 @@ class MarkdownFeedbackModuleTests(TestCase):
 
         expected_html = "<h1>Heading 1</h1>\n<p>Write content here</p>\n"
         self.assertEqual(module.get_html(), expected_html)
+
+    def test_render_html(self):
+        module = MarkdownFeedbackModule(
+            feedback_form=self.feedback_form,
+            order=1,
+            module_type=FeedbackFormModuleType.MARKDOWN,
+        )
+        module.save()
+
+        make_rubric_response(self.rubric)
+
+        self.assertIsInstance(
+            module.render_html(RubricResponse.objects.all()), SafeString
+        )
