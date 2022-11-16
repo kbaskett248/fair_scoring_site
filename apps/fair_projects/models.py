@@ -348,6 +348,14 @@ class JudgingInstance(models.Model):
         def get_queryset(self):
             return super().get_queryset().select_related("judge", "project", "response")
 
+        def for_project(self, project):
+            if isinstance(project, Project):
+                kwargs = {"project": project}
+            else:
+                kwargs = {"project_id": project}
+
+            return self.get_queryset().filter(**kwargs)
+
     objects = JudgingInstanceManager()
 
     class LockedInstanceManager(JudgingInstanceManager):
