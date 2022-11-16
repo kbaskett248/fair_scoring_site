@@ -345,10 +345,10 @@ class JudgingInstance(models.Model):
             self.save()
 
     class JudgingInstanceManager(models.Manager):
-        def get_queryset(self):
+        def get_queryset(self) -> QuerySet["JudgingInstance"]:
             return super().get_queryset().select_related("judge", "project", "response")
 
-        def for_project(self, project):
+        def for_project(self, project: Project | int) -> QuerySet["JudgingInstance"]:
             if isinstance(project, Project):
                 kwargs = {"project": project}
             else:
@@ -356,16 +356,31 @@ class JudgingInstance(models.Model):
 
             return self.get_queryset().filter(**kwargs)
 
+        def to_rubric_responses(
+            self, judging_instances: QuerySet["JudgingInstance"]
+        ) -> QuerySet[RubricResponse]:
+            """
+            Args:
+                judging_instances (QuerySet[JudgingInstance]):
+
+
+            Returns:
+                QuerySet[RubricResponse]: a queryset of RubricResponses for the
+                    given queryset of JudgingInstances
+            """
+            response_ids = judging_instances.values_list("response__id", flat=True)
+            return RubricResponse.objects.filter(id__in=response_ids)
+
     objects = JudgingInstanceManager()
 
     class LockedInstanceManager(JudgingInstanceManager):
-        def get_queryset(self):
+        def get_queryset(self) -> QuerySet["JudgingInstance"]:
             return super().get_queryset().filter(locked=True)
 
     locked_objects = LockedInstanceManager()
 
     class UnlockedInstanceManager(JudgingInstanceManager):
-        def get_queryset(self):
+        def get_queryset(self) -> QuerySet["JudgingInstance"]:
             return super().get_queryset().filter(locked=False)
 
     unlocked_objects = UnlockedInstanceManager()
