@@ -173,16 +173,20 @@ class Question(ValidatedModel):
         **additional_fields
     ):
         if question_type in self.CHOICE_TYPES and weight and weight > 0:
-            keys = [item["key"] for item in self.choice_set.values("key").all()]
-            for key in keys:
-                if not value_is_numeric(key):
-                    raise ValidationError(
-                        "The choice keys for a weighted question must be numeric. "
-                        'The value "%(key)s" is non-numeric.',
-                        code="non-numeric key",
-                        params={"key": key},
-                    )
-                break
+            try:
+                keys = [item["key"] for item in self.choice_set.values("key").all()]
+            except ValueError:
+                pass
+            else:
+                for key in keys:
+                    if not value_is_numeric(key):
+                        raise ValidationError(
+                            "The choice keys for a weighted question must be numeric. "
+                            'The value "%(key)s" is non-numeric.',
+                            code="non-numeric key",
+                            params={"key": key},
+                        )
+                    break
 
     @classmethod
     def validate(
