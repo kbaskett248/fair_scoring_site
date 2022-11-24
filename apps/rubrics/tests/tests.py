@@ -881,7 +881,11 @@ class QuestionResponseTests(HypTestCase):
         )
         self.assertQuerysetEqual(
             rub_response.questionresponse_set.all(),
-            ["Question SINGLE SELECT", "Question MULTI SELECT", "Question LONG TEXT"],
+            [
+                "Test Rubric: Question SINGLE SELECT",
+                "Test Rubric: Question MULTI SELECT",
+                "Test Rubric: Question LONG TEXT",
+            ],
             transform=lambda x: x.question.__str__(),
             ordered=False,
         )

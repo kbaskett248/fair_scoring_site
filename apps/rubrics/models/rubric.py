@@ -88,7 +88,7 @@ class Question(ValidatedModel):
             return 1
 
     def __str__(self):
-        return self.short_description
+        return f"{self.rubric.name}: {self.short_description}"
 
     def show_choices(self):
         return QuestionType.get_instance(self).show_choices()
@@ -139,7 +139,7 @@ class Question(ValidatedModel):
         question_type=None,
         choice_sort=None,
         required=None,
-        **additional_fields
+        **additional_fields,
     ):
         if question_type in self.CHOICE_TYPES and weight and weight > 0:
             try:
@@ -169,7 +169,7 @@ class Question(ValidatedModel):
         question_type=None,
         choice_sort=None,
         required=None,
-        **additional_fields
+        **additional_fields,
     ):
         if not rubric:
             raise ValidationError("Rubric required for question", code="required")
