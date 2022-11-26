@@ -89,7 +89,9 @@ class Question(ValidatedModel):
     help_text = models.TextField(null=True, blank=True)
     weight = models.DecimalField(max_digits=4, decimal_places=3, null=True)
     question_type = models.CharField(max_length=20, choices=TYPES)
-    choice_sort = models.CharField(max_length=1, choices=SORT_CHOICES)
+    choice_sort = models.CharField(
+        max_length=1, choices=SORT_CHOICES, default=AUTO_SORT
+    )
     required = models.BooleanField(default=True)
 
     ordering = ("rubric", "order", "short_description")
