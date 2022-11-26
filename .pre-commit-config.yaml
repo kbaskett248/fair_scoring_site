@@ -29,3 +29,11 @@ repos:
     hooks:
       - id: isort
         name: Sort imports in python files with isort
+
+  - repo: https://github.com/pycqa/bandit
+    rev: 1.7.4
+    hooks:
+      - id: bandit
+        name: Lint python code with bandit
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
