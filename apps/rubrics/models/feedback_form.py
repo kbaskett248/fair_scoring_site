@@ -1,5 +1,5 @@
 from itertools import groupby
-from typing import Any, Generator, NamedTuple, Optional
+from typing import Any, Generator, Iterable, NamedTuple, Optional
 
 import mistletoe
 from django.core.exceptions import ValidationError
@@ -309,3 +309,80 @@ class ScoreTableFeedbackModule(FeedbackModule):
             return sum(scores) / len(scores)
         except TypeError:
             return None
+
+
+class ChoiceResponseListFeedbackModule(FeedbackModule):
+    MODULE_TYPE = FeedbackFormModuleType.CHOICE_RESPONSE_LIST
+    TEMPLATE = "rubrics/modules/choice_response_list_module.html"
+
+    base_module = models.OneToOneField(
+        "FeedbackModule", on_delete=models.CASCADE, parent_link=True, primary_key=True
+    )
+    question = models.ForeignKey(
+        "Question",
+        on_delete=models.CASCADE,
+        null=True,
+        limit_choices_to={"question_type__in": Question.CHOICE_TYPES},
+    )
+
+    display_description = models.BooleanField(
+        "Display description",
+        default=True,
+        help_text="If checked, the choice description is displayed in the list. Otherwise the choice key is displayed.",
+    )
+
+    remove_duplicates = models.BooleanField(
+        "Remove duplicates",
+        default=True,
+        help_text=(
+            "If checked, response choices will only be displayed once, regardless of how many times the response is chosen. "
+            "Otherwise, choices will be listed once for each time they are chosen."
+        ),
+    )
+
+    def __str__(self) -> str:
+        result = f"Choice response list module ({self.order})"
+        if self.question:
+            result += f": {self.question}"
+        return result
+
+    def get_context(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> dict[str, Any]:
+        return {"responses": self._get_response_list(rubric_responses)}
+
+    def _get_response_list(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> list[str]:
+        if not self.question:
+            return []
+
+        question_qs = QuestionResponse.objects.filter(
+            rubric_response__in=rubric_responses, question=self.question_id
+        ).select_related("question", "rubric_response")
+        question_responses = filter(
+            lambda q: q.rubric_response.has_response, question_qs
+        )
+
+        responses = list(self._expand_responses(question_responses))
+
+        if self.remove_duplicates:
+            responses = dict(responses).items()
+
+        if self.display_description:
+            return [resp[1] for resp in responses]
+        else:
+            return [resp[0] for resp in responses]
+
+    def _expand_responses(
+        self, question_responses: Iterable[QuestionResponse]
+    ) -> Generator[tuple[str, str], None, None]:
+        for resp in question_responses:
+            if not resp:
+                continue
+            elif isinstance(resp.response, list) and isinstance(
+                resp.response_external(), list
+            ):
+                yield from zip(resp.response, resp.response_external())
+            else:
+                yield (resp.response, resp.response_external())
