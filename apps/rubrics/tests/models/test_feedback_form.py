@@ -169,11 +169,12 @@ class MarkdownFeedbackModuleTests(TestCase):
         cls.feedback_form.save()
 
     @classmethod
-    def _create_module(cls) -> MarkdownFeedbackModule:
+    def _create_module(cls, **kwargs) -> MarkdownFeedbackModule:
         module = cls.MODULE(
             feedback_form=cls.feedback_form,
             order=1,
             module_type=cls.MODULE_TYPE,
+            **kwargs,
         )
         module.save()
         return module
@@ -185,8 +186,8 @@ class MarkdownFeedbackModuleTests(TestCase):
     def test_get_html(self):
         module = self._create_module()
 
-        expected_html = "<h1>Heading 1</h1>\n<p>Write content here</p>\n"
-        self.assertEqual(module.get_html(), expected_html)
+        expected_html = "<h1>Heading 1</h1>\n<p>Write content here</p>"
+        self.assertHTMLEqual(module.get_html(), expected_html)
 
     def test_render_html(self):
         module = self._create_module()
@@ -195,6 +196,42 @@ class MarkdownFeedbackModuleTests(TestCase):
 
         self.assertIsInstance(
             module.render_html(RubricResponse.objects.all()), SafeString
+        )
+
+    def test_average_score_with_no_responses(self):
+        module = self._create_module(content="{{ average_score }}")
+
+        make_rubric_response(self.rubric)
+        make_rubric_response(self.rubric)
+
+        expected_html = "<p>None</p>"
+        self.assertHTMLEqual(
+            module.render_html(RubricResponse.objects.all()), expected_html
+        )
+
+    def test_average_score_with_responses(self):
+        module = self._create_module(content="# Average Score: {{ average_score }}")
+
+        response1 = make_rubric_response(self.rubric)
+        answer_rubric_response(response1)
+        response2 = make_rubric_response(self.rubric)
+        answer_rubric_response(response2)
+
+        expected_html = "<h1>Average Score: 1.665</h1>"
+        self.assertHTMLEqual(
+            module.render_html(RubricResponse.objects.all()), expected_html
+        )
+
+    def test_average_score_with_partial_responses(self):
+        module = self._create_module(content="# Average Score: {{ average_score }}")
+
+        response = make_rubric_response(self.rubric)
+        answer_rubric_response(response)
+        make_rubric_response(self.rubric)
+
+        expected_html = "<h1>Average Score: 1.665</h1>"
+        self.assertHTMLEqual(
+            module.render_html(RubricResponse.objects.all()), expected_html
         )
 
 

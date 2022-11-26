@@ -185,7 +185,10 @@ class MarkdownFeedbackModule(FeedbackModule):
     base_module = models.OneToOneField(
         "FeedbackModule", on_delete=models.CASCADE, parent_link=True, primary_key=True
     )
-    content = MarkdownField(default="# Heading 1\n\nWrite content here")
+    content = MarkdownField(
+        default="# Heading 1\n\nWrite content here",
+        help_text="You may include <code>{{ average_score }}</code> in the text. It will be replaced by the average score for the project.",
+    )
 
     def get_html(self):
         return self._meta.get_field("content").value_to_html(self)
@@ -196,7 +199,21 @@ class MarkdownFeedbackModule(FeedbackModule):
         return f"Markdown module ({self.order}) - {first_line}"
 
     def render_html(self, rubric_responses: models.QuerySet[RubricResponse]):
-        return mark_safe(self.get_html())
+        return mark_safe(
+            self.get_html().replace(
+                "{{ average_score }}", str(self._get_average_score(rubric_responses))
+            )
+        )
+
+    def _get_average_score(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> float | None:
+        responses = [
+            response.score() for response in rubric_responses if response.has_response
+        ]
+        if not responses:
+            return None
+        return sum(responses) / len(responses)
 
 
 class ScoreTableFeedbackModule(FeedbackModule):
