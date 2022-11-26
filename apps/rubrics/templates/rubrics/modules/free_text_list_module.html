@@ -1,0 +1,15 @@
+<div class="free-text-list-module">
+    {% for response in responses %}
+    <div class="panel panel-default">
+        <div class="panel-body single-response">
+            {{ response }}
+        </div>
+    </div>
+    {% empty %}
+    <div class="panel panel-default">
+        <div class="panel-body no-responses">
+            No comments
+        </div>
+    </div>
+    {% endfor %}
+</div>

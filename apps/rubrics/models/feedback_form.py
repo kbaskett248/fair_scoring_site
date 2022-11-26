@@ -386,3 +386,46 @@ class ChoiceResponseListFeedbackModule(FeedbackModule):
                 yield from zip(resp.response, resp.response_external())
             else:
                 yield (resp.response, resp.response_external())
+
+
+class FreeTextListFeedbackModule(FeedbackModule):
+    MODULE_TYPE = FeedbackFormModuleType.FREE_TEXT_LIST
+    TEMPLATE = "rubrics/modules/free_text_list_module.html"
+
+    base_module = models.OneToOneField(
+        "FeedbackModule", on_delete=models.CASCADE, parent_link=True, primary_key=True
+    )
+    question = models.ForeignKey(
+        "Question",
+        on_delete=models.CASCADE,
+        null=True,
+        limit_choices_to={"question_type": Question.LONG_TEXT},
+    )
+
+    def __str__(self) -> str:
+        result = f"Free text list module ({self.order})"
+        if self.question:
+            result += f": {self.question}"
+        return result
+
+    def get_context(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> dict[str, Any]:
+        return {"responses": self._get_response_list(rubric_responses)}
+
+    def _get_response_list(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> list[str]:
+        if not self.question:
+            return []
+
+        question_qs = QuestionResponse.objects.filter(
+            rubric_response__in=rubric_responses, question=self.question_id
+        ).select_related("question", "rubric_response")
+        question_responses = filter(
+            lambda q: q.rubric_response.has_response, question_qs
+        )
+
+        return list(
+            filter(None, (resp.response_external() for resp in question_responses))
+        )

@@ -15,6 +15,7 @@ from apps.rubrics.models import (
     ChoiceResponseListFeedbackModule,
     FeedbackForm,
     FeedbackModule,
+    FreeTextListFeedbackModule,
     MarkdownFeedbackModule,
     Question,
     Rubric,
@@ -166,6 +167,21 @@ class FeedbackModuleTests(TestCase):
         self.assertEqual(module, FeedbackModule.objects.first())
 
         score_table_module = ChoiceResponseListFeedbackModule.objects.first()
+        self.assertIsNotNone(score_table_module)
+        self.assertEqual(score_table_module.feedback_form, module.feedback_form)
+        self.assertEqual(score_table_module.order, module.order)
+        self.assertEqual(score_table_module.module_type, module.module_type)
+
+    def test_create_free_text_list_module(self):
+        module = FeedbackModule(
+            feedback_form=self.feedback_form,
+            order=1,
+            module_type=FeedbackFormModuleType.FREE_TEXT_LIST,
+        )
+        module.save()
+        self.assertEqual(module, FeedbackModule.objects.first())
+
+        score_table_module = FreeTextListFeedbackModule.objects.first()
         self.assertIsNotNone(score_table_module)
         self.assertEqual(score_table_module.feedback_form, module.feedback_form)
         self.assertEqual(score_table_module.order, module.order)
@@ -589,4 +605,76 @@ class ChoiceResponseListFeedbackModuleTests(FeedbackModuleTestBase):
 
         actual_html = str(module.render_html(RubricResponse.objects.all()))
         expected_html = self.FIXTURES.test_no_display_description_html
+        self.assertHTMLEqual(actual_html, expected_html)
+
+
+class FreeTextListFeedbackModuleTests(FeedbackModuleTestBase):
+    MODULE = FreeTextListFeedbackModule
+    MODULE_TYPE = FeedbackFormModuleType.FREE_TEXT_LIST
+    FIXTURES = fixtures.free_text_list_feedback_module_tests
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+
+        cls.free_text = Question.objects.create(
+            rubric=cls.rubric,
+            short_description="Free Text Question",
+            long_description="Long description for free text question",
+            help_text="This is help text for free text question",
+            weight=0.0,
+            question_type=Question.LONG_TEXT,
+            required=True,
+        )
+
+    def test_create(self):
+        self._test_create()
+
+    def test_render_html(self):
+        self._test_render_html()
+
+    def test_default_options(self):
+        module = self._create_module()
+
+        response = make_rubric_response(self.rubric)
+        answer_rubric_response(response)
+
+        actual_html = str(module.render_html(RubricResponse.objects.all()))
+        expected_html = self.FIXTURES.test_default_options_html
+        self.assertHTMLEqual(actual_html, expected_html)
+
+    def test_with_question(self):
+        module = self._create_module(question=self.free_text)
+
+        response = make_rubric_response(self.rubric)
+        answer_rubric_response(response)
+
+        actual_html = str(module.render_html(RubricResponse.objects.all()))
+        expected_html = self.FIXTURES.test_with_question_html
+        self.assertHTMLEqual(actual_html, expected_html)
+
+    def test_no_responses(self):
+        module = self._create_module(question=self.free_text)
+
+        make_rubric_response(self.rubric)
+
+        actual_html = str(module.render_html(RubricResponse.objects.all()))
+        expected_html = self.FIXTURES.test_no_responses_html
+        self.assertHTMLEqual(actual_html, expected_html)
+
+    def test_multiple_responses(self):
+        module = self._create_module(question=self.free_text)
+
+        response = make_rubric_response(self.rubric)
+        question_response = response.questionresponse_set.get(question=self.free_text)
+        question_response.update_response(
+            "This response is from the first rubric response."
+        )
+
+        response = make_rubric_response(self.rubric)
+        question_response = response.questionresponse_set.get(question=self.free_text)
+        question_response.update_response("And this response is from the second one.")
+
+        actual_html = str(module.render_html(RubricResponse.objects.all()))
+        expected_html = self.FIXTURES.test_multiple_responses_html
         self.assertHTMLEqual(actual_html, expected_html)

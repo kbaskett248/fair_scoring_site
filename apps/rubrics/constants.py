@@ -10,6 +10,7 @@ class FeedbackFormModuleType(str, Enum):
         "Choice Response List",
         "choiceresponselistfeedbackmodule",
     )
+    FREE_TEXT_LIST = ("free_text_list", "Free Text List", "freetextlistfeedbackmodule")
 
     def __new__(cls, value, label, child_attribute) -> "FeedbackFormModuleType":
         obj = str.__new__(cls, value)
