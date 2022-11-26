@@ -14,7 +14,7 @@ from .settings_common import *
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # TODO: Configure Secret Key
-SECRET_KEY = "REPLACE ME"
+SECRET_KEY = "REPLACE ME"  # nosec
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -43,7 +43,7 @@ DATABASES = {
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_HOST_USER = "REPLACE EMAIL"
-EMAIL_HOST_PASSWORD = "REPLACE PASSWORD"
+EMAIL_HOST_PASSWORD = "REPLACE PASSWORD"  # nosec
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 

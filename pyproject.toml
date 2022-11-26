@@ -39,5 +39,7 @@ DJANGO_SETTINGS_MODULE = "fair_scoring_site.settings_test"
 [tool.bandit]
 exclude_dirs = [
     "apps/**/tests",
-    "apps/**/tests.py"
+    "apps/**/tests.py",
+    "fair_scoring_site/settings_test.py",
+    "fair_scoring_site/settings_dev.py",
 ]
