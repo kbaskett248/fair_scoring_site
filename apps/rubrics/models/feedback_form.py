@@ -1,3 +1,4 @@
+from itertools import groupby
 from typing import Any, Generator, NamedTuple, Optional
 
 import mistletoe
@@ -9,7 +10,7 @@ from django.utils.safestring import SafeString, mark_safe
 
 from apps.rubrics.constants import FeedbackFormModuleType
 from apps.rubrics.models.base import ValidatedModel
-from apps.rubrics.models.rubric import RubricResponse
+from apps.rubrics.models.rubric import Question, QuestionResponse, RubricResponse
 
 
 class MarkdownField(models.TextField):
@@ -155,9 +156,12 @@ class FeedbackModule(ValidatedModel):
         }
 
     def get_typed_module(self) -> "FeedbackModule":
-        if self.module_type == FeedbackFormModuleType.MARKDOWN:
-            return self.markdownfeedbackmodule
-        return self
+        try:
+            module_type = FeedbackFormModuleType(self.module_type)
+        except ValueError:
+            return self
+        else:
+            return getattr(self, module_type.child_attribute)
 
     def get_template(self) -> str:
         return self.TEMPLATE
@@ -193,3 +197,98 @@ class MarkdownFeedbackModule(FeedbackModule):
 
     def render_html(self, rubric_responses: models.QuerySet[RubricResponse]):
         return mark_safe(self.get_html())
+
+
+class ScoreTableFeedbackModule(FeedbackModule):
+    MODULE_TYPE = FeedbackFormModuleType.SCORE_TABLE
+    TEMPLATE = "rubrics/modules/score_table_module.html"
+
+    class QuestionRow(NamedTuple):
+        short_description: str
+        long_description: str
+        score: float | None
+
+    base_module = models.OneToOneField(
+        "FeedbackModule", on_delete=models.CASCADE, parent_link=True, primary_key=True
+    )
+    questions = models.ManyToManyField(
+        "Question", limit_choices_to={"question_type__in": Question.CHOICE_TYPES}
+    )
+
+    include_short_description = models.BooleanField(default=True)
+    include_long_description = models.BooleanField(default=True)
+
+    table_title = models.CharField("Table title", max_length=200, blank=True)
+    short_description_title = models.CharField(
+        "Short description title", max_length=50, blank=True
+    )
+    long_description_title = models.CharField(
+        "Long description title", max_length=50, blank=True
+    )
+    score_title = models.CharField("Score title", max_length=50, blank=True)
+
+    use_weighted_scores = models.BooleanField("Use weighted scores", default=False)
+    remove_empty_scores = models.BooleanField("Remove empty scores", default=True)
+
+    def __str__(self) -> str:
+        result = f"Score table module ({self.order})"
+        if self.table_title:
+            result += f" - {self.table_title}"
+        return result
+
+    def get_context(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> dict[str, Any]:
+        return {
+            "include_header": (
+                self.short_description_title
+                or self.long_description_title
+                or self.score_title
+            ),
+            "module": self,
+            "rows": self.get_rows(rubric_responses),
+        }
+
+    def get_rows(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> Generator[QuestionRow, None, None]:
+        question_qs = (
+            QuestionResponse.objects.filter(
+                rubric_response__in=rubric_responses, question__in=self.questions.all()
+            )
+            .select_related("question", "rubric_response")
+            .order_by("question", "question__order")
+        )
+        question_responses = filter(
+            lambda q: q.rubric_response.has_response, question_qs
+        )
+        question_groups = (
+            list(responses)
+            for _, responses in groupby(question_responses, lambda q: q.question_id)
+        )
+        for group in question_groups:
+            yield self.build_row(group)
+
+    def build_row(self, question_responses: list[QuestionResponse]) -> QuestionRow:
+        question = question_responses[0].question
+        short_description = question.short_description
+        long_description = question.long_description
+
+        if self.use_weighted_scores:
+            get_score = lambda resp: resp.score()
+        else:
+            get_score = lambda resp: resp.unweighted_score()
+        scores = map(get_score, question_responses)
+
+        if self.remove_empty_scores:
+            scores = filter(None, scores)
+
+        return self.QuestionRow(
+            short_description, long_description, self._average(list(scores))
+        )
+
+    def _average(self, scores: list[float]) -> float | None:
+        try:
+            return sum(scores) / len(scores)
+        except TypeError:
+            return None

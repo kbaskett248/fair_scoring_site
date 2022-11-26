@@ -3,12 +3,14 @@ from typing import Any, Iterable, Tuple
 
 
 class FeedbackFormModuleType(str, Enum):
-    MARKDOWN = ("markdown", "Markdown")
+    MARKDOWN = ("markdown", "Markdown", "markdownfeedbackmodule")
+    SCORE_TABLE = ("score_table", "Score Table", "scoretablefeedbackmodule")
 
-    def __new__(cls, value, label):
+    def __new__(cls, value, label, child_attribute) -> "FeedbackFormModuleType":
         obj = str.__new__(cls, value)
         obj._value_ = value
         obj.label = label
+        obj.child_attribute = child_attribute
         return obj
 
     @classmethod

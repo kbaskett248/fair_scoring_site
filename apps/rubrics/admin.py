@@ -7,6 +7,7 @@ from django.http import HttpRequest
 
 from apps.rubrics.constants import FeedbackFormModuleType
 from apps.rubrics.forms import ChoiceForm, QuestionForm
+from apps.rubrics.models.feedback_form import ScoreTableFeedbackModule
 
 from .models import (
     Choice,
@@ -57,6 +58,8 @@ class QuestionAdmin(admin.ModelAdmin):
 
 
 class FeedbackModuleInline(admin.StackedInline):
+    MODULE = None
+
     can_delete = True
     fields = ("order", "module_type")
     instance = None
@@ -90,11 +93,34 @@ class FeedbackModuleInline(admin.StackedInline):
 
 
 class MarkdownFeedbackModuleInline(FeedbackModuleInline):
+    MODULE = FeedbackFormModuleType.MARKDOWN
+
     fields = ["order", "content"]
     model = MarkdownFeedbackModule
     max_num = 1
     verbose_name = "Change Markdown Module"
     verbose_name_plural = "Markdown Module"
+
+
+class ScoreTableFeedbackModuleInline(FeedbackModuleInline):
+    MODULE = FeedbackFormModuleType.SCORE_TABLE
+
+    fields = [
+        "order",
+        "questions",
+        "include_short_description",
+        "include_long_description",
+        "table_title",
+        "short_description_title",
+        "long_description_title",
+        "score_title",
+        "use_weighted_scores",
+        "remove_empty_scores",
+    ]
+    model = ScoreTableFeedbackModule
+    max_num = 1
+    verbose_name = "Change Score Table Module"
+    verbose_name_plural = "Score Table"
 
 
 @admin.register(FeedbackForm)
@@ -104,18 +130,19 @@ class FeedbackFormAdmin(admin.ModelAdmin):
     def get_inlines(self, request, obj: FeedbackForm):
         inlines = []
         for module in obj.modules.all():
-            if (module_type := module.module_type) == FeedbackFormModuleType.MARKDOWN:
-                base_inline = MarkdownFeedbackModuleInline
-            else:
-                continue
+            module_type = module.module_type
 
-            inlines.append(
-                type(
-                    f"Single{base_inline.__name__}",
-                    (base_inline,),
-                    {"instance": module},
-                )
-            )
+            for base_inline in FeedbackModuleInline.__subclasses__():
+                if module_type == base_inline.MODULE:
+                    inlines.append(
+                        type(
+                            f"Single{base_inline.__name__}",
+                            (base_inline,),
+                            {"instance": module},
+                        )
+                    )
+
+                    break
 
         inlines.append(FeedbackModuleInline)
 
