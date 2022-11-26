@@ -8,7 +8,7 @@ from django.dispatch import receiver
 
 from apps.fair_projects.models import JudgingInstance, Project
 from apps.judges.models import Judge
-from apps.rubrics.models import Rubric
+from apps.rubrics.models.rubric import Rubric
 
 from .logic import (
     get_judging_rubric,

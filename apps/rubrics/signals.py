@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from .models import Choice, Question, QuestionResponse, Rubric, RubricResponse
+from .models.rubric import Choice, Question, QuestionResponse, RubricResponse
 
 
 @receiver(post_save, sender=Question)

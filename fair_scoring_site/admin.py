@@ -211,13 +211,17 @@ class ProjectAwardFormset(BaseGenericInlineFormSet):
     def clean(self):
         super(ProjectAwardFormset, self).clean()
 
-        project_instance = ProjectInstance(self.instance)
-        for form in self.forms:
-            if not form.cleaned_data:
-                continue
-            elif form.cleaned_data["DELETE"]:
-                continue
-            self.clean_award(project_instance, form.cleaned_data["award"])
+        try:
+            project_instance = ProjectInstance(self.instance)
+        except ValueError:
+            pass
+        else:
+            for form in self.forms:
+                if not form.cleaned_data:
+                    continue
+                elif form.cleaned_data["DELETE"]:
+                    continue
+                self.clean_award(project_instance, form.cleaned_data["award"])
 
     def clean_award(self, instance, award):
         if not award.instance_passes_all_rules(instance):

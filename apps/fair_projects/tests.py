@@ -27,7 +27,7 @@ from apps.fair_projects.models import (
     create_teachers_group,
 )
 from apps.judges.models import Judge
-from apps.rubrics.models import Choice, Question, Rubric, RubricResponse
+from apps.rubrics.models.rubric import Choice, Question, Rubric, RubricResponse
 
 
 def make_school(name: str = "Test School") -> School:

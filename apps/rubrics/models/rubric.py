@@ -5,6 +5,8 @@ from django.db import models, transaction
 from django.db.models import Max, Q
 from django.utils import timezone
 
+from .base import ValidatedModel
+
 
 def value_is_numeric(value) -> bool:
     try:
@@ -13,39 +15,6 @@ def value_is_numeric(value) -> bool:
         return False
     else:
         return True
-
-
-class ValidatedModel(models.Model):
-    """Adds additional validation to a model on save.
-
-    This class defines a framework for adding additional validation
-    on save of an object. The validation is written in such a way that it
-    can easily be re-used by forms. As such, the validation functions expect
-    dictionaries.
-    """
-
-    class Meta:
-        abstract = True
-
-    def save(self, **kwargs):
-        data = self.get_field_dict()
-        self.validate(**data)
-        self.validate_instance(**data)
-
-        super(ValidatedModel, self).save(**kwargs)
-
-    def get_field_dict(self) -> dict:
-        data = {}
-        for field in self._meta.fields:
-            data[field.name] = getattr(self, field.name)
-        return data
-
-    def validate_instance(self, **fields):
-        pass
-
-    @classmethod
-    def validate(cls, **fields):
-        pass
 
 
 class Rubric(ValidatedModel):
@@ -89,7 +58,9 @@ class Question(ValidatedModel):
     help_text = models.TextField(null=True, blank=True)
     weight = models.DecimalField(max_digits=4, decimal_places=3, null=True)
     question_type = models.CharField(max_length=20, choices=TYPES)
-    choice_sort = models.CharField(max_length=1, choices=SORT_CHOICES)
+    choice_sort = models.CharField(
+        max_length=1, choices=SORT_CHOICES, default=AUTO_SORT
+    )
     required = models.BooleanField(default=True)
 
     ordering = ("rubric", "order", "short_description")
@@ -117,7 +88,7 @@ class Question(ValidatedModel):
             return 1
 
     def __str__(self):
-        return self.short_description
+        return f"{self.rubric.name}: {self.short_description}"
 
     def show_choices(self):
         return QuestionType.get_instance(self).show_choices()
@@ -168,19 +139,23 @@ class Question(ValidatedModel):
         question_type=None,
         choice_sort=None,
         required=None,
-        **additional_fields
+        **additional_fields,
     ):
         if question_type in self.CHOICE_TYPES and weight and weight > 0:
-            keys = [item["key"] for item in self.choice_set.values("key").all()]
-            for key in keys:
-                if not value_is_numeric(key):
-                    raise ValidationError(
-                        "The choice keys for a weighted question must be numeric. "
-                        'The value "%(key)s" is non-numeric.',
-                        code="non-numeric key",
-                        params={"key": key},
-                    )
-                break
+            try:
+                keys = [item["key"] for item in self.choice_set.values("key").all()]
+            except ValueError:
+                pass
+            else:
+                for key in keys:
+                    if not value_is_numeric(key):
+                        raise ValidationError(
+                            "The choice keys for a weighted question must be numeric. "
+                            'The value "%(key)s" is non-numeric.',
+                            code="non-numeric key",
+                            params={"key": key},
+                        )
+                    break
 
     @classmethod
     def validate(
@@ -194,7 +169,7 @@ class Question(ValidatedModel):
         question_type=None,
         choice_sort=None,
         required=None,
-        **additional_fields
+        **additional_fields,
     ):
         if not rubric:
             raise ValidationError("Rubric required for question", code="required")

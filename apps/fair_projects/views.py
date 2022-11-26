@@ -23,7 +23,8 @@ from apps.awards.models import Award
 from apps.fair_projects.logic import get_rubric_name
 from apps.judges.models import Judge
 from apps.rubrics.forms import rubric_form_factory
-from apps.rubrics.models import Question
+from apps.rubrics.models.feedback_form import FeedbackForm
+from apps.rubrics.models.rubric import Question
 
 from .forms import StudentFormset, UploadFileForm
 from .logic import (
@@ -540,11 +541,22 @@ class StudentFeedbackForm(SpecificUserRequiredMixin, DetailView):
             raise Http404()
 
     def get_context_data(self, **kwargs):
-        context = super(StudentFeedbackForm, self).get_context_data(**kwargs)
-        context["student"] = Student.objects.get(pk=self.kwargs["student_id"])
-        context["project"] = context["student"].project
-        context["questions"] = get_question_feedback_dict(context["project"])
-        context["feedback_template"] = self.feedback_template
+        context = super().get_context_data(**kwargs)
+        student = Student.objects.get(pk=self.kwargs["student_id"])
+        project = student.project
+
+        judging_instances = JudgingInstance.objects.for_project(project)
+        rubric_responses = JudgingInstance.objects.to_rubric_responses(
+            judging_instances
+        )
+
+        feedback_forms = FeedbackForm.objects.render_html_for_responses(
+            rubric_responses
+        )
+
+        context.update(
+            {"student": student, "project": project, "forms": feedback_forms}
+        )
 
         return context
 

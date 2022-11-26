@@ -1,0 +1,9 @@
+<div class="choice-response-list-module">
+    <ul class="choice-response-list">
+        {% for response in responses %}
+        <li class="single-response">{{ response }}</li>
+        {% empty %}
+        <li class="no-responses">No responses for this question</li>
+        {% endfor %}
+    </ul>
+</div>

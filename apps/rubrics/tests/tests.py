@@ -24,7 +24,7 @@ from model_mommy import mommy
 
 from apps.rubrics.fixtures import make_test_rubric
 from apps.rubrics.forms import ChoiceForm, QuestionForm
-from apps.rubrics.models import (
+from apps.rubrics.models.rubric import (
     Choice,
     Question,
     QuestionResponse,
@@ -32,6 +32,7 @@ from apps.rubrics.models import (
     RubricResponse,
     value_is_numeric,
 )
+from apps.rubrics.tests.base import TestBase
 
 
 def fixed_decimals(
@@ -104,15 +105,6 @@ def create_rubric_with_questions_and_choices():
                 mommy.make(Choice, question=question)
 
     return rubric
-
-
-class TestBase(HypTestCase):
-    @contextmanager
-    def assertNoException(self, exception_type):
-        try:
-            yield
-        except exception_type:
-            self.fail("%s exception type raised" % exception_type)
 
 
 class RubricTests(HypTestCase):
@@ -889,7 +881,11 @@ class QuestionResponseTests(HypTestCase):
         )
         self.assertQuerysetEqual(
             rub_response.questionresponse_set.all(),
-            ["Question SINGLE SELECT", "Question MULTI SELECT", "Question LONG TEXT"],
+            [
+                "Test Rubric: Question SINGLE SELECT",
+                "Test Rubric: Question MULTI SELECT",
+                "Test Rubric: Question LONG TEXT",
+            ],
             transform=lambda x: x.question.__str__(),
             ordered=False,
         )

@@ -1,0 +1,35 @@
+<div class="score-table-module">
+    {% if module.table_title %}
+    <h4 class="table_title">{{ module.table_title }}</h4>
+    {% endif %}
+
+    <table class="table table-bordered table-striped">
+        {% if include_header %}
+        <thead>
+            <tr class="header-row">
+            {% if module.include_short_description %}
+                <td class="short-description">{{ module.short_description_title }}</td>
+            {% endif %}
+            {% if module.include_long_description %}
+                <td class="long-description">{{ module.long_description_title }}</td>
+            {% endif %}
+                <td class="score">{{ module.score_title }}</td>
+            </tr>
+        </thead>
+        {% endif %}
+
+        <tbody>
+            {% for row in rows %}
+            <tr class="data-row">
+                {% if module.include_short_description %}
+                <td class="short-description">{{ row.short_description }}</td>
+                {% endif %}
+                {% if module.include_long_description %}
+                <td class="long-description">{{ row.long_description }}</td>
+                {% endif %}
+                <td class="score">{{ row.score|stringformat:'.2F' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

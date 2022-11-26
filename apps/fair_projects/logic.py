@@ -16,7 +16,7 @@ from django.utils.http import urlsafe_base64_encode
 
 from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
 from apps.judges.models import Judge
-from apps.rubrics.models import QuestionResponse, Rubric
+from apps.rubrics.models.rubric import QuestionResponse
 from fair_scoring_site.logic import get_judging_rubric
 
 from .models import JudgingInstance, Project, Teacher, create_student
