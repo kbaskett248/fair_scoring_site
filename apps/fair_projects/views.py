@@ -1,6 +1,7 @@
 import functools
 import logging
 from collections import defaultdict, namedtuple
+from typing import Any
 
 from django.contrib import messages
 from django.contrib.auth.mixins import (
@@ -543,6 +544,13 @@ class StudentFeedbackForm(SpecificUserRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         student = Student.objects.get(pk=self.kwargs["student_id"])
+
+        context.update(self.get_project_context(student))
+
+        return context
+
+    @classmethod
+    def get_project_context(cls, student: Student) -> dict[str, Any]:
         project = student.project
 
         judging_instances = JudgingInstance.objects.for_project(project)
@@ -554,11 +562,7 @@ class StudentFeedbackForm(SpecificUserRequiredMixin, DetailView):
             rubric_responses
         )
 
-        context.update(
-            {"student": student, "project": project, "forms": feedback_forms}
-        )
-
-        return context
+        return {"student": student, "project": project, "forms": feedback_forms}
 
 
 class TeacherStudentsFeedbackForm(SpecificUserRequiredMixin, ListView):
