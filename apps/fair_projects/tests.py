@@ -27,7 +27,15 @@ from apps.fair_projects.models import (
     create_teachers_group,
 )
 from apps.judges.models import Judge
-from apps.rubrics.models.rubric import Choice, Question, Rubric, RubricResponse
+from apps.rubrics.constants import FeedbackFormModuleType
+from apps.rubrics.models import (
+    Choice,
+    FeedbackForm,
+    MarkdownFeedbackModule,
+    Question,
+    Rubric,
+    RubricResponse,
+)
 
 
 def make_school(name: str = "Test School") -> School:
@@ -723,3 +731,102 @@ class TestProjectResource(TestCase):
         self.assertEqual(instance.title, "Extra Project")
         self.assertNotEqual(instance.pk, self.instance.pk)
         self.assertNotEqual(instance.number, self.instance.number)
+
+
+class FeedbackFormViewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.rubric = make_rubric()
+        cls.feedback_form = FeedbackForm.objects.create(rubric=cls.rubric)
+        MarkdownFeedbackModule.objects.create(
+            feedback_form=cls.feedback_form,
+            order=1,
+            module_type=FeedbackFormModuleType.MARKDOWN,
+            content="# Test Title",
+        )
+
+        create_teachers_group()
+        cls.school = make_school()
+        cls.teacher = create_teacher(
+            username="test_teacher",
+            email="test@test.com",
+            first_name="Teddy",
+            last_name="Testerson",
+            school_name=cls.school.name,
+        )
+
+        cls.student = make_student(teacher=cls.teacher)
+        cls.project = make_project(title="Test Project")
+        cls.project.student_set.add(cls.student)
+
+        user = mommy.make(User, first_name="Dallas", last_name="Green")
+        cls.judge = make_judge(user=user)
+
+        cls.student_feedback_url = reverse(
+            "fair_projects:student_feedback_form",
+            kwargs={
+                "project_number": cls.project.number,
+                "student_id": cls.student.pk,
+            },
+        )
+        cls.teacher_feedback_url = reverse(
+            "fair_projects:teacher_feedback",
+            kwargs={"username": cls.teacher.user.username},
+        )
+
+    def setUp(self):
+        self.ji = make_judging_instance(
+            self.project, judge=self.judge, rubric=self.rubric
+        )
+        answer_rubric_response(self.ji.response)
+
+    def test_student_feedback_form_at_url(self):
+        expected_url = (
+            f"/projects/{self.project.number}/feedback/student/{self.student.pk}"
+        )
+        self.assertEqual(self.student_feedback_url, expected_url)
+
+        self.client.force_login(self.teacher.user)
+        response = self.client.get(self.student_feedback_url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_student_feedback_form(self):
+        self.client.force_login(self.teacher.user)
+        response = self.client.get(self.student_feedback_url)
+
+        self.assertTemplateUsed(response, "fair_projects/student_feedback.html")
+
+        self.assertInHTML("<h1>Test Title</h1>", response.content.decode())
+
+        self.assertEqual(response.context["student"], self.student)
+        self.assertEqual(response.context["project"], self.project)
+
+    def test_student_feedback_form_redirects_unauthenticated_user(self):
+        response = self.client.get(self.student_feedback_url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_teacher_feedback_form_at_url(self):
+        expected_url = f"/projects/teacher/{self.teacher.user.username}/feedback"
+        self.assertEqual(self.teacher_feedback_url, expected_url)
+
+        self.client.force_login(self.teacher.user)
+        response = self.client.get(self.teacher_feedback_url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_teacher_feedback_form(self):
+        self.client.force_login(self.teacher.user)
+        response = self.client.get(self.teacher_feedback_url)
+
+        self.assertTemplateUsed(response, "fair_projects/student_feedback_multi.html")
+
+        page_html = response.content.decode()
+        self.assertInHTML(self.teacher.user.last_name, page_html)
+        self.assertInHTML(self.project.title, page_html)
+        self.assertInHTML(
+            f"{self.student.last_name}, {self.student.first_name}", page_html
+        )
+        self.assertInHTML("<h1>Test Title</h1>", page_html)
+
+    def test_teacher_feedback_form_redirects_unauthenticated_user(self):
+        response = self.client.get(self.student_feedback_url)
+        self.assertEqual(response.status_code, 302)

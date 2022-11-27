@@ -11,8 +11,10 @@ from apps.rubrics.models.feedback_form import ScoreTableFeedbackModule
 
 from .models import (
     Choice,
+    ChoiceResponseListFeedbackModule,
     FeedbackForm,
     FeedbackModule,
+    FreeTextListFeedbackModule,
     MarkdownFeedbackModule,
     Question,
     Rubric,
@@ -121,6 +123,34 @@ class ScoreTableFeedbackModuleInline(FeedbackModuleInline):
     max_num = 1
     verbose_name = "Change Score Table Module"
     verbose_name_plural = "Score Table"
+
+
+class ChoiceResponseListFeedbackModuleInline(FeedbackModuleInline):
+    MODULE = FeedbackFormModuleType.CHOICE_RESPONSE_LIST
+
+    fields = [
+        "order",
+        "question",
+        "display_description",
+        "remove_duplicates",
+    ]
+    model = ChoiceResponseListFeedbackModule
+    max_num = 1
+    verbose_name = "Change Choice Response List Module"
+    verbose_name_plural = "Choice Response List"
+
+
+class FreeTextListFeedbackModuleInline(FeedbackModuleInline):
+    MODULE = FeedbackFormModuleType.FREE_TEXT_LIST
+
+    fields = [
+        "order",
+        "question",
+    ]
+    model = FreeTextListFeedbackModule
+    max_num = 1
+    verbose_name = "Change Free Text List Module"
+    verbose_name_plural = "Free Text List"
 
 
 @admin.register(FeedbackForm)
