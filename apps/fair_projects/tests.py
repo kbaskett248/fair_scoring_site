@@ -769,6 +769,10 @@ class FeedbackFormViewTests(TestCase):
                 "student_id": cls.student.pk,
             },
         )
+        cls.teacher_feedback_url = reverse(
+            "fair_projects:teacher_feedback",
+            kwargs={"username": cls.teacher.user.username},
+        )
 
     def setUp(self):
         self.ji = make_judging_instance(
@@ -798,5 +802,31 @@ class FeedbackFormViewTests(TestCase):
         self.assertEqual(response.context["project"], self.project)
 
     def test_student_feedback_form_redirects_unauthenticated_user(self):
+        response = self.client.get(self.student_feedback_url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_teacher_feedback_form_at_url(self):
+        expected_url = f"/projects/teacher/{self.teacher.user.username}/feedback"
+        self.assertEqual(self.teacher_feedback_url, expected_url)
+
+        self.client.force_login(self.teacher.user)
+        response = self.client.get(self.teacher_feedback_url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_teacher_feedback_form(self):
+        self.client.force_login(self.teacher.user)
+        response = self.client.get(self.teacher_feedback_url)
+
+        self.assertTemplateUsed(response, "fair_projects/student_feedback_multi.html")
+
+        page_html = response.content.decode()
+        self.assertInHTML(self.teacher.user.last_name, page_html)
+        self.assertInHTML(self.project.title, page_html)
+        self.assertInHTML(
+            f"{self.student.last_name}, {self.student.first_name}", page_html
+        )
+        self.assertInHTML("<h1>Test Title</h1>", page_html)
+
+    def test_teacher_feedback_form_redirects_unauthenticated_user(self):
         response = self.client.get(self.student_feedback_url)
         self.assertEqual(response.status_code, 302)
