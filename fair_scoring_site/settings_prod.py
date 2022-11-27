@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 
-from .settings_common import *
+from .settings_common import *  # pylint: disable=W0401,W0614
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # TODO: Configure Secret Key
@@ -55,4 +55,4 @@ X_FRAME_OPTIONS = "DENY"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-STATIC_ROOT = f"/var/www/fair_scoring_site/static/"
+STATIC_ROOT = "/var/www/fair_scoring_site/static/"

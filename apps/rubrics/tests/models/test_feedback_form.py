@@ -1,3 +1,5 @@
+# pylint: disable=E1101
+
 from typing import Optional
 
 from django.core.exceptions import ValidationError
@@ -23,7 +25,7 @@ from apps.rubrics.models import (
     ScoreTableFeedbackModule,
 )
 from apps.rubrics.tests.fixtures.models import test_feedback_form as fixtures
-from apps.rubrics.tests.tests import answer_rubric_response, make_rubric_response
+from apps.rubrics.tests.utils import answer_rubric_response, make_rubric_response
 
 
 class FeedbackFormTests(HypTestCase):
@@ -320,7 +322,7 @@ class ScoreTableFeedbackModuleTests(FeedbackModuleTestBase):
     def setUpClass(cls) -> None:
         super().setUpClass()
 
-        default_weight = float("{0:.3f}".format(1 / len(Question.CHOICE_TYPES)))
+        default_weight = float(f"{1 / len(Question.CHOICE_TYPES):.3f}")
 
         cls.scale_question = Question.objects.create(
             rubric=cls.rubric,
@@ -476,7 +478,7 @@ class ChoiceResponseListFeedbackModuleTests(FeedbackModuleTestBase):
     def setUpClass(cls) -> None:
         super().setUpClass()
 
-        default_weight = float("{0:.3f}".format(1 / len(Question.CHOICE_TYPES)))
+        default_weight = float(f"{1 / len(Question.CHOICE_TYPES):.3f}")
 
         cls.scale_question = Question.objects.create(
             rubric=cls.rubric,
