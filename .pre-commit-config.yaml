@@ -37,3 +37,14 @@ repos:
         name: Lint python code with bandit
         args: ["-c", "pyproject.toml"]
         additional_dependencies: ["bandit[toml]"]
+
+  - repo: https://github.com/pycqa/pylint
+    rev: v2.15.6
+    hooks:
+      - id: pylint
+        name: Lint python code using pylint
+        additional_dependencies: ["pylint-venv"]
+        args: [
+            "-rn", # Only display messages
+            "-sn", # Don't display the score
+          ]
