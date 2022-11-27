@@ -20,9 +20,9 @@
                    type='radio'
                    value='{{ choice.0 }}'
                    {% if not form.is_bound %}
-                       {% ifequal field.field.initial choice.0 %} checked='checked' {% endifequal %}
+                       {% if field.field.initial == choice.0 %} checked='checked' {% endif %}
                    {% else %}
-                       {% ifequal field.data choice.0 %} checked='checked' {% endifequal %}
+                       {% if field.data == choice.0 %} checked='checked' {% endif %}
                    {% endif %}/>
                 {{ choice.1 }}
             </label>
