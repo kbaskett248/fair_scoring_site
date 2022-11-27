@@ -193,7 +193,9 @@ class MarkdownFeedbackModule(FeedbackModule):
     def render_html(self, rubric_responses: models.QuerySet[RubricResponse]):
         average_score = self._get_average_score(rubric_responses)
         average_score = f"{average_score:.2f}" if average_score is not None else ""
-        return mark_safe(self.get_html().replace("{{ average_score }}", average_score))
+        return mark_safe(  # nosec
+            self.get_html().replace("{{ average_score }}", average_score)
+        )
 
     def _get_average_score(
         self, rubric_responses: models.QuerySet[RubricResponse]
