@@ -14,17 +14,21 @@
 
 <div class="page-break"></div>
 
-{% for student, project, questions in feedback_list %}
+{% for c in feedback_list %}
 
     <div class="row">
-        <p class="col-xs-8 text-left" style="font-size: 120%;"><strong>{{ student.last_name}}, {{student.first_name }}</strong></p>
-        <p class="col-xs-4 text-right" style="font-size: 120%;"><strong>{{ student.teacher.user.last_name }}</strong></p>
-        <p class="col-xs-12 text-left" style="font-size: 120%;"><strong>{{ project.title }}</strong></p>
+        <p class="col-xs-8 text-left" style="font-size: 120%;"><strong>{{ c.student.last_name}}, {{ c.student.first_name }}</strong></p>
+        <p class="col-xs-4 text-right" style="font-size: 120%;"><strong>{{ c.student.teacher.user.last_name }}</strong></p>
+        <p class="col-xs-12 text-left" style="font-size: 120%;"><strong>{{ c.project.title }}</strong></p>
     </div>
 
     <h1>Freshmen Poster Session Feedback</h1>
 
-    {% include feedback_template %}
+    {% for form in c.forms %}
+    <h2>{{ form.form }}</h2>
+
+    {{ form.html }}
+    {% endfor %}
 
     <div class="noprint" style="border-bottom: 1px solid;margin: 20px"></div>
     <div class="page-break"></div>

@@ -32,7 +32,6 @@ from .logic import (
     assign_judges,
     email_teachers,
     get_projects_sorted_by_score,
-    get_question_feedback_dict,
     handle_project_import,
 )
 from .models import JudgingInstance, Project, Student, Teacher
@@ -526,7 +525,6 @@ class StudentFeedbackForm(SpecificUserRequiredMixin, DetailView):
     model = Project
     context_object_name = "project"
     queryset = Project.objects.select_related("category", "subcategory", "division")
-    feedback_template = "fair_projects/student_feedback_common_2.html"
 
     def get_required_user(self, *args, **kwargs):
         student = get_object_or_404(Student, pk=kwargs["student_id"])
@@ -562,7 +560,7 @@ class StudentFeedbackForm(SpecificUserRequiredMixin, DetailView):
             rubric_responses
         )
 
-        return {"student": student, "project": project, "forms": feedback_forms}
+        return {"student": student, "project": project, "forms": list(feedback_forms)}
 
 
 class TeacherStudentsFeedbackForm(SpecificUserRequiredMixin, ListView):
@@ -571,7 +569,6 @@ class TeacherStudentsFeedbackForm(SpecificUserRequiredMixin, ListView):
     model = Student
     template_name = "fair_projects/student_feedback_multi.html"
     context_object_name = "student_list"
-    feedback_template = "fair_projects/student_feedback_common_2.html"
 
     def get_required_user(self, *args, **kwargs):
         return get_object_or_404(User, username=kwargs["username"])
@@ -590,17 +587,9 @@ class TeacherStudentsFeedbackForm(SpecificUserRequiredMixin, ListView):
         context = super(TeacherStudentsFeedbackForm, self).get_context_data(**kwargs)
         context["teacher"] = self.teacher
 
-        Feedback = namedtuple("Feedback", ("student", "project", "questions"))
-        feedback_list = []
-        for student in context["student_list"]:
-            feedback_list.append(
-                Feedback(
-                    student,
-                    student.project,
-                    get_question_feedback_dict(student.project),
-                )
-            )
-        context["feedback_list"] = feedback_list
-        context["feedback_template"] = self.feedback_template
+        context["feedback_list"] = [
+            StudentFeedbackForm.get_project_context(student)
+            for student in context["student_list"]
+        ]
 
         return context
