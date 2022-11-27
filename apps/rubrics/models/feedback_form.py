@@ -63,13 +63,9 @@ class FeedbackForm(models.Model):
             ]
         }
 
-    def render_html(
-        self, rubric_responses: models.QuerySet[RubricResponse]
-    ) -> SafeString:
+    def render_html(self, rubric_responses: models.QuerySet[RubricResponse]) -> str:
         rubric_responses = rubric_responses.filter(rubric=self.rubric)
-        return mark_safe(
-            render_to_string(self.get_template(), self.get_context(rubric_responses))
-        )
+        return render_to_string(self.get_template(), self.get_context(rubric_responses))
 
     class FeedbackFormManager(models.Manager):
         def get_queryset(self) -> QuerySet["FeedbackForm"]:
@@ -171,12 +167,8 @@ class FeedbackModule(ValidatedModel):
     ) -> dict[str, Any]:
         raise NotImplementedError
 
-    def render_html(
-        self, rubric_responses: models.QuerySet[RubricResponse]
-    ) -> SafeString:
-        return mark_safe(
-            render_to_string(self.get_template(), self.get_context(rubric_responses))
-        )
+    def render_html(self, rubric_responses: models.QuerySet[RubricResponse]) -> str:
+        return render_to_string(self.get_template(), self.get_context(rubric_responses))
 
 
 class MarkdownFeedbackModule(FeedbackModule):
