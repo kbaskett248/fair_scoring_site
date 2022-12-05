@@ -122,7 +122,7 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "django-bootstrap3"
-version = "22.1"
+version = "22.2"
 description = "Bootstrap 3 support for Django projects"
 category = "main"
 optional = false
@@ -507,7 +507,7 @@ mysql = ["mysqlclient"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "9cfab8e1bf9aa9e2b3f2b8149f25be8481c913a9333b9fa333b4326224967c57"
+content-hash = "1f620f2ea28b57d067469c1566e46dd83341149d82f622ddbf21f3c6eaa9cce2"
 
 [metadata.files]
 argon2-cffi = [
@@ -680,8 +680,8 @@ Django = [
     {file = "Django-4.1.3.tar.gz", hash = "sha256:678bbfc8604eb246ed54e2063f0765f13b321a50526bdc8cb1f943eda7fa31f1"},
 ]
 django-bootstrap3 = [
-    {file = "django-bootstrap3-22.1.tar.gz", hash = "sha256:6ac3af76ec81df53d81f01a19cac1565ca24d5b036a0e636815120a212270d14"},
-    {file = "django_bootstrap3-22.1-py3-none-any.whl", hash = "sha256:bab5113b0c865dd644d317d73ae2c3b716215b1bcfacc671124f9dffb823246a"},
+    {file = "django-bootstrap3-22.2.tar.gz", hash = "sha256:537b08748ab40a9f214968c188ae26cfeadb7987b784f2857396a33b477fa10a"},
+    {file = "django_bootstrap3-22.2-py3-none-any.whl", hash = "sha256:c128452497500188052c0e0a24fe5639ee1a26170985b8da636d8fea9114430a"},
 ]
 django-constance = [
     {file = "django-constance-2.9.1.tar.gz", hash = "sha256:4c6a96a5f2cbce1bc3fa41aa20566b6ee26fbd896c9f91f996518a3a0904f6c8"},
