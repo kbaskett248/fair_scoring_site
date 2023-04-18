@@ -340,20 +340,20 @@ sqlparse = ">=0.2"
 
 [[package]]
 name = "django-import-export"
-version = "3.0.1"
+version = "3.2.0"
 description = "Django application and library for importing and exporting data with included admin integration."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "django-import-export-3.0.1.tar.gz", hash = "sha256:608974431037ab75480b62c106075a08d6d7c84d61d54507b4e295ebf9d0133f"},
-    {file = "django_import_export-3.0.1-py3-none-any.whl", hash = "sha256:5dc87e0742601c5321b33c35072a2b0e8ecfb88cc27afa78eb785a2fbe6b52e3"},
+    {file = "django-import-export-3.2.0.tar.gz", hash = "sha256:38fd7b9439b9e3aa1a4747421c1087a5bc194e915a28d795fb8429a5f8028f2d"},
+    {file = "django_import_export-3.2.0-py3-none-any.whl", hash = "sha256:1d3f2cb2ee3cca0386ed60651fa1623be989f130d9fbdf98a67f7dc3a94b8a37"},
 ]
 
 [package.dependencies]
 diff-match-patch = "*"
 Django = ">=3.2"
-tablib = {version = ">=3.2.1", extras = ["html", "ods", "xls", "xlsx", "yaml"]}
+tablib = {version = ">=3.4.0", extras = ["html", "ods", "xls", "xlsx", "yaml"]}
 
 [[package]]
 name = "django-picklefield"
@@ -764,14 +764,14 @@ files = [
 
 [[package]]
 name = "tablib"
-version = "3.2.1"
-description = "Format agnostic tabular data library (XLS, JSON, YAML, CSV)"
+version = "3.4.0"
+description = "Format agnostic tabular data library (XLS, JSON, YAML, CSV, etc.)"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "tablib-3.2.1-py3-none-any.whl", hash = "sha256:870d7e688f738531a14937a055e8bba404fbc388e77d4d500b2c904075d1019c"},
-    {file = "tablib-3.2.1.tar.gz", hash = "sha256:a57f2770b8c225febec1cb1e65012a69cf30dd28be810e0ff98d024768c7d0f1"},
+    {file = "tablib-3.4.0-py3-none-any.whl", hash = "sha256:0f9c45141195c472202f30d82c0c035bf7e0dd7e4da2257815e506acff4ab364"},
+    {file = "tablib-3.4.0.tar.gz", hash = "sha256:77ea97faf6f92a7e198c05bd0c690f3cba57b83ea45a636b72f967cb6fe6f160"},
 ]
 
 [package.dependencies]
@@ -851,4 +851,4 @@ mysql = ["mysqlclient"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "ab979817424ad62c72a56f9c740f08e3e61061435260130f11124110a8f745fc"
+content-hash = "43de9450b2193c3d730c53e38facf9f8952de76204d2a98a7f0c893a8256a347"
