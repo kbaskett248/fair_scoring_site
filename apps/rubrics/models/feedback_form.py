@@ -274,7 +274,7 @@ class ScoreTableFeedbackModule(FeedbackModule):
                 rubric_response__in=rubric_responses, question__in=self.questions.all()
             )
             .select_related("question", "rubric_response")
-            .order_by("question", "question__order")
+            .order_by("question__order", "question")
         )
         question_responses = filter(
             lambda q: q.rubric_response.has_response, question_qs
