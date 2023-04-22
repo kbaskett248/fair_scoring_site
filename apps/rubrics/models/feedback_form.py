@@ -202,7 +202,7 @@ class MarkdownFeedbackModule(FeedbackModule):
         return mark_safe(
             self.get_html().replace(
                 "{{ average_score }}",
-                f'{self._get_average_score(rubric_responses):.2f}'
+                f"{self._get_average_score(rubric_responses):.2f}",
             )
         )
 
