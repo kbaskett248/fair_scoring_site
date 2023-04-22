@@ -20,7 +20,7 @@ from hypothesis.strategies import (
     text,
     tuples,
 )
-from model_mommy import mommy
+from model_bakery import baker
 
 from apps.rubrics.fixtures import make_test_rubric
 from apps.rubrics.forms import ChoiceForm, QuestionForm
@@ -96,13 +96,13 @@ def rubric_with_questions(
 
 
 def create_rubric_with_questions_and_choices():
-    rubric = mommy.make(Rubric)
+    rubric = baker.make(Rubric)
     for _ in range(0, 10):
         required = bool(random.getrandbits(1))
-        question = mommy.make(Question, rubric=rubric, required=required)
+        question = baker.make(Question, rubric=rubric, required=required)
         if question.show_choices():
             for a in range(0, 5):
-                mommy.make(Choice, question=question)
+                baker.make(Choice, question=question)
 
     return rubric
 
@@ -112,14 +112,14 @@ class RubricTests(HypTestCase):
     def test_create_rubric(self, name: str):
         rubric = Rubric.objects.create(name=name)
         self.assertEqual(rubric.name, name)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Rubric.objects.all(), ["<Rubric: %s>" % name], transform=repr
         )
 
     def test_create_rubric_fails_for_empty_name(self):
         with self.assertRaises(ValidationError):
             Rubric.objects.create(name="")
-        self.assertQuerysetEqual(Rubric.objects.all(), [])
+        self.assertQuerySetEqual(Rubric.objects.all(), [])
 
 
 class QuestionTests(HypTestCase):
@@ -148,7 +148,7 @@ class QuestionTests(HypTestCase):
     @given(question_type=sane_text())
     def test_invalid_question_type_raises_error(self, question_type):
         with self.assertRaises(ValidationError):
-            mommy.make(Question, rubric=self.rubric, question_type=question_type)
+            baker.make(Question, rubric=self.rubric, question_type=question_type)
 
     @given(
         sort_option=one_of(sane_text().filter(lambda x: x != "A" and x != "M"), none())
@@ -158,7 +158,7 @@ class QuestionTests(HypTestCase):
             ValidationError,
             msg="No error raised for sort_option {}".format(sort_option),
         ):
-            mommy.make(
+            baker.make(
                 Question,
                 rubric=self.rubric,
                 question_type=Question.LONG_TEXT,
@@ -170,7 +170,7 @@ class QuestionTests(HypTestCase):
         self, weight
     ):
         with self.assertRaises(ValidationError):
-            mommy.make(
+            baker.make(
                 Question,
                 rubric=self.rubric,
                 question_type=Question.LONG_TEXT,
@@ -183,18 +183,18 @@ class QuestionTests(HypTestCase):
             question.add_choice(10, "High")
 
         with self.subTest("%(type)s question", type=Question.SCALE_TYPE):
-            question = mommy.make(
+            question = baker.make(
                 Question, question_type=Question.SCALE_TYPE, rubric=self.rubric
             )
             add_choices(question)
-            self.assertQuerysetEqual(
+            self.assertQuerySetEqual(
                 question.choice_set.order_by("description").all(),
                 ["<Choice: High>", "<Choice: Low>"],
                 transform=repr,
             )
 
         with self.subTest("%(type)s question", type=Question.LONG_TEXT):
-            question = mommy.make(
+            question = baker.make(
                 Question, question_type=Question.LONG_TEXT, rubric=self.rubric
             )
             with self.assertRaises(ValidationError):
@@ -202,7 +202,7 @@ class QuestionTests(HypTestCase):
 
     @given(question_type_and_weight(), question_type_and_weight())
     def test_question_type_changed(self, q1: (str, float), q2: (str, float)):
-        question = mommy.make(Question, question_type=q1[0], weight=0)  # type: Question
+        question = baker.make(Question, question_type=q1[0], weight=0)  # type: Question
         self.assertEqual(question.question_type, q1[0])
         question.question_type = q2[0]
         self.assertEqual(question.question_type, q2[0])
@@ -217,7 +217,7 @@ class QuestionTests(HypTestCase):
         self, q1: (str, float), q2: (str, float)
     ):
         compatible_types = (Question.SCALE_TYPE, Question.SINGLE_SELECT_TYPE)
-        question = mommy.make(Question, question_type=q1[0], weight=0)  # type: Question
+        question = baker.make(Question, question_type=q1[0], weight=0)  # type: Question
         self.assertEqual(question.question_type, q1[0])
         question.question_type = q2[0]
         self.assertEqual(question.question_type, q2[0])
@@ -234,7 +234,7 @@ class QuestionFormTests(HypTestCase):
     @classmethod
     def setUpClass(cls):
         super(QuestionFormTests, cls).setUpClass()
-        cls.rubric = mommy.make(Rubric)  # type: Rubric
+        cls.rubric = baker.make(Rubric)  # type: Rubric
         cls.data = {
             "rubric": cls.rubric.pk,
             "order": 1,
@@ -293,25 +293,25 @@ class QuestionFormTests(HypTestCase):
     def test_instance_with_numeric_choices_and_zero_weight(self):
         self.question.weight = 1
         self.question.save()
-        mommy.make(Choice, question=self.question, key="1")
+        baker.make(Choice, question=self.question, key="1")
         self.success_test(instance=self.question, weight=0)
 
     def test_instance_with_numeric_choices_and_positive_weight(self):
         self.question.weight = 0
         self.question.save()
-        mommy.make(Choice, question=self.question, key="1")
+        baker.make(Choice, question=self.question, key="1")
         self.success_test(instance=self.question, weight=1)
 
     def test_instance_with_non_numeric_choices_and_zero_weight(self):
         self.question.weight = 0
         self.question.save()
-        mommy.make(Choice, question=self.question, key="test")
+        baker.make(Choice, question=self.question, key="test")
         self.success_test(instance=self.question, weight=0)
 
     def test_instance_with_non_numeric_choices_and_positive_weight(self):
         self.question.weight = 0
         self.question.save()
-        mommy.make(Choice, question=self.question, key="test")
+        baker.make(Choice, question=self.question, key="test")
         self.failed_test(instance=self.question, weight=1)
 
 
@@ -319,7 +319,7 @@ class ChoiceTests(TestBase):
     @classmethod
     def setUpClass(cls):
         super(ChoiceTests, cls).setUpClass()
-        cls.question = mommy.make(Question)  # type: Question
+        cls.question = baker.make(Question)  # type: Question
 
     def choice_test_with_positive_weight(self, key):
         self.question.weight = 1.000
@@ -406,7 +406,7 @@ class ChoiceTests(TestBase):
 
 class ChoiceFormTests(HypTestCase):
     def setUp(self):
-        self.question = mommy.make(Question)  # type: Question
+        self.question = baker.make(Question)  # type: Question
 
     def update_question(self, question_type, weight):
         self.question.question_type = question_type
@@ -650,7 +650,7 @@ class RubricResponseTests(HypTestCase):
 def make_rubric_response(rubric=None):
     rubric = rubric or make_test_rubric()
 
-    return mommy.make(RubricResponse, rubric=rubric)
+    return baker.make(RubricResponse, rubric=rubric)
 
 
 def answer_rubric_response(rubric_response):
@@ -773,11 +773,11 @@ class QuestionResponseTests(HypTestCase):
     # Choice was updated so that non-numeric choices could not be saved for weighted questions.
     @unittest.expectedFailure
     def test_score_for_non_numeric_choices(self):
-        rubric = mommy.make(Rubric, name="Test Rubric")
+        rubric = baker.make(Rubric, name="Test Rubric")
         rub_response = make_rubric_response(rubric)
 
         question_type = Question.SINGLE_SELECT_TYPE
-        question = mommy.make(
+        question = baker.make(
             Question,
             rubric=rubric,
             short_description="Question %s" % question_type,
@@ -787,8 +787,8 @@ class QuestionResponseTests(HypTestCase):
             question_type=question_type,
             required=True,
         )
-        choices = mommy.make(Choice, _quantity=4, question=question)
-        q_resp = mommy.make(
+        choices = baker.make(Choice, _quantity=4, question=question)
+        q_resp = baker.make(
             QuestionResponse, rubric_response=rub_response, question=question
         )
         q_resp.update_response(choices[0].key)
@@ -799,7 +799,7 @@ class QuestionResponseTests(HypTestCase):
         )
 
         question_type = Question.MULTI_SELECT_TYPE
-        question = mommy.make(
+        question = baker.make(
             Question,
             rubric=rubric,
             short_description="Question %s" % question_type,
@@ -809,8 +809,8 @@ class QuestionResponseTests(HypTestCase):
             question_type=question_type,
             required=True,
         )
-        choices = mommy.make(Choice, _quantity=4, question=question)
-        q_resp = mommy.make(
+        choices = baker.make(Choice, _quantity=4, question=question)
+        q_resp = baker.make(
             QuestionResponse, rubric_response=rub_response, question=question
         )
         q_resp.update_response([choices[0].key, choices[1].key])
@@ -852,7 +852,7 @@ class QuestionResponseTests(HypTestCase):
     def test_new_question_is_added_to_response(self):
         rub_response = make_rubric_response()  # type: RubricResponse
 
-        question = mommy.make(
+        question = baker.make(
             Question,
             rubric=rub_response.rubric,
             short_description="Additional test question",
@@ -879,7 +879,7 @@ class QuestionResponseTests(HypTestCase):
         self.assertEqual(
             rub_response.questionresponse_set.count(), num_question_responses - 1
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             rub_response.questionresponse_set.all(),
             [
                 "Test Rubric: Question SINGLE SELECT",
@@ -984,4 +984,4 @@ class QuestionResponseClearingTests(HypTestCase):
     @given(question_type().filter(lambda x: x in Question.CHOICE_TYPES))
     def test_clear_responses_when_choice_added(self, question_type):
         with self.assertOnlyResponseForChoiceCleared(question_type) as choice:
-            mommy.make(Choice, question=choice.question, key=10000)
+            baker.make(Choice, question=choice.question, key=10000)

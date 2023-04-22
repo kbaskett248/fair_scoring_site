@@ -5,7 +5,7 @@ from hypothesis import given, settings
 from hypothesis.extra.django import TestCase as HypTestCase
 from hypothesis.extra.django import TransactionTestCase as HypTransTestCase
 from hypothesis.strategies import integers
-from model_mommy import mommy
+from model_bakery import baker
 
 import apps.rubrics.fixtures
 from apps.awards.models import In, Is
@@ -27,7 +27,7 @@ def make_test_category(short_description: str) -> Category:
 
 
 def make_test_subcategory(category: Category, short_description: str) -> Subcategory:
-    return mommy.make(
+    return baker.make(
         Subcategory, short_description=short_description, category=category
     )
 
@@ -40,8 +40,8 @@ def make_test_division(short_description: str) -> Division:
 def make_test_judge(
     categories: [Category], divisions: [Division], active=True
 ) -> Judge:
-    user = mommy.make(User, is_active=active, first_name="Test", last_name="Judge")
-    judge = mommy.prepare(Judge, phone="770-867-5309", user=user)  # type: Judge
+    user = baker.make(User, is_active=active, first_name="Test", last_name="Judge")
+    judge = baker.prepare(Judge, phone="770-867-5309", user=user)  # type: Judge
     judge.categories.set(categories)
     judge.divisions.set(divisions)
     judge.save()
@@ -51,7 +51,7 @@ def make_test_judge(
 def make_test_project(subcategory: Subcategory, division: Division) -> Project:
     global project_number_counter
     project_number_counter += 1
-    return mommy.make(
+    return baker.make(
         Project,
         number=project_number_counter,
         subcategory=subcategory,
@@ -71,14 +71,14 @@ class AwardRuleFormTests(TestCase):
         Category.objects.create(short_description="Category 1")
         Category.objects.create(short_description="Category 2")
 
-        mommy.make(Subcategory, short_description="Subcategory 1")
-        mommy.make(Subcategory, short_description="Subcategory 2")
+        baker.make(Subcategory, short_description="Subcategory 1")
+        baker.make(Subcategory, short_description="Subcategory 2")
 
         Division.objects.create(short_description="Division 1")
         Division.objects.create(short_description="Division 2")
 
-        mommy.make(Project, number=1001)
-        mommy.make(Project, number=1002)
+        baker.make(Project, number=1001)
+        baker.make(Project, number=1002)
 
     def success_test(self, trait: str, operator: str, value: str):
         data = {"trait": trait, "operator_name": operator, "value": value}
