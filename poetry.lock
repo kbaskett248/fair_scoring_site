@@ -106,15 +106,15 @@ python-versions = ">=2.7"
 
 [[package]]
 name = "django"
-version = "4.2"
+version = "4.1.8"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
 python-versions = ">=3.8"
 
 [package.dependencies]
-asgiref = ">=3.6.0,<4"
-sqlparse = ">=0.3.1"
+asgiref = ">=3.5.2,<4"
+sqlparse = ">=0.2.2"
 tzdata = {version = "*", markers = "sys_platform == \"win32\""}
 
 [package.extras]
@@ -498,7 +498,7 @@ mysql = ["mysqlclient"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "2112cf0bf61bce054fbe43036a8eb3664768b45bed013e923327a48e6d013f22"
+content-hash = "1333d95b0524d06202e1147fe10ad479f59f6fb6eb35f85c96e6de4bdfd4a982"
 
 [metadata.files]
 argon2-cffi = [
@@ -668,8 +668,8 @@ diff-match-patch = [
     {file = "diff_match_patch-20200713-py3-none-any.whl", hash = "sha256:8bf9d9c4e059d917b5c6312bac0c137971a32815ddbda9c682b949f2986b4d34"},
 ]
 django = [
-    {file = "Django-4.2-py3-none-any.whl", hash = "sha256:ad33ed68db9398f5dfb33282704925bce044bef4261cd4fb59e4e7f9ae505a78"},
-    {file = "Django-4.2.tar.gz", hash = "sha256:c36e2ab12824e2ac36afa8b2515a70c53c7742f0d6eaefa7311ec379558db997"},
+    {file = "Django-4.1.8-py3-none-any.whl", hash = "sha256:dba9dd0bf8b748aa9c98d6c679f8b1c0bfa43124844bea9425ad9ba0cd5e65c3"},
+    {file = "Django-4.1.8.tar.gz", hash = "sha256:43253f4b4a2c3a1694cd52d3517847271934c84dbd060ca0e82a9f90e569dab3"},
 ]
 django-bootstrap3 = [
     {file = "django-bootstrap3-22.2.tar.gz", hash = "sha256:537b08748ab40a9f214968c188ae26cfeadb7987b784f2857396a33b477fa10a"},
