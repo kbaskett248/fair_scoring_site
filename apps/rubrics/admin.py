@@ -157,22 +157,23 @@ class FreeTextListFeedbackModuleInline(FeedbackModuleInline):
 class FeedbackFormAdmin(admin.ModelAdmin):
     model = FeedbackForm
 
-    def get_inlines(self, request, obj: FeedbackForm):
+    def get_inlines(self, request, obj: Optional[FeedbackForm]):
         inlines = []
-        for module in obj.modules.all():
-            module_type = module.module_type
+        if obj is not None:
+            for module in obj.modules.all():
+                module_type = module.module_type
 
-            for base_inline in FeedbackModuleInline.__subclasses__():
-                if module_type == base_inline.MODULE:
-                    inlines.append(
-                        type(
-                            f"Single{base_inline.__name__}",
-                            (base_inline,),
-                            {"instance": module},
+                for base_inline in FeedbackModuleInline.__subclasses__():
+                    if module_type == base_inline.MODULE:
+                        inlines.append(
+                            type(
+                                f"Single{base_inline.__name__}",
+                                (base_inline,),
+                                {"instance": module},
+                            )
                         )
-                    )
 
-                    break
+                        break
 
         inlines.append(FeedbackModuleInline)
 
