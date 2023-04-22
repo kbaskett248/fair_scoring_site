@@ -13,3 +13,4 @@ fair_scoring_site/settings.py
 .python-version
 /static
 /.venv
+**/__pycache__
