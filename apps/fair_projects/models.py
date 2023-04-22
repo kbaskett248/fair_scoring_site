@@ -6,6 +6,7 @@ from django.db.models import Manager, QuerySet
 from django.urls.base import reverse
 
 from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
+from apps.fair_projects.utils import make_random_password
 from apps.judges.models import Judge
 from apps.rubrics.models.rubric import RubricResponse
 
@@ -57,7 +58,7 @@ def create_teacher(
     user, save_user = User.objects.get_or_create(username=username)
     if save_user:
         if not password:
-            password = User.objects.make_random_password()
+            password = make_random_password()
         user.first_name = first_name
         user.last_name = last_name
         user.email = email
