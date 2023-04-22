@@ -21,9 +21,14 @@ class JudgeCreateView(CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy("login")
 
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.object = None
+        self.judge_form = None
+
     def get_context_data(self, **kwargs):
         """Add the formset for Judge fields to the context."""
-        context = super(JudgeCreateView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["judge_form"] = self.get_judge_form(self.request)
         return context
 
@@ -32,8 +37,8 @@ class JudgeCreateView(CreateView):
             return JudgeCreationForm(
                 self.request.POST, self.request.FILES, prefix="judge"
             )
-        else:
-            return JudgeCreationForm(prefix="judge")
+
+        return JudgeCreationForm(prefix="judge")
 
     def post(self, request, *args, **kwargs):
         self.object = None
@@ -41,9 +46,9 @@ class JudgeCreateView(CreateView):
         judge_form = self.get_judge_form(request)
         if judge_form.is_valid():
             self.judge_form = judge_form
-            return super(JudgeCreateView, self).post(request, *args, **kwargs)
-        else:
-            return self.form_invalid(self.get_form(self.get_form_class()))
+            return super().post(request, *args, **kwargs)
+
+        return self.form_invalid(self.get_form(self.get_form_class()))
 
     @transaction.atomic
     def form_valid(self, form):

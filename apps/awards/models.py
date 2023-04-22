@@ -1,4 +1,4 @@
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -45,8 +45,7 @@ class Award(models.Model):
     def is_valid_for_instance(self, instance):
         if self.exclude_from_instance(instance):
             return self.instance_passes_all_rules(instance)
-        else:
-            return False
+        return False
 
     def instance_passes_all_rules(self, instance):
         for rule in self.awardrule_set.all():
@@ -60,17 +59,16 @@ class Award(models.Model):
 
     def num_awards_str(self):
         if self.percentage_count:
-            return "{0}%".format(self.award_count)
-        else:
-            return str(self.award_count)
+            return f"{self.award_count}%"
+        return str(self.award_count)
 
     num_awards_str.short_description = "Award Count"
 
     def get_number_to_assign(self, num_instances):
         if self.percentage_count:
             return round(num_instances * self.award_count / 100)
-        else:
-            return self.award_count
+
+        return self.award_count
 
     def delete_award_instances(self):
         self.awardinstance_set.all().delete()
@@ -84,7 +82,8 @@ class Operator(ABC):
     internal = None
     display = None
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def operate(cls, value1, value2) -> bool:
         pass
 
@@ -161,7 +160,7 @@ class Less(Operator):
 
 class AwardRule(models.Model):
     OPERATORS = (Is, IsNot, Greater, Less, In, NotIn)
-    OPERATOR_CHOICES = tuple([(op.internal, op.display) for op in OPERATORS])
+    OPERATOR_CHOICES = tuple((op.internal, op.display) for op in OPERATORS)
 
     award = models.ForeignKey(Award, on_delete=models.CASCADE)
     trait = models.CharField(max_length=50)
@@ -169,13 +168,13 @@ class AwardRule(models.Model):
     value = models.CharField(max_length=300)
 
     def __init__(self, *args, **kwargs):
-        super(AwardRule, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._operator = None
         if self.operator_name:
             self.set_operator()
 
     def __str__(self):
-        return "{0} {1} {2}".format(self.trait, self.operator.display, self.value)
+        return f"{self.trait} {self.operator.display} {self.value}"
 
     @property
     def operator(self) -> Operator:
@@ -198,8 +197,8 @@ class AwardRule(models.Model):
                 break
         else:
             raise ValueError(
-                "%s is not a valid operator. Must be one of %s"
-                % (self.operator_name, self.OPERATORS)
+                f"{self.operator_name} is not a valid operator. "
+                f"Must be one of {self.OPERATORS}"
             )
 
     def allow_instance(self, instance) -> bool:
@@ -215,7 +214,7 @@ class AwardInstance(models.Model):
 
     def __str__(self):
         try:
-            return "{0} - {1}".format(self.content_object, self.award)
+            return f"{self.content_object} - {self.award}"
         except ObjectDoesNotExist:
             return self.content_object_str()
 

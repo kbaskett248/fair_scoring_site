@@ -17,6 +17,7 @@ from apps.rubrics.models.rubric import RubricResponse
 from fair_scoring_site.logic import get_judging_rubric
 
 from .models import Project, School, Student, Teacher
+from .views import delete_judge_assignments, judge_assignment
 
 
 class ProjectResource(resources.ModelResource):
@@ -91,17 +92,17 @@ class StudentResource(resources.ModelResource):
     class TeacherForeignKeyWidget(ForeignKeyWidget):
         """Allow value formats of <last name> or <first name> <last name>."""
 
-        def clean(self, value, row=None, *args, **kwargs):
+        def clean(self, value, row=None, **kwargs):
             result = None
             try:
-                result = super().clean(value.split()[1], row, *args, **kwargs)
+                result = super().clean(value.split()[1], row, **kwargs)
             except IndexError:
                 pass
-            finally:
-                if result:
-                    return result
-                else:
-                    return super().clean(value, row, *args, **kwargs)
+
+            if result:
+                return result
+
+            return super().clean(value, row, **kwargs)
 
     first_name = fields.Field(
         attribute="first_name", column_name="first name", widget=CharWidget()
@@ -148,7 +149,7 @@ class JudgingInstanceForm(forms.ModelForm):
 
     @transaction.atomic()
     def save(self, commit=True):
-        instance = super(JudgingInstanceForm, self).save(commit=False)
+        instance = super().save(commit=False)
         response = RubricResponse.objects.create(rubric=get_judging_rubric())
         instance.response = response
         if commit:
@@ -312,8 +313,6 @@ django.contrib.auth.admin.UserAdmin.actions = [
 
 # Register your models here.
 admin.site.register(School)
-
-from .views import delete_judge_assignments, judge_assignment
 
 
 def do_judge_assignment(modeladmin, request, queryset):
