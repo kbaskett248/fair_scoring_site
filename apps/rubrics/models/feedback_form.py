@@ -201,7 +201,7 @@ class MarkdownFeedbackModule(FeedbackModule):
     def render_html(self, rubric_responses: models.QuerySet[RubricResponse]):
         return mark_safe(
             self.get_html().replace(
-                "{{ average_score }}", str(self._get_average_score(rubric_responses))
+                "{{ average_score }}", f'{self._get_average_score(rubric_responses):.2f}'
             )
         )
 
