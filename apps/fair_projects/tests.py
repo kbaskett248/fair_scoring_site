@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import call_command
 from django.test import Client, TestCase
 from django.urls import reverse
-from model_mommy import mommy
+from model_bakery import baker
 
 from apps.fair_categories.models import Category, Division, Subcategory
 from apps.fair_projects.admin import ProjectResource
@@ -39,7 +39,7 @@ from apps.rubrics.models import (
 
 
 def make_school(name: str = "Test School") -> School:
-    return mommy.make(School, name=name)
+    return baker.make(School, name=name)
 
 
 class SchoolTests(TestCase):
@@ -189,7 +189,7 @@ class InitGroupsTest(TestCase):
 
 
 def make_student(**kwargs) -> Student:
-    return mommy.make(Student, **kwargs)
+    return baker.make(Student, **kwargs)
 
 
 class StudentTests(TestCase):
@@ -206,8 +206,8 @@ def make_project(category_name: str = None, division_name: str = None, **kwargs)
             )
             kwargs["category"] = kwargs["subcategory"].category
         except ObjectDoesNotExist:
-            kwargs["category"] = mommy.make(Category, short_description=category_name)
-            kwargs["subcategory"] = mommy.make(
+            kwargs["category"] = baker.make(Category, short_description=category_name)
+            kwargs["subcategory"] = baker.make(
                 Subcategory,
                 short_description="Subcategory of %s" % category_name,
                 category=kwargs["category"],
@@ -216,8 +216,8 @@ def make_project(category_name: str = None, division_name: str = None, **kwargs)
         try:
             kwargs["division"] = Division.objects.get(short_description=division_name)
         except ObjectDoesNotExist:
-            kwargs["division"] = mommy.make(Division, short_description=division_name)
-    return mommy.make(Project, number=None, **kwargs)
+            kwargs["division"] = baker.make(Division, short_description=division_name)
+    return baker.make(Project, number=None, **kwargs)
 
 
 class ProjectTests(TestCase):
@@ -253,13 +253,13 @@ class ProjectTests(TestCase):
             self.assertEqual(project.number, number)
 
     def test_project_create(self) -> None:
-        category = mommy.make(Category, short_description="Test category")
-        subcategory = mommy.make(
+        category = baker.make(Category, short_description="Test category")
+        subcategory = baker.make(
             Subcategory,
             short_description="Subcategory of %s" % category.short_description,
             category=category,
         )
-        division = mommy.make(Division, short_description="Test division")
+        division = baker.make(Division, short_description="Test division")
         project = Project.create(
             "Test project", "abstract", category, subcategory, division
         )
@@ -321,14 +321,14 @@ class ProjectTests(TestCase):
 
 
 def make_rubric():
-    rubric = mommy.make(Rubric, name="Test Rubric")
+    rubric = baker.make(Rubric, name="Test Rubric")
     default_weight = float("{0:.3f}".format(1 / len(Question.CHOICE_TYPES)))
     for idx, question_type in enumerate(Question.available_types(), start=1):
         question_is_choice_type = question_type in Question.CHOICE_TYPES
         weight = 0
         if question_is_choice_type:
             weight = default_weight
-        question = mommy.make(
+        question = baker.make(
             Question,
             id=idx,
             rubric=rubric,
@@ -341,7 +341,7 @@ def make_rubric():
         )
         if question_is_choice_type:
             for key in range(1, 4):
-                mommy.make(
+                baker.make(
                     Choice,
                     question=question,
                     order=key,
@@ -355,7 +355,7 @@ def make_rubric_response(rubric=None):
     if not rubric:
         rubric = make_rubric()
 
-    return mommy.make(RubricResponse, rubric=rubric)
+    return baker.make(RubricResponse, rubric=rubric)
 
 
 def answer_rubric_response(rubric_response):
@@ -371,7 +371,7 @@ def answer_rubric_response(rubric_response):
 
 
 def make_judge(phone: str = "867-5309", **kwargs):
-    return mommy.make(Judge, phone=phone, **kwargs)
+    return baker.make(Judge, phone=phone, **kwargs)
 
 
 def make_judging_instance(project: Project, judge: Judge = None, rubric: Rubric = None):
@@ -389,7 +389,7 @@ class JudgingInstanceTests(TestCase):
     def setUpTestData(cls):
         cls.rubric = make_rubric()
         cls.school = make_school()
-        user = mommy.make(User, first_name="Dallas", last_name="Green")
+        user = baker.make(User, first_name="Dallas", last_name="Green")
         cls.judge = make_judge(user=user)
         cls.project = make_project(title="Test Project")
 
@@ -653,22 +653,22 @@ class TestProjectResource(TestCase):
         cls.headers = ("number", "title", "category", "subcategory", "division")
 
         cls.resource = ProjectResource()
-        cls.category = mommy.make(
+        cls.category = baker.make(
             Category, short_description="Category 1"
         )  # type: Category
-        cls.subcategory = mommy.make(
+        cls.subcategory = baker.make(
             Subcategory, short_description="Subcategory 1", category=cls.category
         )  # type: Subcategory
-        cls.division = mommy.make(
+        cls.division = baker.make(
             Division, short_description="Division 1"
         )  # type: Division
-        cls.instance = mommy.make(
+        cls.instance = baker.make(
             Project,
             category=cls.category,
             subcategory=cls.subcategory,
             division=cls.division,
         )  # type: Project
-        cls.subcategory2 = mommy.make(
+        cls.subcategory2 = baker.make(
             Subcategory, short_description="Subcategory 2", category=cls.category
         )  # type: Subcategory
 
@@ -759,7 +759,7 @@ class FeedbackFormViewTests(TestCase):
         cls.project = make_project(title="Test Project")
         cls.project.student_set.add(cls.student)
 
-        user = mommy.make(User, first_name="Dallas", last_name="Green")
+        user = baker.make(User, first_name="Dallas", last_name="Green")
         cls.judge = make_judge(user=user)
 
         cls.student_feedback_url = reverse(

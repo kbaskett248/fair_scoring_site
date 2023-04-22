@@ -14,7 +14,7 @@ from hypothesis.strategies import (
     one_of,
     text,
 )
-from model_mommy import mommy
+from model_bakery import baker
 
 from apps.awards.admin import AwardRuleForm
 from apps.awards.logic import InstanceBase
@@ -22,11 +22,11 @@ from apps.awards.models import Award, AwardRule, Greater, In, Is, IsNot, Less, N
 
 
 def make_Award(**kwargs) -> Award:
-    return mommy.make(Award, **kwargs)
+    return baker.make(Award, **kwargs)
 
 
 def make_AwardRule(**kwargs) -> AwardRule:
-    return mommy.make(AwardRule, **kwargs)
+    return baker.make(AwardRule, **kwargs)
 
 
 def sane_text(min_size: int = 0, max_size: Optional[int] = None) -> SearchStrategy:

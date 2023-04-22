@@ -1,17 +1,17 @@
-from model_mommy import mommy
+from model_bakery import baker
 
 from apps.rubrics.models.rubric import Choice, Question, Rubric
 
 
 def make_test_rubric(name: str = "Test Rubric") -> Rubric:
-    rubric = mommy.make(Rubric, name=name)
+    rubric = baker.make(Rubric, name=name)
     default_weight = float("{0:.3f}".format(1 / len(Question.CHOICE_TYPES)))
     for idx, question_type in enumerate(Question.available_types(), start=1):
         question_is_choice_type = question_type in Question.CHOICE_TYPES
         weight = 0.0
         if question_is_choice_type:
             weight = default_weight
-        question = mommy.make(
+        question = baker.make(
             Question,
             id=idx,
             rubric=rubric,
@@ -24,7 +24,7 @@ def make_test_rubric(name: str = "Test Rubric") -> Rubric:
         )
         if question_is_choice_type:
             for key in range(1, 4):
-                mommy.make(
+                baker.make(
                     Choice,
                     question=question,
                     order=key,
