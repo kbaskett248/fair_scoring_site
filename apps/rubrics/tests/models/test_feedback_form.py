@@ -293,7 +293,7 @@ class MarkdownFeedbackModuleTests(FeedbackModuleTestBase):
         response2 = make_rubric_response(self.rubric)
         answer_rubric_response(response2)
 
-        expected_html = "<h1>Average Score: 1.665</h1>"
+        expected_html = "<h1>Average Score: 1.67</h1>"
         self.assertHTMLEqual(
             module.render_html(RubricResponse.objects.all()), expected_html
         )
@@ -305,7 +305,7 @@ class MarkdownFeedbackModuleTests(FeedbackModuleTestBase):
         answer_rubric_response(response)
         make_rubric_response(self.rubric)
 
-        expected_html = "<h1>Average Score: 1.665</h1>"
+        expected_html = "<h1>Average Score: 1.67</h1>"
         self.assertHTMLEqual(
             module.render_html(RubricResponse.objects.all()), expected_html
         )
