@@ -48,3 +48,4 @@ exclude_dirs = [
 max-line-length = 88
 disable = "C0114, C0115, C0116, R0801, R0903, E0401, W0511"
 good-names = "setUpClass, setUp, assertHTMLEqual"
+ignore = "**/migrations/*.py"
