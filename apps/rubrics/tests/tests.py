@@ -112,14 +112,14 @@ class RubricTests(HypTestCase):
     def test_create_rubric(self, name: str):
         rubric = Rubric.objects.create(name=name)
         self.assertEqual(rubric.name, name)
-        self.assertQuerySetEqual(
+        self.assertQuerysetEqual(
             Rubric.objects.all(), ["<Rubric: %s>" % name], transform=repr
         )
 
     def test_create_rubric_fails_for_empty_name(self):
         with self.assertRaises(ValidationError):
             Rubric.objects.create(name="")
-        self.assertQuerySetEqual(Rubric.objects.all(), [])
+        self.assertQuerysetEqual(Rubric.objects.all(), [])
 
 
 class QuestionTests(HypTestCase):
@@ -187,7 +187,7 @@ class QuestionTests(HypTestCase):
                 Question, question_type=Question.SCALE_TYPE, rubric=self.rubric
             )
             add_choices(question)
-            self.assertQuerySetEqual(
+            self.assertQuerysetEqual(
                 question.choice_set.order_by("description").all(),
                 ["<Choice: High>", "<Choice: Low>"],
                 transform=repr,
@@ -879,7 +879,7 @@ class QuestionResponseTests(HypTestCase):
         self.assertEqual(
             rub_response.questionresponse_set.count(), num_question_responses - 1
         )
-        self.assertQuerySetEqual(
+        self.assertQuerysetEqual(
             rub_response.questionresponse_set.all(),
             [
                 "Test Rubric: Question SINGLE SELECT",

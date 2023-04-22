@@ -72,17 +72,17 @@ class TeacherTests(TestCase):
         # Teacher is correct
         self.assertIsNotNone(teacher)
         self.assertIsInstance(teacher, Teacher)
-        self.assertQuerySetEqual(Teacher.objects.all(), [teacher_repr], transform=repr)
+        self.assertQuerysetEqual(Teacher.objects.all(), [teacher_repr], transform=repr)
 
         # User is correct
         self.assertIsInstance(teacher.user, User)
-        self.assertQuerySetEqual(User.objects.all(), [user_repr], transform=repr)
+        self.assertQuerysetEqual(User.objects.all(), [user_repr], transform=repr)
         self.assertIn(self.teachers_group, teacher.user.groups.all())
         self.assertTrue(teacher.user.has_perm("fair_projects.is_teacher"))
 
         # School is correct
         self.assertIsInstance(teacher.school, School)
-        self.assertQuerySetEqual(School.objects.all(), [school_repr], transform=repr)
+        self.assertQuerysetEqual(School.objects.all(), [school_repr], transform=repr)
 
     def create_and_test_teacher(self, data_dict: OrderedDict):
         teacher = create_teacher(*list(data_dict.values()))
@@ -118,7 +118,7 @@ class TeacherTests(TestCase):
             last_name=data_dict["last_name"],
         )
         # Establish initial state
-        self.assertQuerySetEqual(
+        self.assertQuerysetEqual(
             User.objects.all(),
             ["<User: {username}>".format(**data_dict)],
             transform=repr,
@@ -136,7 +136,7 @@ class TeacherTests(TestCase):
 
         School.objects.create(name=data_dict["school"])
         # Establish initial state
-        self.assertQuerySetEqual(
+        self.assertQuerysetEqual(
             School.objects.all(),
             ["<School: {school}>".format(**data_dict)],
             transform=repr,
@@ -152,7 +152,7 @@ class InitGroupsTest(TestCase):
 
         fair_runners_group = Group.objects.get(name="Fair runners")
         self.assertIsNotNone(fair_runners_group)
-        self.assertQuerySetEqual(
+        self.assertQuerysetEqual(
             fair_runners_group.permissions.all(),
             [
                 "<Permission: auth | group | Can add group>",
@@ -168,7 +168,7 @@ class InitGroupsTest(TestCase):
 
         judges_group = Group.objects.get(name="Judges")
         self.assertIsNotNone(judges_group)
-        self.assertQuerySetEqual(
+        self.assertQuerysetEqual(
             judges_group.permissions.all(),
             ["<Permission: judges | judge | Designates this user as a judge>"],
             transform=repr,
@@ -176,7 +176,7 @@ class InitGroupsTest(TestCase):
 
         teachers_group = Group.objects.get(name="Teachers")
         self.assertIsNotNone(teachers_group)
-        self.assertQuerySetEqual(
+        self.assertQuerysetEqual(
             teachers_group.permissions.all(),
             [
                 "<Permission: fair_projects | project | Can add project>",
@@ -457,7 +457,7 @@ class TestJudgeAssignmentAndProjectScoring(TestCase):
         qs = JudgingInstance.objects.order_by("pk")
         existing_instances = map(repr, qs.all())
         assign_judges()
-        self.assertQuerySetEqual(
+        self.assertQuerysetEqual(
             qs.all(),
             existing_instances,
             transform=repr,
