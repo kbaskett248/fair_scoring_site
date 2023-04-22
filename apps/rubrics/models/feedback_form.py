@@ -199,11 +199,9 @@ class MarkdownFeedbackModule(FeedbackModule):
         return f"Markdown module ({self.order}) - {first_line}"
 
     def render_html(self, rubric_responses: models.QuerySet[RubricResponse]):
-        return mark_safe(
-            self.get_html().replace(
-                "{{ average_score }}", str(self._get_average_score(rubric_responses))
-            )
-        )
+        average_score = self._get_average_score(rubric_responses)
+        average_score = f"{average_score:.2f}" if average_score is not None else ""
+        return mark_safe(self.get_html().replace("{{ average_score }}", average_score))
 
     def _get_average_score(
         self, rubric_responses: models.QuerySet[RubricResponse]
@@ -274,7 +272,7 @@ class ScoreTableFeedbackModule(FeedbackModule):
                 rubric_response__in=rubric_responses, question__in=self.questions.all()
             )
             .select_related("question", "rubric_response")
-            .order_by("question", "question__order")
+            .order_by("question__order", "question")
         )
         question_responses = filter(
             lambda q: q.rubric_response.has_response, question_qs
