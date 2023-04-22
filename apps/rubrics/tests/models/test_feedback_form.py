@@ -280,7 +280,7 @@ class MarkdownFeedbackModuleTests(FeedbackModuleTestBase):
         make_rubric_response(self.rubric)
         make_rubric_response(self.rubric)
 
-        expected_html = "<p>None</p>"
+        expected_html = "<p></p>"
         self.assertHTMLEqual(
             module.render_html(RubricResponse.objects.all()), expected_html
         )
