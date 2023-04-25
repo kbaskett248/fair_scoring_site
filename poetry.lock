@@ -295,14 +295,14 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "django-bootstrap3"
-version = "22.2"
+version = "23.1"
 description = "Bootstrap 3 support for Django projects"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "django-bootstrap3-22.2.tar.gz", hash = "sha256:537b08748ab40a9f214968c188ae26cfeadb7987b784f2857396a33b477fa10a"},
-    {file = "django_bootstrap3-22.2-py3-none-any.whl", hash = "sha256:c128452497500188052c0e0a24fe5639ee1a26170985b8da636d8fea9114430a"},
+    {file = "django-bootstrap3-23.1.tar.gz", hash = "sha256:7095b7c66a89f3baeb78ea028799ebd795d29739fc8602460422e7c2a194ad30"},
+    {file = "django_bootstrap3-23.1-py3-none-any.whl", hash = "sha256:044ff0d34cd6a3928e0b7dc104a06b2f73e71bea237da5e9a477cc047a5d8e21"},
 ]
 
 [package.dependencies]
@@ -839,4 +839,4 @@ mysql = ["mysqlclient"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "6f38b23fae02df1f5060891f876d9b39a8fcaa1a774decfc5c758aa5fbb60a43"
+content-hash = "c6b56772a5c59d0c58b54a7676a95b089d3a5ed3797c32c9b65940719d0df010"
