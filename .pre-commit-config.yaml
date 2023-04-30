@@ -46,3 +46,9 @@ repos:
         language: system
         entry: poetry run manage.py check
         pass_filenames: false
+
+      - id: django-migrations-check
+        name: Check django migrations
+        language: system
+        entry: poetry run manage.py makemigrations --check --dry-run
+        pass_filenames: false

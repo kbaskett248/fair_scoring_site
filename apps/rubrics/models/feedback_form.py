@@ -332,7 +332,7 @@ class ChoiceResponseListFeedbackModule(FeedbackModule):
         default=True,
         help_text=(
             "If checked, the choice description is displayed in the list. Otherwise "
-            "the choice key is displayed.",
+            "the choice key is displayed."
         ),
     )
 

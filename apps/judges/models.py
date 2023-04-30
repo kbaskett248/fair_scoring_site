@@ -15,9 +15,11 @@ class PhoneField(models.CharField):
     )
 
     def __init__(self, **options):
+        vals = []
         try:
             vals = list(options["validators"])
-            vals.append(PhoneField.phone_regex)
+            if PhoneField.phone_regex not in vals:
+                vals.append(PhoneField.phone_regex)
         except KeyError:
             vals = [PhoneField.phone_regex]
         finally:
