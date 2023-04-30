@@ -45,6 +45,7 @@ exclude_dirs = [
 ]
 
 [tool.ruff]
+select = ["E", "F", "I"]
 extend-exclude = [
     "migrations"
 ]
