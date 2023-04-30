@@ -1,7 +1,7 @@
 import unittest
+from collections.abc import Callable
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Callable
 
 from django.utils import timezone
 from hypothesis import given

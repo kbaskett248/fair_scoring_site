@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from django.contrib import admin
 from django.db import models
@@ -68,7 +68,7 @@ class FeedbackModuleInline(admin.StackedInline):
     verbose_name_plural = "Add more feedback modules"
 
     def get_readonly_fields(
-        self, request: HttpRequest, obj: Optional[FeedbackModule] = ...
+        self, request: HttpRequest, obj: FeedbackModule | None = ...
     ) -> list[str] | tuple[Any, ...]:
         if self.instance:
             return ["module_type"]
@@ -81,7 +81,7 @@ class FeedbackModuleInline(admin.StackedInline):
         return qs.filter(pk__isnull=True)
 
     def get_extra(
-        self, request: HttpRequest, obj: Optional[FeedbackForm] = ..., **kwargs: Any
+        self, request: HttpRequest, obj: FeedbackForm | None = ..., **kwargs: Any
     ) -> int:
         if self.instance:
             return 0
@@ -156,7 +156,7 @@ class FreeTextListFeedbackModuleInline(FeedbackModuleInline):
 class FeedbackFormAdmin(admin.ModelAdmin):
     model = FeedbackForm
 
-    def get_inlines(self, request, obj: Optional[FeedbackForm]):
+    def get_inlines(self, request, obj: FeedbackForm | None):
         inlines = []
         if obj is not None:
             for module in obj.modules.all():

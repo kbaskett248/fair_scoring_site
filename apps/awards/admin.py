@@ -54,7 +54,7 @@ class AwardRuleForm(forms.ModelForm):
         return "validate_" + trait
 
     def clean(self):
-        cleaned_data = super(AwardRuleForm, self).clean()
+        cleaned_data = super().clean()
 
         operator_name = cleaned_data.get("operator_name", None)
         if operator_name == In.internal or operator_name == NotIn.internal:
@@ -78,8 +78,7 @@ class AwardRuleForm(forms.ModelForm):
         if (
             operator_name == In.internal or operator_name == NotIn.internal
         ) and value is not None:
-            for item in value.split(","):
-                yield item
+            yield from value.split(",")
         else:
             yield value
 

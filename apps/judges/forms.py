@@ -29,7 +29,7 @@ class UserCreationForm(UserForm):
             **kwargs: pass-through form arguments
 
         """
-        super(UserCreationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["first_name"].required = True
         self.fields["last_name"].required = True
         self.fields["email"].required = True

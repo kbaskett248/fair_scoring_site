@@ -1,6 +1,5 @@
 # pylint: disable=E1101
 
-from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -202,7 +201,7 @@ class FeedbackModuleTestBase(TestCase):
         cls.feedback_form = FeedbackForm(rubric=cls.rubric)
         cls.feedback_form.save()
 
-    def assertHTMLEqual(self, html1: str, html2: str, msg: Optional[str] = ...) -> None:
+    def assertHTMLEqual(self, html1: str, html2: str, msg: str | None = ...) -> None:
         try:
             return super().assertHTMLEqual(html1, html2, msg)
         except self.failureException as err:

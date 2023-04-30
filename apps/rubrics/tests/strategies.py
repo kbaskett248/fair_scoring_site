@@ -1,5 +1,3 @@
-from typing import Optional
-
 from hypothesis.extra.django import from_model
 from hypothesis.strategies import (
     SearchStrategy,
@@ -62,7 +60,7 @@ def questions(rubric: Rubric) -> SearchStrategy:
 
 
 def rubric_with_questions(
-    min_questions: int = 0, max_questions: Optional[int] = None
+    min_questions: int = 0, max_questions: int | None = None
 ) -> SearchStrategy:
     def add_questions(rubric: Rubric) -> SearchStrategy:
         return lists(

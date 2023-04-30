@@ -32,7 +32,7 @@ class RubricTests(HypTestCase):
 class QuestionTests(HypTestCase):
     @classmethod
     def setUpClass(cls):
-        super(QuestionTests, cls).setUpClass()
+        super().setUpClass()
         cls.rubric = create_rubric_with_questions_and_choices()
 
     def test_is_allowed_type(self):
@@ -146,7 +146,7 @@ class QuestionTests(HypTestCase):
 class ChoiceTests(TestBase):
     @classmethod
     def setUpClass(cls):
-        super(ChoiceTests, cls).setUpClass()
+        super().setUpClass()
         cls.question = baker.make(Question)  # type: Question
 
     def choice_test_with_positive_weight(self, key):

@@ -1,5 +1,6 @@
+from collections.abc import Generator, Iterable
 from itertools import groupby
-from typing import Any, Generator, Iterable, NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 import mistletoe
 from django.core.exceptions import ValidationError

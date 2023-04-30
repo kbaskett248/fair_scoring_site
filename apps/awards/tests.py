@@ -1,5 +1,4 @@
 from collections import namedtuple
-from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -29,7 +28,7 @@ def make_AwardRule(**kwargs) -> AwardRule:
     return baker.make(AwardRule, **kwargs)
 
 
-def sane_text(min_size: int = 0, max_size: Optional[int] = None) -> SearchStrategy:
+def sane_text(min_size: int = 0, max_size: int | None = None) -> SearchStrategy:
     return text(
         alphabet=[chr(i) for i in range(33, 126)],
         min_size=min_size,
@@ -37,7 +36,7 @@ def sane_text(min_size: int = 0, max_size: Optional[int] = None) -> SearchStrate
     )
 
 
-def text_lists(min_size: int = 0, max_size: Optional[int] = None) -> SearchStrategy:
+def text_lists(min_size: int = 0, max_size: int | None = None) -> SearchStrategy:
     return lists(
         elements=sane_text(),
         min_size=min_size,
@@ -318,7 +317,7 @@ class AwardRuleFormTests(HypTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(AwardRuleFormTests, cls).setUpClass()
+        super().setUpClass()
         cls.data = {"trait": "test_trait", "operator_name": "IS", "value": "Valid Data"}
 
     def get_form(self, **updated_data):

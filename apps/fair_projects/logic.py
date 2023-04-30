@@ -1,9 +1,9 @@
 import csv
 from collections import defaultdict
+from collections.abc import Generator
 from functools import reduce
 from itertools import groupby, product
 from operator import ior
-from typing import Generator
 
 from constance import config
 from django.contrib.auth.tokens import default_token_generator
@@ -274,7 +274,7 @@ def balance_judges(rubric, judge_queryset):
 
 
 def build_quotient_array(judge_queryset):
-    class Quotient(object):
+    class Quotient:
         def __init__(self, num_projects, num_judges):
             self.num_projects = num_projects
             self.num_judges = num_judges
@@ -284,7 +284,7 @@ def build_quotient_array(judge_queryset):
             return self.num_projects / self.num_judges
 
         def __str__(self):
-            return "Projects: {0}; Judges: {1}; Quotient: {2}".format(
+            return "Projects: {}; Judges: {}; Quotient: {}".format(
                 self.num_projects, self.num_judges, self.projects_per_judge
             )
 
@@ -574,4 +574,4 @@ class FeedbackQuestion:
             return None
 
     def __str__(self):
-        return "{0} responses".format(len(self.responses))
+        return f"{len(self.responses)} responses"

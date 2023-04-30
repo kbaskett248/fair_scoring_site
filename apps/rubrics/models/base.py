@@ -18,7 +18,7 @@ class ValidatedModel(models.Model):
         self.validate(**data)
         self.validate_instance(**data)
 
-        super(ValidatedModel, self).save(**kwargs)
+        super().save(**kwargs)
 
     def get_field_dict(self) -> dict:
         data = {}

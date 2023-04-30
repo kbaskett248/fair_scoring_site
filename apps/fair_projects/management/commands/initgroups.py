@@ -44,7 +44,7 @@ class Command(BaseCommand):
                     grp.permissions.add(permission)
                     self.stdout.write(
                         self.style.SUCCESS(
-                            '\tAdded Permission "%s" to Group "%s"' % (permission, grp)
+                            f'\tAdded Permission "{permission}" to Group "{grp}"'
                         )
                     )
                 else:

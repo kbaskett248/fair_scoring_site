@@ -89,7 +89,7 @@ class RubricForm(forms.Form):
     }
 
     def __init__(self, instance=None, **kwargs):
-        super(RubricForm, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.instance = instance
 
     def save(self, commit=True):
@@ -145,7 +145,7 @@ class ValidatedForm(ModelForm):
     """
 
     def clean(self):
-        cleaned_data = super(ValidatedForm, self).clean()
+        cleaned_data = super().clean()
         self._meta.model.validate(**cleaned_data)
         if self.instance:
             self.instance.validate_instance(**cleaned_data)

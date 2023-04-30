@@ -67,7 +67,7 @@ def make_test_rubric():
 class AwardRuleFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(AwardRuleFormTests, cls).setUpClass()
+        super().setUpClass()
         Category.objects.create(short_description="Category 1")
         Category.objects.create(short_description="Category 2")
 
@@ -190,14 +190,14 @@ class AssignmentTests:
         self, project: Project, judge: Judge, msg: str = None
     ) -> None:
         if not msg:
-            msg = "Project ({}) not assigned to judge ({})".format(project, judge)
+            msg = f"Project ({project}) not assigned to judge ({judge})"
         self.assertTrue(self._instance_exists(project, judge), msg)
 
     def assertProjectNotAssignedToJudge(
         self, project: Project, judge: Judge, msg: str = None
     ) -> None:
         if not msg:
-            msg = "Project ({}) assigned to judge ({})".format(project, judge)
+            msg = f"Project ({project}) assigned to judge ({judge})"
         self.assertFalse(self._instance_exists(project, judge), msg)
 
     def assertNumInstances(self, count, msg: str = None, **kwargs) -> None:
@@ -224,7 +224,7 @@ class AssignmentTests:
 class JudgeAssignmentTests(AssignmentTests, HypTestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        super(JudgeAssignmentTests, cls).setUpClass()
+        super().setUpClass()
         cls.initialize_supporting_objects()
         cls.judge = make_test_judge(
             categories=[cls.category1], divisions=[cls.division1]

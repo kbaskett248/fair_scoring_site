@@ -9,11 +9,11 @@ from apps.judges.models import JudgeEducation, JudgeFairExperience, create_judge
 
 class DefaultDictReader(csv.DictReader):
     def __init__(self, *args, defaults=None, **kwargs):
-        super(DefaultDictReader, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.defaults = defaults
 
     def __next__(self):
-        result = super(DefaultDictReader, self).__next__()
+        result = super().__next__()
         if self.defaults:
             for key, value in self.defaults.items():
                 if key not in result:
@@ -79,7 +79,7 @@ class JudgeData:
         )[0]
 
     def __str__(self) -> str:
-        return "{0} {1} ({2})".format(self.first_name, self.last_name, self.username)
+        return f"{self.first_name} {self.last_name} ({self.username})"
 
 
 class Command(BaseCommand):

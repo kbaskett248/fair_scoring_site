@@ -115,7 +115,7 @@ def create_teachers_group(
         if permission:
             group.permissions.add(permission)
             write_output(
-                '\tAdded Permission "%s" to Group "%s"' % (permission, group), "SUCCESS"
+                f'\tAdded Permission "{permission}" to Group "{group}"', "SUCCESS"
             )
         else:
             write_output("\tNo Permission named %s" % perm, "NOTICE")
@@ -260,9 +260,7 @@ class Project(models.Model):
     ):
         if not self.number:
             self.number = self.get_next_number()
-        return super(Project, self).save(
-            force_insert, force_update, using, update_fields
-        )
+        return super().save(force_insert, force_update, using, update_fields)
 
     def __str__(self):
         return self.title
@@ -322,14 +320,12 @@ class JudgingInstance(models.Model):
 
     def __init__(self, *args, **kwargs):
         rubric = kwargs.pop("rubric", None)
-        super(JudgingInstance, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if not self.response and rubric:
             self.response = RubricResponse.objects.create(rubric=rubric)
 
     def __str__(self):
-        return "{0} - {1}: {2}".format(
-            self.judge, self.project, self.response.rubric.name
-        )
+        return f"{self.judge} - {self.project}: {self.response.rubric.name}"
 
     def score(self):
         return self.response.score()

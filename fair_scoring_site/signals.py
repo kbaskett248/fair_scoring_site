@@ -1,4 +1,4 @@
-from typing import Iterator
+from collections.abc import Iterator
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist

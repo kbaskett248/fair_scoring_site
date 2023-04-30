@@ -30,7 +30,7 @@ class PhoneField(models.CharField):
         except KeyError:
             options["max_length"] = 15
 
-        super(PhoneField, self).__init__(**options)
+        super().__init__(**options)
 
 
 class JudgeFairExperience(models.Model):
@@ -108,7 +108,7 @@ class Judge(models.Model):
     def save(
         self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
-        super(Judge, self).save(
+        super().save(
             force_insert=force_insert,
             force_update=force_update,
             using=using,

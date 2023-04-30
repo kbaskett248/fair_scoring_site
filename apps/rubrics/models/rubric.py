@@ -68,7 +68,7 @@ class Question(ValidatedModel):
     def __init__(self, *args, **kwargs):
         # __init__ is run when objects are retrieved from the database
         # in addition to when they are created.
-        super(Question, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if not self.order:
             self.order = self._get_next_order()
 
@@ -239,7 +239,7 @@ class Choice(ValidatedModel):
     def __init__(self, *args, **kwargs):
         # __init__ is run when objects are retrieved from the database
         # in addition to when they are created.
-        super(Choice, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if not self.order:
             self.order = self._get_next_order()
 
@@ -289,7 +289,7 @@ class RubricResponse(models.Model):
     rubric = models.ForeignKey("Rubric", on_delete=models.CASCADE)
 
     def save(self, **kwargs):
-        super(RubricResponse, self).save(**kwargs)
+        super().save(**kwargs)
         if not self.questionresponse_set.exists():
             for ques in self.rubric.question_set.all():
                 QuestionResponse.objects.create(rubric_response=self, question=ques)
@@ -402,7 +402,7 @@ class QuestionResponse(models.Model):
         self.update_response(None)
 
 
-class QuestionType(object):
+class QuestionType:
     question = None
 
     @classmethod
@@ -412,7 +412,7 @@ class QuestionType(object):
         )
 
     def __init__(self, question: Question):
-        super(QuestionType, self).__init__()
+        super().__init__()
         self.question = question
 
     def show_choices(self):
@@ -441,7 +441,7 @@ class GenericQuestionType(QuestionType):
     pass
 
 
-class ChoiceSelectionMixin(object):
+class ChoiceSelectionMixin:
     def show_choices(self):
         return True
 
@@ -547,14 +547,10 @@ class LongTextQuestionType(QuestionType):
         response.text_response = value
 
     def score(self, response: QuestionResponse) -> float:
-        raise TypeError(
-            "Questions of type {0} cannot be scored".format(self.__class__.__name__)
-        )
+        raise TypeError(f"Questions of type {self.__class__.__name__} cannot be scored")
 
     def unweighted_score(self, response: QuestionResponse) -> float:
-        raise TypeError(
-            "Questions of type {0} cannot be scored".format(self.__class__.__name__)
-        )
+        raise TypeError(f"Questions of type {self.__class__.__name__} cannot be scored")
 
 
 QUESTION_TYPE_DICT = {

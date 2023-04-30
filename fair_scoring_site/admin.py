@@ -30,7 +30,7 @@ def assign_awards_to_projects(modeladmin, request, queryset):
             messages.add_message(
                 request,
                 messages.INFO,
-                "Assigned {0} to {1}".format(instance.awards_str, instance.project),
+                f"Assigned {instance.awards_str} to {instance.project}",
             )
     messages.add_message(request, messages.INFO, "Awards assigned")
 
@@ -206,7 +206,7 @@ class ProjectAwardFormset(BaseGenericInlineFormSet):
     model = AwardInstance
 
     def clean(self):
-        super(ProjectAwardFormset, self).clean()
+        super().clean()
 
         try:
             project_instance = ProjectInstance(self.instance)

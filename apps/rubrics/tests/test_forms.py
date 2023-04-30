@@ -1,5 +1,3 @@
-from typing import Optional
-
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_bakery import baker
@@ -11,7 +9,7 @@ from apps.rubrics.models.rubric import Choice, Question, Rubric
 class QuestionFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(QuestionFormTests, cls).setUpClass()
+        super().setUpClass()
         cls.rubric = baker.make(Rubric)  # type: Rubric
         cls.data = {
             "rubric": cls.rubric.pk,
@@ -29,7 +27,7 @@ class QuestionFormTests(TestCase):
         cls.question = Question.objects.create(**data)  # type: Question
 
     def get_test_data_and_form(
-        self, updated_data: dict, instance: Optional[Question] = None
+        self, updated_data: dict, instance: Question | None = None
     ) -> tuple:
         data = self.data.copy()
         if updated_data:
@@ -37,7 +35,7 @@ class QuestionFormTests(TestCase):
         form = QuestionForm(data, instance=instance)
         return data, form
 
-    def success_test(self, instance: Optional[Question] = None, **updated_data):
+    def success_test(self, instance: Question | None = None, **updated_data):
         data, form = self.get_test_data_and_form(updated_data, instance=instance)
         self.assertTrue(form.is_valid())
         question = form.save(commit=False)
@@ -47,7 +45,7 @@ class QuestionFormTests(TestCase):
             else:
                 self.assertEqual(value, getattr(question, key, None))
 
-    def failed_test(self, instance: Optional[Question] = None, **updated_data):
+    def failed_test(self, instance: Question | None = None, **updated_data):
         _, form = self.get_test_data_and_form(updated_data, instance=instance)
         self.assertFalse(form.is_valid())
         with self.assertRaises(ValueError):

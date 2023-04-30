@@ -194,7 +194,7 @@ def make_student(**kwargs) -> Student:
 class StudentTests(TestCase):
     def test_str(self, first_name: str = "Diana", last_name: str = "Prince"):
         student = make_student(first_name=first_name, last_name=last_name)
-        self.assertEqual(str(student), "{0} {1}".format(first_name, last_name))
+        self.assertEqual(str(student), f"{first_name} {last_name}")
 
 
 def make_project(category_name: str = None, division_name: str = None, **kwargs):
@@ -330,7 +330,7 @@ class ProjectTests(TestCase):
 
 def make_rubric():
     rubric = baker.make(Rubric, name="Test Rubric")
-    default_weight = float("{0:.3f}".format(1 / len(Question.CHOICE_TYPES)))
+    default_weight = float(f"{1 / len(Question.CHOICE_TYPES):.3f}")
     for idx, question_type in enumerate(Question.available_types(), start=1):
         question_is_choice_type = question_type in Question.CHOICE_TYPES
         weight = 0
