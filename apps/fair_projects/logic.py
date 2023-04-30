@@ -347,8 +347,8 @@ def median_value(queryset, term):
 def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
     # print(judge)
     num_to_reassign = judge.num_projects - lower_bound
-    cat_Q = reduce(ior, (Q(categories=cat) for cat in judge.categories.all()))
-    div_Q = reduce(ior, (Q(divisions=div) for div in judge.divisions.all()))
+    cat_q = reduce(ior, (Q(categories=cat) for cat in judge.categories.all()))
+    div_q = reduce(ior, (Q(divisions=div) for div in judge.divisions.all()))
     # print(num_to_reassign)
 
     def sort_value(judging_instance):
@@ -369,7 +369,7 @@ def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
 
                 if num_to_reassign <= 0:
                     break
-                elif not possible_judges.filter(cat_Q, div_Q).exists():
+                elif not possible_judges.filter(cat_q, div_q).exists():
                     break
 
 

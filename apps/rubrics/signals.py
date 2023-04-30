@@ -6,7 +6,7 @@ from .models.rubric import Choice, Question, QuestionResponse, RubricResponse
 
 
 @receiver(post_save, sender=Question)
-def createRelatedQuestionResponses(
+def create_related_question_responses(
     sender: type, instance: Question, created: bool, **kwargs
 ) -> None:
     """When saving a question, make sure there is a QuestionResponse for all
@@ -54,7 +54,7 @@ def get_rubric_response_set_related_to_question(question_id) -> set:
 
 
 @receiver(post_save, sender=Question)
-def clearResponsesForQuestion(
+def clear_responses_for_question(
     sender: type, instance: Question, created: bool, **kwargs
 ) -> None:
     """If a question type changes, delete the response from all associated
@@ -83,7 +83,7 @@ def delete_related_responses(question_id):
 
 @receiver(post_save, sender=Choice)
 @receiver(post_delete, sender=Choice)
-def clearResponsesForChoice(sender: type, instance: Choice, **kwargs) -> None:
+def clear_responses_for_choice(sender: type, instance: Choice, **kwargs) -> None:
     """When saving or deletting a Choice, delete the response from all associated
     QuestionResponse objects.
 
