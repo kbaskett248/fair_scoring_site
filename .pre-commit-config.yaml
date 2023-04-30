@@ -43,3 +43,4 @@ repos:
     hooks:
       - id: ruff
         name: Lint python code with ruff
+        args: ["--fix", "--show-fixes"]
