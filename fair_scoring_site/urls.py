@@ -24,8 +24,10 @@ from apps.fair_projects.views import (
 )
 
 # We need to load the admin and signals here, otherwise they will not be loaded
-from . import admin  # noqa: F401
-from . import signals  # noqa: F401
+from . import (
+    admin,  # noqa: F401
+    signals,  # noqa: F401
+)
 from .views import home, profile
 
 urlpatterns = [
