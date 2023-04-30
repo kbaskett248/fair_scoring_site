@@ -17,9 +17,10 @@ class Command(BaseCommand):
             "--password",
             type=str,
             help=(
-                "Password to assign to each teacher. This value will override any password stored "
-                "in the input file. If no password is specified here, and no password is stored "
-                "in the input file, then a random password is assigned."
+                "Password to assign to each teacher. This value will override any "
+                "password stored in the input file. If no password is specified here, "
+                "and no password is stored in the input file, then a random password "
+                "is assigned."
             ),
         )
         parser.add_argument(
@@ -27,8 +28,8 @@ class Command(BaseCommand):
             "--email",
             type=str,
             help=(
-                "Email to assign to each teacher. This will override any email stored in the input "
-                "file. Useful for setting up test teachers."
+                "Email to assign to each teacher. This will override any email stored "
+                "in the input file. Useful for setting up test teachers."
             ),
         )
 

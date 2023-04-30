@@ -133,7 +133,7 @@ class AwardRuleTests(HypTestCase):
     @given(text(min_size=1, max_size=20))
     def test_operator_raises_error_with_invalid_operator_name(self, operator_name):
         with self.assertRaises(ValueError):
-            rule = make_AwardRule(operator_name=operator_name)
+            make_AwardRule(operator_name=operator_name)
 
     def test_operator_is_Operator_instance(self):
         for op in AwardRule.OPERATORS:

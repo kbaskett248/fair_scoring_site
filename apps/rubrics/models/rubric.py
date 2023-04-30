@@ -181,7 +181,8 @@ class Question(ValidatedModel):
 
         if not cls.is_allowed_type(question_type):
             raise ValidationError(
-                "Question_type was %(question_type)s. Should be one of %(available_types)s.",
+                "Question_type was %(question_type)s. "
+                "Should be one of %(available_types)s.",
                 code="invalid question type",
                 params={
                     "question_type": question_type,
@@ -336,7 +337,11 @@ class RubricResponse(models.Model):
 
     def question_answer_iter(self):
         for resp in self.ordered_questionresponse_set.select_related("question").all():
-            yield resp.question.question_type, resp.question.description(), resp.response_external()
+            yield (
+                resp.question.question_type,
+                resp.question.description(),
+                resp.response_external(),
+            )
 
     def get_form_data(self):
         return {

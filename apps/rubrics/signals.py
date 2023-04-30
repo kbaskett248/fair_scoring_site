@@ -1,5 +1,3 @@
-from functools import reduce
-
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -11,7 +9,8 @@ from .models.rubric import Choice, Question, QuestionResponse, RubricResponse
 def createRelatedQuestionResponses(
     sender: type, instance: Question, created: bool, **kwargs
 ) -> None:
-    """When saving a question, make sure there is a QuestionResponse for all RubricResponse objects
+    """When saving a question, make sure there is a QuestionResponse for all
+    RubricResponse objects.
 
     New QuestionResponse instances are created using bulk_create. This doesn't
     call save and doesn't trigger pre_save or post_save hooks.

@@ -81,11 +81,10 @@ class FeedbackForm(models.Model):
         ) -> QuerySet["FeedbackForm"]:
             """
             Args:
-                rubric_responses (QuerySet[RubricResponse]): a queryset of rubric responses
+                rubric_responses: a queryset of rubric responses
 
             Returns:
-                QuerySet[RubricResponse]: a queryset of FeedbackForms for the
-                    given queryset of RubricResponses
+                a queryset of FeedbackForms for the given queryset of RubricResponses
             """
             rubric_set = set(rubric_responses.values_list("rubric__id", flat=True))
             return self.get_queryset().filter(rubric__in=rubric_set)
@@ -93,7 +92,9 @@ class FeedbackForm(models.Model):
         def render_html_for_responses(
             self, rubric_responses: QuerySet[RubricResponse]
         ) -> Generator["FeedbackForm.FeedbackFormContext", None, None]:
-            """Render html for each feedback form associated with the rubric responses."""
+            """
+            Render html for each feedback form associated with the rubric responses.
+            """
             for feedback_form in self.for_rubric_responses(rubric_responses):
                 yield FeedbackForm.FeedbackFormContext(
                     feedback_form, feedback_form.render_html(rubric_responses)
@@ -179,15 +180,18 @@ class MarkdownFeedbackModule(FeedbackModule):
     )
     content = MarkdownField(
         default="# Heading 1\n\nWrite content here",
-        help_text="You may include <code>{{ average_score }}</code> in the text. It will be replaced by the average score for the project.",
+        help_text=(
+            "You may include <code>{{ average_score }}</code> in the text. It will be "
+            "replaced by the average score for the project."
+        ),
     )
 
     def get_html(self):
         return self._meta.get_field("content").value_to_html(self)
 
     def __str__(self):
-        l = min(50, self.content.find("\n"))
-        first_line = self.content[:l]
+        _length = min(50, self.content.find("\n"))
+        first_line = self.content[:_length]
         return f"Markdown module ({self.order}) - {first_line}"
 
     def render_html(self, rubric_responses: models.QuerySet[RubricResponse]):
@@ -284,9 +288,15 @@ class ScoreTableFeedbackModule(FeedbackModule):
         long_description = question.long_description
 
         if self.use_weighted_scores:
-            get_score = lambda resp: resp.score()
+
+            def get_score(resp):
+                return resp.score()
+
         else:
-            get_score = lambda resp: resp.unweighted_score()
+
+            def get_score(resp):
+                return resp.unweighted_score()
+
         scores = map(get_score, question_responses)
 
         if self.remove_empty_scores:
@@ -320,15 +330,19 @@ class ChoiceResponseListFeedbackModule(FeedbackModule):
     display_description = models.BooleanField(
         "Display description",
         default=True,
-        help_text="If checked, the choice description is displayed in the list. Otherwise the choice key is displayed.",
+        help_text=(
+            "If checked, the choice description is displayed in the list. Otherwise "
+            "the choice key is displayed.",
+        ),
     )
 
     remove_duplicates = models.BooleanField(
         "Remove duplicates",
         default=True,
         help_text=(
-            "If checked, response choices will only be displayed once, regardless of how many times the response is chosen. "
-            "Otherwise, choices will be listed once for each time they are chosen."
+            "If checked, response choices will only be displayed once, regardless of "
+            "how many times the response is chosen. Otherwise, choices will be listed "
+            "once for each time they are chosen."
         ),
     )
 

@@ -1,3 +1,4 @@
+# ruff: noqa: F405
 """
 Django settings for fair_scoring_site project.
 
@@ -10,7 +11,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 
-from .settings_common import *
+from .settings_common import *  # noqa: F403
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/

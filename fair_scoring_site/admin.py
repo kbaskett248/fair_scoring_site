@@ -13,12 +13,9 @@ import apps.awards.admin
 import apps.fair_projects
 from apps.awards.logic import InstanceBase, assign_awards
 from apps.awards.models import Award, AwardInstance
-from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
+from apps.fair_categories.models import Category, Division, Subcategory
 from apps.fair_projects.logic import get_projects_sorted_by_score
-from apps.fair_projects.models import Project, Student
-
-# This seems like a safe place to register signals
-from . import signals
+from apps.fair_projects.models import Project
 
 admin.site.unregister(Project)
 admin.site.unregister(Award)

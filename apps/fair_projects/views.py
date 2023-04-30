@@ -1,6 +1,6 @@
 import functools
 import logging
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from typing import Any
 
 from django.contrib import messages
@@ -281,9 +281,8 @@ class SpecificUserRequiredMixin(AccessMixin):
 
     def get_required_user(self, *args, **kwargs):
         raise NotImplementedError(
-            "{0} is missing the implementation of the get_user_from_path() method.".format(
-                self.__class__.__name__
-            )
+            f"{self.__class__.__name__} is missing the implementation of the "
+            "get_user_from_path() method."
         )
 
     def dispatch(self, request, *args, **kwargs):

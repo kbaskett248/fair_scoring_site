@@ -252,7 +252,8 @@ class JudgeAssignmentTests(AssignmentTests, HypTestCase):
         project.save()
         self.assertOnlyOneJudgingInstance(project, self.judge)
 
-    # An existing judge is not assigned to a new project if the category and division do not match
+    # An existing judge is not assigned to a new project if the category and division
+    # do not match
     def test_judge_not_assigned_for_mismatched_category(self):
         project = make_test_project(self.subcategory2, self.division1)
         self.assertProjectNotAssignedToJudge(project, self.judge)
@@ -322,7 +323,8 @@ class ProjectAssignmentTests(AssignmentTests, HypTransTestCase):
         judge.save()
         self.assertOnlyOneJudgingInstance(self.project, judge)
 
-    # An existing project is not assigned to a new judge if the category and division do not match
+    # An existing project is not assigned to a new judge if the category and division
+    # do not match
     def test_project_not_assigned_for_mismatched_category(self):
         judge = make_test_judge(categories=[self.category2], divisions=[self.division1])
         self.assertProjectNotAssignedToJudge(self.project, judge)

@@ -106,7 +106,7 @@ class AwardInstanceInline(admin.TabularInline):
     exclude = ("content_type", "object_id")
     readonly_fields = ("content_object_str",)
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request, obj=None):
         return False
 
 

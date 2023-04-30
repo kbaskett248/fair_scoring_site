@@ -1,7 +1,7 @@
 import csv
 from collections import defaultdict
 from functools import reduce
-from itertools import filterfalse, groupby, product
+from itertools import groupby, product
 from operator import ior
 from typing import Generator
 
@@ -168,25 +168,32 @@ def assign_judges():
     #    1. Search for projects with fewer than the minimum number of judges.
     #    2. For each project:
     #       1. Determine the number of judges the project needs.
-    #       2. Search for judges that can judge the project's category and division, sorted by the number of projects
-    #          ascending. Get the number of judges needed for the project.
+    #       2. Search for judges that can judge the project's category and division,
+    #          sorted by the number of projects ascending.
+    #          Get the number of judges needed for the project.
     #       3. Assign the judges to the project
 
     # 2. Switch projects from judges that have too many projects
-    #    1. Count the number of projects in each category division group, the number of judges that can judge that
+    #    1. Count the number of projects in each category division group,
+    #       the number of judges that can judge that
     #       category and division, and calculate their quotient.
     #    2. Compute the median and average number of projects assigned to all judges.
-    #    3. Compute the max of the median, average and minimum number of projects per judge.
+    #    3. Compute the max of the median, average and minimum number of projects per
+    #       judge.
     #    4. Search for judges that have more than this number of projects assigned
     #    5. For each judge:
-    #       1. Compute the number of projects needed to bring the judge down to the number computed above
+    #       1. Compute the number of projects needed to bring the judge down to the
+    #          number computed above
     #       2. Get a list of the projects for this judge that don't have any responses.
     #       3. Sort the projects by the quotient computed in step 1.
-    #       4. Loop through each project until the necessary number of projects have been removed or there are no
+    #       4. Loop through each project until the necessary number of projects have
+    #          been removed or there are no
     #          judges available to take the projects.
-    #          1. Search for judges that could be assigned the project and sort by number of projects, filtered by
-    #             judges that have fewer than the number computed above.
-    #          2. Remove the project from the first judge and assign it to the new judge.
+    #          1. Search for judges that could be assigned the project and sort by
+    #             number of projects, filtered by judges that have fewer than the number
+    #             computed above.
+    #          2. Remove the project from the first judge and assign it to the new
+    #             judge.
 
     rubric = get_judging_rubric()
     delete_instances_for_inactive_judges(rubric)
@@ -388,7 +395,6 @@ def get_available_judge(project, rubric, possible_judges):
 
 @transaction.atomic()
 def reassign_project(judging_instance, to_judge):
-    # print("Reassigning {0} from {1} to {2}".format(judging_instance.project.number, judging_instance.judge, to_judge))
     new_instance = create_judging_instance(
         to_judge, judging_instance.project, judging_instance.response.rubric
     )

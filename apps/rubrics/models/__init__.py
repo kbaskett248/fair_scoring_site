@@ -7,3 +7,17 @@ from .feedback_form import (
     ScoreTableFeedbackModule,
 )
 from .rubric import Choice, Question, QuestionResponse, Rubric, RubricResponse
+
+__all__ = [
+    ChoiceResponseListFeedbackModule,
+    FeedbackForm,
+    FeedbackModule,
+    FreeTextListFeedbackModule,
+    MarkdownFeedbackModule,
+    ScoreTableFeedbackModule,
+    Choice,
+    Question,
+    QuestionResponse,
+    Rubric,
+    RubricResponse,
+]
