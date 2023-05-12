@@ -27,7 +27,7 @@ class MarkdownField(models.TextField):
     def validate_markdown(value):
         try:
             mistletoe.markdown(value)
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             raise ValidationError(err)
 
     def value_to_html(self, obj: models.Model) -> str:
