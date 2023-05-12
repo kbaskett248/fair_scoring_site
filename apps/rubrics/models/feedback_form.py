@@ -44,7 +44,7 @@ class FeedbackForm(models.Model):
 
     rubric = models.ForeignKey("Rubric", on_delete=models.CASCADE)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Feedback Form for {self.rubric.name}"
 
     def get_typed_modules(self) -> Generator["FeedbackModule", None, None]:
@@ -190,7 +190,7 @@ class MarkdownFeedbackModule(FeedbackModule):
     def get_html(self):
         return self._meta.get_field("content").value_to_html(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         _length = min(50, self.content.find("\n"))
         first_line = self.content[:_length]
         return f"Markdown module ({self.order}) - {first_line}"
@@ -198,7 +198,7 @@ class MarkdownFeedbackModule(FeedbackModule):
     def render_html(self, rubric_responses: models.QuerySet[RubricResponse]):
         average_score = self._get_average_score(rubric_responses)
         average_score = f"{average_score:.2f}" if average_score is not None else ""
-        return mark_safe(  # nosec
+        return mark_safe(  # noqa: S308
             self.get_html().replace("{{ average_score }}", average_score)
         )
 

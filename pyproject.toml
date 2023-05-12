@@ -33,21 +33,15 @@ mysql = ["mysqlclient"]
 python_files = "tests.py test_*.py *_tests.py"
 DJANGO_SETTINGS_MODULE = "fair_scoring_site.settings_test"
 
-[tool.bandit]
-exclude_dirs = [
-    "apps/**/tests",
-    "apps/**/tests.py",
-    "fair_scoring_site/settings_test.py",
-    "fair_scoring_site/settings_dev.py",
-]
-
 [tool.ruff]
-select = ["E", "F", "I", "N", "UP"]
+select = ["E", "F", "I", "N", "UP", "YTT", "S"]
 extend-exclude = [
     "migrations"
 ]
 ignore-init-module-imports = true
 
 [tool.ruff.per-file-ignores]
-"test*.py" = ["N"]
-"**/tests/**/*.py" = ["N"]
+"test*.py" = ["N", "S"]
+"**/tests/**/*.py" = ["N", "S"]
+"fair_scoring_site/settings_test.py" = ["S"]
+"fair_scoring_site/settings_dev.py" = ["S"]
