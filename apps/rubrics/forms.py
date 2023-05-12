@@ -92,7 +92,7 @@ class RubricForm(forms.Form):
         super().__init__(**kwargs)
         self.instance = instance
 
-    def save(self, commit=True):
+    def save(self, commit=True):  # noqa: FBT002
         updated_data = {
             int(key.replace("question_", "")): self.cleaned_data[key]
             for key in self.changed_data

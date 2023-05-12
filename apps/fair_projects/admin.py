@@ -148,7 +148,7 @@ class JudgingInstanceForm(forms.ModelForm):
         fields = ("judge",)
 
     @transaction.atomic()
-    def save(self, commit=True):
+    def save(self, commit=True):  # noqa: FBT002
         instance = super().save(commit=False)
         response = RubricResponse.objects.create(rubric=get_judging_rubric())
         instance.response = response

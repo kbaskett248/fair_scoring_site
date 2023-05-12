@@ -106,7 +106,11 @@ class Judge(models.Model):
         return self.user.first_name + " " + self.user.last_name
 
     def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
+        self,
+        force_insert=False,  # noqa: FBT002
+        force_update=False,  # noqa: FBT002
+        using=None,
+        update_fields=None,
     ):
         super().save(
             force_insert=force_insert,
@@ -131,7 +135,7 @@ def create_judge(
     categories,
     divisions,
     password=None,
-    has_device=True,
+    has_device=True,  # noqa: FBT002
     output_stream=None,
 ):
     def write_output(message):

@@ -7,7 +7,7 @@ from .models.rubric import Choice, Question, QuestionResponse, RubricResponse
 
 @receiver(post_save, sender=Question)
 def create_related_question_responses(
-    sender: type, instance: Question, created: bool, **kwargs
+    sender: type, instance: Question, created: bool, **kwargs  # noqa: FBT001
 ) -> None:
     """When saving a question, make sure there is a QuestionResponse for all
     RubricResponse objects.
@@ -55,7 +55,7 @@ def get_rubric_response_set_related_to_question(question_id) -> set:
 
 @receiver(post_save, sender=Question)
 def clear_responses_for_question(
-    sender: type, instance: Question, created: bool, **kwargs
+    sender: type, instance: Question, created: bool, **kwargs  # noqa: FBT001
 ) -> None:
     """If a question type changes, delete the response from all associated
     QuestionResponse objects.

@@ -402,7 +402,7 @@ def reassign_project(judging_instance, to_judge):
     return new_instance
 
 
-def email_teachers(site_name, domain, use_https=False):
+def email_teachers(site_name, domain, *, use_https=False):
     messages = []
     context = {
         "domain": domain,

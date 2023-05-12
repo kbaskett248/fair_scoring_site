@@ -256,7 +256,11 @@ class Project(models.Model):
             return str(1001)
 
     def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
+        self,
+        force_insert=False,  # noqa: FBT002
+        force_update=False,  # noqa: FBT002
+        using=None,
+        update_fields=None,
     ):
         if not self.number:
             self.number = self.get_next_number()

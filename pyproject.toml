@@ -34,14 +34,14 @@ python_files = "tests.py test_*.py *_tests.py"
 DJANGO_SETTINGS_MODULE = "fair_scoring_site.settings_test"
 
 [tool.ruff]
-select = ["E", "F", "I", "N", "UP", "YTT", "S", "BLE"]
+select = ["E", "F", "I", "N", "UP", "YTT", "S", "BLE", "FBT"]
 extend-exclude = [
     "migrations"
 ]
 ignore-init-module-imports = true
 
 [tool.ruff.per-file-ignores]
-"test*.py" = ["N", "S"]
-"**/tests/**/*.py" = ["N", "S"]
+"test*.py" = ["N", "S", "FBT"]
+"**/tests/**/*.py" = ["N", "S", "FBT"]
 "fair_scoring_site/settings_test.py" = ["S"]
 "fair_scoring_site/settings_dev.py" = ["S"]
