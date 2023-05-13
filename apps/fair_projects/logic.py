@@ -76,7 +76,6 @@ class ProjectData:
 
     def __init__(self, **kwargs):
         self.row_data = kwargs
-        print(self.row_data)
         self.title = self.row_data["Title"]
         self.abstract = self.row_data.get("Abstract", "")
 
