@@ -55,10 +55,8 @@ class Judge(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     phone = PhoneField()
     has_device = models.BooleanField(
-        verbose_name=(
-            "Do you have a smartphone or tablet to use during fair " "judging?"
-        ),
-        help_text=("This device will be used with our electronic judging " "system."),
+        verbose_name=("Do you have a smartphone or tablet to use during fair judging?"),
+        help_text=("This device will be used with our electronic judging system."),
     )
 
     education = models.ForeignKey(
