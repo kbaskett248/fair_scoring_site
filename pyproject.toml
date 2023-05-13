@@ -34,7 +34,7 @@ python_files = "tests.py test_*.py *_tests.py"
 DJANGO_SETTINGS_MODULE = "fair_scoring_site.settings_test"
 
 [tool.ruff]
-select = ["E", "F", "I", "N", "UP", "YTT", "S", "BLE", "FBT", "B", "A", "COM", "C4", "DTZ"]
+select = ["E", "F", "I", "N", "UP", "YTT", "S", "BLE", "FBT", "B", "A", "COM", "C4", "DTZ", "T10"]
 extend-exclude = [
     "migrations"
 ]
