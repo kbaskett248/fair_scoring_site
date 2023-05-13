@@ -35,7 +35,7 @@ class PhoneField(models.CharField):
 
 class JudgeFairExperience(models.Model):
     short_description = models.CharField(max_length=100)
-    long_description = models.TextField(null=True, blank=True)
+    long_description = models.TextField(blank=True, default="")
 
     def __str__(self):
         return self.short_description
@@ -43,7 +43,7 @@ class JudgeFairExperience(models.Model):
 
 class JudgeEducation(models.Model):
     short_description = models.CharField(max_length=100)
-    long_description = models.TextField(null=True, blank=True)
+    long_description = models.TextField(blank=True, default="")
 
     def __str__(self):
         return self.short_description
@@ -92,15 +92,15 @@ class Judge(models.Model):
         verbose_name="Which division(s) do you prefer to judge?",
     )
 
-    class Meta:
-        permissions = (("is_judge", "Designates this user as a judge"),)
-        ordering = ("user__last_name", "user__first_name")
-
     class WithUserManager(models.Manager):
         def get_queryset(self):
             return super().get_queryset().select_related("user")
 
     objects = WithUserManager()
+
+    class Meta:
+        permissions = (("is_judge", "Designates this user as a judge"),)
+        ordering = ("user__last_name", "user__first_name")
 
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name

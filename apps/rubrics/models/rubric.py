@@ -54,8 +54,8 @@ class Question(ValidatedModel):
     rubric = models.ForeignKey("Rubric", on_delete=models.CASCADE)
     order = models.PositiveSmallIntegerField(null=True, blank=True)
     short_description = models.CharField(max_length=200)
-    long_description = models.TextField(null=True, blank=True)
-    help_text = models.TextField(null=True, blank=True)
+    long_description = models.TextField(blank=True)
+    help_text = models.TextField(blank=True)
     weight = models.DecimalField(max_digits=4, decimal_places=3, null=True)
     question_type = models.CharField(max_length=20, choices=TYPES)
     choice_sort = models.CharField(
@@ -288,6 +288,9 @@ class Choice(ValidatedModel):
 class RubricResponse(models.Model):
     rubric = models.ForeignKey("Rubric", on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"Response for {self.rubric}"
+
     def save(self, **kwargs):
         super().save(**kwargs)
         if not self.questionresponse_set.exists():
@@ -360,8 +363,10 @@ class RubricResponse(models.Model):
 class QuestionResponse(models.Model):
     rubric_response = models.ForeignKey("RubricResponse", on_delete=models.CASCADE)
     question = models.ForeignKey("Question", on_delete=models.CASCADE)
-    choice_response = models.CharField(max_length=20, null=True, blank=True)
-    text_response = models.TextField(null=True, blank=True)
+    choice_response = models.CharField(  # noqa: DJ001
+        max_length=20, null=True, blank=True
+    )
+    text_response = models.TextField(null=True, blank=True)  # noqa: DJ001
     last_submitted = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
@@ -523,6 +528,8 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
             return self.unweighted_score(response) * weight
 
     def unweighted_score(self, response: QuestionResponse) -> float:
+        if not response.text_response:
+            return 0.0
         responses = json.loads(response.text_response)
         value = 0.0
         for x in responses:

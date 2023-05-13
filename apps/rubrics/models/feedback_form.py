@@ -42,32 +42,6 @@ class FeedbackForm(models.Model):
         form: "FeedbackForm"
         html: SafeString
 
-    rubric = models.ForeignKey("Rubric", on_delete=models.CASCADE)
-
-    def __str__(self) -> str:
-        return f"Feedback Form for {self.rubric.name}"
-
-    def get_typed_modules(self) -> Generator["FeedbackModule", None, None]:
-        for module in self.modules.all():
-            yield module.get_typed_module()
-
-    def get_template(self) -> str:
-        return self.TEMPLATE
-
-    def get_context(
-        self, rubric_responses: models.QuerySet[RubricResponse]
-    ) -> dict[str, Any]:
-        return {
-            "modules": [
-                module.render_html(rubric_responses)
-                for module in self.get_typed_modules()
-            ]
-        }
-
-    def render_html(self, rubric_responses: models.QuerySet[RubricResponse]) -> str:
-        rubric_responses = rubric_responses.filter(rubric=self.rubric)
-        return render_to_string(self.get_template(), self.get_context(rubric_responses))
-
     class FeedbackFormManager(models.Manager):
         def get_queryset(self) -> QuerySet["FeedbackForm"]:
             return (
@@ -101,7 +75,33 @@ class FeedbackForm(models.Model):
                     feedback_form, feedback_form.render_html(rubric_responses)
                 )
 
+    rubric = models.ForeignKey("Rubric", on_delete=models.CASCADE)
+
     objects = FeedbackFormManager()
+
+    def __str__(self) -> str:
+        return f"Feedback Form for {self.rubric.name}"
+
+    def get_typed_modules(self) -> Generator["FeedbackModule", None, None]:
+        for module in self.modules.all():
+            yield module.get_typed_module()
+
+    def get_template(self) -> str:
+        return self.TEMPLATE
+
+    def get_context(
+        self, rubric_responses: models.QuerySet[RubricResponse]
+    ) -> dict[str, Any]:
+        return {
+            "modules": [
+                module.render_html(rubric_responses)
+                for module in self.get_typed_modules()
+            ]
+        }
+
+    def render_html(self, rubric_responses: models.QuerySet[RubricResponse]) -> str:
+        rubric_responses = rubric_responses.filter(rubric=self.rubric)
+        return render_to_string(self.get_template(), self.get_context(rubric_responses))
 
 
 class FeedbackModule(ValidatedModel):

@@ -132,19 +132,19 @@ class Student(models.Model):
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     teacher = models.ForeignKey(Teacher, on_delete=models.PROTECT)
     grade_level = models.PositiveSmallIntegerField()
-    email = models.EmailField(null=True, blank=True)
+    email = models.EmailField(blank=True, default="")
     project = models.ForeignKey("Project", on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        ordering = ("last_name", "first_name")
+
+    def __str__(self):
+        return self.full_name
 
     @property
     def full_name(self) -> str:
         """str: Getter for full_name"""
         return self.first_name + " " + self.last_name
-
-    def __str__(self):
-        return self.full_name
-
-    class Meta:
-        ordering = ("last_name", "first_name")
 
 
 def create_student(
@@ -239,6 +239,23 @@ class Project(models.Model):
     class Meta:
         permissions = (("can_view_results", "Can view project results"),)
 
+    def __str__(self):
+        return self.title
+
+    def save(
+        self,
+        force_insert=False,  # noqa: FBT002
+        force_update=False,  # noqa: FBT002
+        using=None,
+        update_fields=None,
+    ):
+        if not self.number:
+            self.number = self.get_next_number()
+        return super().save(force_insert, force_update, using, update_fields)
+
+    def get_absolute_url(self):
+        return reverse("fair_projects:detail", args=(self.number,))
+
     def get_next_number(self):
         def get_max(qs: QuerySet) -> int:
             return qs.aggregate(models.Max("number"))["number__max"]
@@ -255,20 +272,6 @@ class Project(models.Model):
         else:
             return str(1001)
 
-    def save(
-        self,
-        force_insert=False,  # noqa: FBT002
-        force_update=False,  # noqa: FBT002
-        using=None,
-        update_fields=None,
-    ):
-        if not self.number:
-            self.number = self.get_next_number()
-        return super().save(force_insert, force_update, using, update_fields)
-
-    def __str__(self):
-        return self.title
-
     def average_score(self) -> float:
         _sum = 0
         _count = 0
@@ -284,9 +287,6 @@ class Project(models.Model):
 
     def num_scores(self) -> int:
         return len([ji for ji in self.judginginstance_set.all() if ji.has_response()])
-
-    def get_absolute_url(self):
-        return reverse("fair_projects:detail", args=(self.number,))
 
     def student_str(self):
         return ", ".join(str(student) for student in self.student_set.all())
@@ -322,29 +322,6 @@ class JudgingInstance(models.Model):
     )
     locked = models.BooleanField(default=False)
 
-    def __init__(self, *args, **kwargs):
-        rubric = kwargs.pop("rubric", None)
-        super().__init__(*args, **kwargs)
-        if not self.response and rubric:
-            self.response = RubricResponse.objects.create(rubric=rubric)
-
-    def __str__(self):
-        return f"{self.judge} - {self.project}: {self.response.rubric.name}"
-
-    def score(self):
-        return self.response.score()
-
-    def has_response(self):
-        return self.response.has_response
-
-    def complete(self):
-        return self.response.complete
-
-    def set_locked(self):
-        if not self.locked:
-            self.locked = True
-            self.save()
-
     class JudgingInstanceManager(models.Manager):
         def get_queryset(self) -> QuerySet["JudgingInstance"]:
             return super().get_queryset().select_related("judge", "project", "response")
@@ -373,6 +350,29 @@ class JudgingInstance(models.Model):
             return RubricResponse.objects.filter(id__in=response_ids)
 
     objects = JudgingInstanceManager()
+
+    def __str__(self):
+        return f"{self.judge} - {self.project}: {self.response.rubric.name}"
+
+    def __init__(self, *args, **kwargs):
+        rubric = kwargs.pop("rubric", None)
+        super().__init__(*args, **kwargs)
+        if not self.response and rubric:
+            self.response = RubricResponse.objects.create(rubric=rubric)
+
+    def score(self):
+        return self.response.score()
+
+    def has_response(self):
+        return self.response.has_response
+
+    def complete(self):
+        return self.response.complete
+
+    def set_locked(self):
+        if not self.locked:
+            self.locked = True
+            self.save()
 
     class LockedInstanceManager(JudgingInstanceManager):
         def get_queryset(self) -> QuerySet["JudgingInstance"]:
