@@ -454,7 +454,7 @@ class SingleSelectionMixin(ChoiceSelectionMixin):
         resp = response.choice_response
         if resp is None:
             return None
-        choices = {key: value for key, value in self.question.choices()}
+        choices = dict(self.question.choices())
 
         return choices[resp]
 
@@ -505,7 +505,7 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
         if not resp:
             return []
         resp = json.loads(resp)
-        choices = {key: value for key, value in self.question.choices()}
+        choices = dict(self.question.choices())
 
         return [choices[indv] for indv in resp]
 
