@@ -43,7 +43,7 @@ ETHNICITIES = ["Hispanic", "Black", "Caucasian"]
 
 
 class Command(BaseCommand):
-    help = "Initializes default values for the fair categories"
+    help = "Initializes default values for the fair categories"  # noqa: A003
 
     def handle(self, *args, **options):
         self.init_categories(CATEGORIES)

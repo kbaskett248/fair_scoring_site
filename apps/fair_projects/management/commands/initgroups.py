@@ -21,7 +21,7 @@ GROUPS = [
 
 
 class Command(BaseCommand):
-    help = "Initializes default Groups in the database"
+    help = "Initializes default Groups in the database"  # noqa: A003
 
     def handle(self, *args, **options):
         self.init_groups(GROUPS)

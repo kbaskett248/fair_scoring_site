@@ -7,7 +7,7 @@ from apps.fair_projects.logic import process_project_import
 
 
 class Command(BaseCommand):
-    help = "Imports a csv file of projects"
+    help = "Imports a csv file of projects"  # noqa: A003
 
     def add_arguments(self, parser):
         parser.add_argument("csv_path", type=str)

@@ -83,7 +83,7 @@ class JudgeData:
 
 
 class Command(BaseCommand):
-    help = "Imports a csv file of teachers"
+    help = "Imports a csv file of teachers"  # noqa: A003
 
     def add_arguments(self, parser):
         parser.add_argument(

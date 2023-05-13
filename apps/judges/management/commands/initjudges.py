@@ -25,7 +25,7 @@ EDUCATIONS = [
 
 
 class Command(BaseCommand):
-    help = "Initializes default database values for the judges app"
+    help = "Initializes default database values for the judges app"  # noqa: A003
 
     def handle(self, *args, **options):
         self.init_experience(FAIR_EXPERIENCES)
