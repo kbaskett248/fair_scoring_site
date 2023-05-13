@@ -140,7 +140,9 @@ class Command(BaseCommand):
         with open(tsv_path, newline="") as tsv_file:
             self.read_file(tsv_file, defaults=defaults)
 
-    def read_file(self, csv_file, defaults={}):
+    def read_file(self, csv_file, defaults=None):
+        if defaults is None:
+            defaults = {}
         dialect = csv.Sniffer().sniff(csv_file.read(1024))
         csv_file.seek(0)
         reader = DefaultDictReader(csv_file, dialect=dialect, defaults=defaults)

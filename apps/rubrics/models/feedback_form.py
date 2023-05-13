@@ -28,7 +28,7 @@ class MarkdownField(models.TextField):
         try:
             mistletoe.markdown(value)
         except Exception as err:  # noqa: BLE001
-            raise ValidationError(err)
+            raise ValidationError(err) from err
 
     def value_to_html(self, obj: models.Model) -> str:
         value = self.value_from_object(obj)
@@ -390,7 +390,7 @@ class ChoiceResponseListFeedbackModule(FeedbackModule):
             elif isinstance(resp.response, list) and isinstance(
                 resp.response_external(), list
             ):
-                yield from zip(resp.response, resp.response_external())
+                yield from zip(resp.response, resp.response_external(), strict=True)
             else:
                 yield (resp.response, resp.response_external())
 

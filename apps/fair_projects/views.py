@@ -91,8 +91,8 @@ class ProjectModifyMixin(PermissionRequiredMixin):
             user_is_teacher = False
         else:
             user_is_teacher = True
-        finally:
-            return {"user_is_teacher": user_is_teacher}
+
+        return {"user_is_teacher": user_is_teacher}
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -187,8 +187,8 @@ class ProjectDetail(DetailView):
 
         try:
             return queryset.get(number=self.kwargs["project_number"])
-        except ObjectDoesNotExist:
-            raise Http404()
+        except ObjectDoesNotExist as err:
+            raise Http404() from err
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -528,8 +528,8 @@ class StudentFeedbackForm(SpecificUserRequiredMixin, DetailView):
 
         try:
             return queryset.get(number=self.kwargs["project_number"])
-        except ObjectDoesNotExist:
-            raise Http404()
+        except ObjectDoesNotExist as err:
+            raise Http404() from err
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

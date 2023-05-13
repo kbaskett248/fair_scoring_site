@@ -477,7 +477,7 @@ class TestJudgeAssignmentAndProjectScoring(TestCase):
 
     def test_unanswered_projects_are_sorted_by_project_number(self):
         project_list = get_projects_sorted_by_score()
-        for project1, project2 in zip(project_list[:-1], project_list[1:]):
+        for project1, project2 in zip(project_list[:-1], project_list[1:], strict=True):
             self.assertLess(
                 project1.number,
                 project2.number,
