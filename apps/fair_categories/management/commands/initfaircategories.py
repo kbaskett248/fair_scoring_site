@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
 
@@ -43,7 +43,7 @@ ETHNICITIES = ["Hispanic", "Black", "Caucasian"]
 
 
 class Command(BaseCommand):
-    help = "Initializes default values for the fair categories"
+    help = "Initializes default values for the fair categories"  # noqa: A003
 
     def handle(self, *args, **options):
         self.init_categories(CATEGORIES)

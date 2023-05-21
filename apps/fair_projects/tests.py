@@ -3,7 +3,6 @@ from io import StringIO
 
 import tablib
 from django.contrib.auth.models import Group, Permission, User
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import call_command
 from django.test import Client, TestCase
@@ -111,7 +110,7 @@ class TeacherTests(TestCase):
         data_dict["last_name"] = "Testerson"
         data_dict["school"] = "Test School 2"
 
-        user = User.objects.create_user(
+        User.objects.create_user(
             data_dict["username"],
             email=data_dict["email"],
             first_name=data_dict["first_name"],
@@ -182,7 +181,7 @@ class InitGroupsTest(TestCase):
                 "<Permission: fair_projects | project | Can add project>",
                 "<Permission: fair_projects | project | Can change project>",
                 "<Permission: fair_projects | project | Can delete project>",
-                "<Permission: fair_projects | teacher | Designate this user as a teacher>",
+                "<Permission: fair_projects | teacher | Designate this user as a teacher>",  # noqa: E501
             ],
             transform=repr,
         )
@@ -195,7 +194,7 @@ def make_student(**kwargs) -> Student:
 class StudentTests(TestCase):
     def test_str(self, first_name: str = "Diana", last_name: str = "Prince"):
         student = make_student(first_name=first_name, last_name=last_name)
-        self.assertEqual(str(student), "{0} {1}".format(first_name, last_name))
+        self.assertEqual(str(student), f"{first_name} {last_name}")
 
 
 def make_project(category_name: str = None, division_name: str = None, **kwargs):
@@ -280,7 +279,10 @@ class ProjectTests(TestCase):
         self.assertEqual(
             project.average_score(),
             0,
-            msg="average_score should be zero for project with unanswered judging instances",
+            msg=(
+                "average_score should be zero for project with unanswered judging "
+                "instances"
+            ),
         )
 
     def test_average_score_is_equal_to_instance_score(self):
@@ -290,12 +292,18 @@ class ProjectTests(TestCase):
         self.assertGreater(
             project.average_score(),
             0,
-            msg="average_score should be greater than zero for project with answered judging instances",
+            msg=(
+                "average_score should be greater than zero for project with answered "
+                "judging instances"
+            ),
         )
         self.assertEqual(
             project.average_score(),
             ji.score(),
-            msg="average_score should be equal to JudgingInstance score when there is only one judging instance",
+            msg=(
+                "average_score should be equal to JudgingInstance score when there is "
+                "only one judging instance"
+            ),
         )
 
     def test_num_scores_is_zero_for_project_with_no_rubrics(self):
@@ -322,7 +330,7 @@ class ProjectTests(TestCase):
 
 def make_rubric():
     rubric = baker.make(Rubric, name="Test Rubric")
-    default_weight = float("{0:.3f}".format(1 / len(Question.CHOICE_TYPES)))
+    default_weight = float(f"{1 / len(Question.CHOICE_TYPES):.3f}")
     for idx, question_type in enumerate(Question.available_types(), start=1):
         question_is_choice_type = question_type in Question.CHOICE_TYPES
         weight = 0
@@ -461,12 +469,15 @@ class TestJudgeAssignmentAndProjectScoring(TestCase):
             qs.all(),
             existing_instances,
             transform=repr,
-            msg="Judge assignment is not steady. Assigning again without changed inputs results in changed assignments.",
+            msg=(
+                "Judge assignment is not steady. Assigning again without changed "
+                "inputs results in changed assignments."
+            ),
         )
 
     def test_unanswered_projects_are_sorted_by_project_number(self):
         project_list = get_projects_sorted_by_score()
-        for project1, project2 in zip(project_list[:-1], project_list[1:]):
+        for project1, project2 in zip(project_list[:-1], project_list[1:], strict=True):
             self.assertLess(
                 project1.number,
                 project2.number,
@@ -517,6 +528,8 @@ class TestJudgeAssignmentAndProjectScoring(TestCase):
             for ji in project.judginginstance_set.all():
                 if not ji.has_response():
                     return ji.response
+
+            return None
 
         project = project_list[1]
         answer_rubric_response(get_unanswered_response(project))

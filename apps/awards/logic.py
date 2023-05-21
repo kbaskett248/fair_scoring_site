@@ -9,12 +9,12 @@ def assign_awards(queryset, instances):
 class InstanceMixin:
     def assign_award(self, award: Award) -> None:
         raise NotImplementedError(
-            "{0} does not implement assign".format(self.__class__.__name__)
+            f"{self.__class__.__name__} does not implement assign"
         )
 
     def get_awards(self, award: Award) -> list:
         raise NotImplementedError(
-            "{0} does not implement get_awards".format(self.__class__.__name__)
+            f"{self.__class__.__name__} does not implement get_awards"
         )
 
     @classmethod

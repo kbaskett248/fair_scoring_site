@@ -67,7 +67,7 @@ def make_test_rubric():
 class AwardRuleFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(AwardRuleFormTests, cls).setUpClass()
+        super().setUpClass()
         Category.objects.create(short_description="Category 1")
         Category.objects.create(short_description="Category 2")
 
@@ -190,14 +190,14 @@ class AssignmentTests:
         self, project: Project, judge: Judge, msg: str = None
     ) -> None:
         if not msg:
-            msg = "Project ({}) not assigned to judge ({})".format(project, judge)
+            msg = f"Project ({project}) not assigned to judge ({judge})"
         self.assertTrue(self._instance_exists(project, judge), msg)
 
     def assertProjectNotAssignedToJudge(
         self, project: Project, judge: Judge, msg: str = None
     ) -> None:
         if not msg:
-            msg = "Project ({}) assigned to judge ({})".format(project, judge)
+            msg = f"Project ({project}) assigned to judge ({judge})"
         self.assertFalse(self._instance_exists(project, judge), msg)
 
     def assertNumInstances(self, count, msg: str = None, **kwargs) -> None:
@@ -224,7 +224,7 @@ class AssignmentTests:
 class JudgeAssignmentTests(AssignmentTests, HypTestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        super(JudgeAssignmentTests, cls).setUpClass()
+        super().setUpClass()
         cls.initialize_supporting_objects()
         cls.judge = make_test_judge(
             categories=[cls.category1], divisions=[cls.division1]
@@ -252,7 +252,8 @@ class JudgeAssignmentTests(AssignmentTests, HypTestCase):
         project.save()
         self.assertOnlyOneJudgingInstance(project, self.judge)
 
-    # An existing judge is not assigned to a new project if the category and division do not match
+    # An existing judge is not assigned to a new project if the category and division
+    # do not match
     def test_judge_not_assigned_for_mismatched_category(self):
         project = make_test_project(self.subcategory2, self.division1)
         self.assertProjectNotAssignedToJudge(project, self.judge)
@@ -322,7 +323,8 @@ class ProjectAssignmentTests(AssignmentTests, HypTransTestCase):
         judge.save()
         self.assertOnlyOneJudgingInstance(self.project, judge)
 
-    # An existing project is not assigned to a new judge if the category and division do not match
+    # An existing project is not assigned to a new judge if the category and division
+    # do not match
     def test_project_not_assigned_for_mismatched_category(self):
         judge = make_test_judge(categories=[self.category2], divisions=[self.division1])
         self.assertProjectNotAssignedToJudge(self.project, judge)
@@ -392,10 +394,8 @@ class SequentialAssignmentTests(AssignmentTests, HypTransTestCase):
 
         if num_projects < projects_per_judge or num_judges < judges_per_project:
             return num_projects * num_judges
-        else:
-            return max(
-                num_projects * judges_per_project, num_judges * projects_per_judge
-            )
+
+        return max(num_projects * judges_per_project, num_judges * projects_per_judge)
 
     @staticmethod
     def get_active_judge():

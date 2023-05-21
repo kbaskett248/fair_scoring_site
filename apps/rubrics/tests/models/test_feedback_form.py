@@ -1,4 +1,5 @@
-from typing import Optional
+# pylint: disable=E1101
+
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -23,7 +24,7 @@ from apps.rubrics.models import (
     ScoreTableFeedbackModule,
 )
 from apps.rubrics.tests.fixtures.models import test_feedback_form as fixtures
-from apps.rubrics.tests.tests import answer_rubric_response, make_rubric_response
+from apps.rubrics.tests.utils import answer_rubric_response, make_rubric_response
 
 
 class FeedbackFormTests(HypTestCase):
@@ -200,7 +201,7 @@ class FeedbackModuleTestBase(TestCase):
         cls.feedback_form = FeedbackForm(rubric=cls.rubric)
         cls.feedback_form.save()
 
-    def assertHTMLEqual(self, html1: str, html2: str, msg: Optional[str] = ...) -> None:
+    def assertHTMLEqual(self, html1: str, html2: str, msg: str | None = ...) -> None:
         try:
             return super().assertHTMLEqual(html1, html2, msg)
         except self.failureException as err:
@@ -320,7 +321,7 @@ class ScoreTableFeedbackModuleTests(FeedbackModuleTestBase):
     def setUpClass(cls) -> None:
         super().setUpClass()
 
-        default_weight = float("{0:.3f}".format(1 / len(Question.CHOICE_TYPES)))
+        default_weight = float(f"{1 / len(Question.CHOICE_TYPES):.3f}")
 
         cls.scale_question = Question.objects.create(
             rubric=cls.rubric,
@@ -476,7 +477,7 @@ class ChoiceResponseListFeedbackModuleTests(FeedbackModuleTestBase):
     def setUpClass(cls) -> None:
         super().setUpClass()
 
-        default_weight = float("{0:.3f}".format(1 / len(Question.CHOICE_TYPES)))
+        default_weight = float(f"{1 / len(Question.CHOICE_TYPES):.3f}")
 
         cls.scale_question = Question.objects.create(
             rubric=cls.rubric,

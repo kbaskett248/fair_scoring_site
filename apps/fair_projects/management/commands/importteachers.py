@@ -1,5 +1,5 @@
 import csv
-import os
+from pathlib import Path
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand, CommandError
@@ -8,7 +8,7 @@ from apps.fair_projects.models import create_teacher
 
 
 class Command(BaseCommand):
-    help = "Imports a csv file of teachers"
+    help = "Imports a csv file of teachers"  # noqa: A003
 
     def add_arguments(self, parser):
         parser.add_argument("csv_path", type=str)
@@ -17,9 +17,10 @@ class Command(BaseCommand):
             "--password",
             type=str,
             help=(
-                "Password to assign to each teacher. This value will override any password stored "
-                "in the input file. If no password is specified here, and no password is stored "
-                "in the input file, then a random password is assigned."
+                "Password to assign to each teacher. This value will override any "
+                "password stored in the input file. If no password is specified here, "
+                "and no password is stored in the input file, then a random password "
+                "is assigned."
             ),
         )
         parser.add_argument(
@@ -27,14 +28,14 @@ class Command(BaseCommand):
             "--email",
             type=str,
             help=(
-                "Email to assign to each teacher. This will override any email stored in the input "
-                "file. Useful for setting up test teachers."
+                "Email to assign to each teacher. This will override any email stored "
+                "in the input file. Useful for setting up test teachers."
             ),
         )
 
     def handle(self, *args, **options):
-        csv_path = options["csv_path"]
-        if not os.path.isfile(csv_path):
+        csv_path = Path(options["csv_path"])
+        if not csv_path.is_file():
             raise CommandError('File "%s" does not exist')
 
         self.group = Group.objects.get(name="Teachers")
@@ -43,7 +44,7 @@ class Command(BaseCommand):
         email = options.get("email", None)
         phone = options.get("phone", None)
 
-        with open(csv_path, newline="") as csv_file:
+        with csv_path.open(newline="") as csv_file:
             self.read_file(
                 csv_file,
                 global_password=password,

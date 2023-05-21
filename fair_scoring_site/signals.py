@@ -1,4 +1,4 @@
-from typing import Iterator
+from collections.abc import Iterator
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -188,10 +188,10 @@ class AssignmentHelper:
         return {"project": self.project, "judge": self.judge}
 
     def other_kwarg(self, **kwargs) -> dict:
-        d = self.kwargs()
-        for k in kwargs.keys():
-            d.pop(k, None)
-        return d
+        dict_ = self.kwargs()
+        for key in kwargs:
+            dict_.pop(key, None)
+        return dict_
 
     @staticmethod
     def instance_count(rubric: Rubric, **kwargs):

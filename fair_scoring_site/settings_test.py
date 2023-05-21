@@ -14,7 +14,7 @@ import os
 
 from hypothesis import Verbosity, settings
 
-from .settings_common import *
+from .settings_common import *  # noqa: F403
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # TODO: Configure Secret Key

@@ -5,10 +5,7 @@ from .models.rubric import Choice, Question
 
 
 def default_field(question, override_required=None):
-    if override_required is not None:
-        required = override_required
-    else:
-        required = question.required
+    required = override_required if override_required is not None else question.required
     return forms.CharField(
         label=question.description(),
         help_text=question.help_text,
@@ -18,10 +15,7 @@ def default_field(question, override_required=None):
 
 
 def long_text_field(question, override_required=None):
-    if override_required is not None:
-        required = override_required
-    else:
-        required = question.required
+    required = override_required if override_required is not None else question.required
     return forms.CharField(
         label=question.description(),
         help_text=question.help_text,
@@ -32,10 +26,7 @@ def long_text_field(question, override_required=None):
 
 
 def scale_field(question, override_required=None):
-    if override_required is not None:
-        required = override_required
-    else:
-        required = question.required
+    required = override_required if override_required is not None else question.required
     return forms.ChoiceField(
         label=question.description(),
         help_text=question.help_text,
@@ -46,10 +37,7 @@ def scale_field(question, override_required=None):
 
 
 def single_select_field(question, override_required=None):
-    if override_required is not None:
-        required = override_required
-    else:
-        required = question.required
+    required = override_required if override_required is not None else question.required
     return forms.ChoiceField(
         label=question.description(),
         help_text=question.help_text,
@@ -60,10 +48,7 @@ def single_select_field(question, override_required=None):
 
 
 def multi_select_field(question, override_required=None):
-    if override_required is not None:
-        required = override_required
-    else:
-        required = question.required
+    required = override_required if override_required is not None else question.required
     return forms.MultipleChoiceField(
         label=question.description(),
         help_text=question.help_text,
@@ -89,10 +74,10 @@ class RubricForm(forms.Form):
     }
 
     def __init__(self, instance=None, **kwargs):
-        super(RubricForm, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.instance = instance
 
-    def save(self, commit=True):
+    def save(self, commit=True):  # noqa: FBT002
         updated_data = {
             int(key.replace("question_", "")): self.cleaned_data[key]
             for key in self.changed_data
@@ -145,7 +130,7 @@ class ValidatedForm(ModelForm):
     """
 
     def clean(self):
-        cleaned_data = super(ValidatedForm, self).clean()
+        cleaned_data = super().clean()
         self._meta.model.validate(**cleaned_data)
         if self.instance:
             self.instance.validate_instance(**cleaned_data)

@@ -13,12 +13,9 @@ import apps.awards.admin
 import apps.fair_projects
 from apps.awards.logic import InstanceBase, assign_awards
 from apps.awards.models import Award, AwardInstance
-from apps.fair_categories.models import Category, Division, Ethnicity, Subcategory
+from apps.fair_categories.models import Category, Division, Subcategory
 from apps.fair_projects.logic import get_projects_sorted_by_score
-from apps.fair_projects.models import Project, Student
-
-# This seems like a safe place to register signals
-from . import signals
+from apps.fair_projects.models import Project
 
 admin.site.unregister(Project)
 admin.site.unregister(Award)
@@ -33,7 +30,7 @@ def assign_awards_to_projects(modeladmin, request, queryset):
             messages.add_message(
                 request,
                 messages.INFO,
-                "Assigned {0} to {1}".format(instance.awards_str, instance.project),
+                f"Assigned {instance.awards_str} to {instance.project}",
             )
     messages.add_message(request, messages.INFO, "Awards assigned")
 
@@ -209,7 +206,7 @@ class ProjectAwardFormset(BaseGenericInlineFormSet):
     model = AwardInstance
 
     def clean(self):
-        super(ProjectAwardFormset, self).clean()
+        super().clean()
 
         try:
             project_instance = ProjectInstance(self.instance)
@@ -219,7 +216,7 @@ class ProjectAwardFormset(BaseGenericInlineFormSet):
             for form in self.forms:
                 if not form.cleaned_data:
                     continue
-                elif form.cleaned_data["DELETE"]:
+                if form.cleaned_data["DELETE"]:
                     continue
                 self.clean_award(project_instance, form.cleaned_data["award"])
 
@@ -230,7 +227,7 @@ class ProjectAwardFormset(BaseGenericInlineFormSet):
                 code="invalid award for project",
                 params={"award": award},
             )
-        elif award.exclude_from_instance(instance):
+        if award.exclude_from_instance(instance):
             raise ValidationError(
                 _("Cannot assign %(award)s to this project due to excluded awards"),
                 code="excluded award for project",

@@ -15,9 +15,11 @@ class PhoneField(models.CharField):
     )
 
     def __init__(self, **options):
+        vals = []
         try:
             vals = list(options["validators"])
-            vals.append(PhoneField.phone_regex)
+            if PhoneField.phone_regex not in vals:
+                vals.append(PhoneField.phone_regex)
         except KeyError:
             vals = [PhoneField.phone_regex]
         finally:
@@ -28,12 +30,12 @@ class PhoneField(models.CharField):
         except KeyError:
             options["max_length"] = 15
 
-        super(PhoneField, self).__init__(**options)
+        super().__init__(**options)
 
 
 class JudgeFairExperience(models.Model):
     short_description = models.CharField(max_length=100)
-    long_description = models.TextField(null=True, blank=True)
+    long_description = models.TextField(blank=True, default="")
 
     def __str__(self):
         return self.short_description
@@ -41,7 +43,7 @@ class JudgeFairExperience(models.Model):
 
 class JudgeEducation(models.Model):
     short_description = models.CharField(max_length=100)
-    long_description = models.TextField(null=True, blank=True)
+    long_description = models.TextField(blank=True, default="")
 
     def __str__(self):
         return self.short_description
@@ -53,10 +55,8 @@ class Judge(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     phone = PhoneField()
     has_device = models.BooleanField(
-        verbose_name=(
-            "Do you have a smartphone or tablet to use during fair " "judging?"
-        ),
-        help_text=("This device will be used with our electronic judging " "system."),
+        verbose_name=("Do you have a smartphone or tablet to use during fair judging?"),
+        help_text=("This device will be used with our electronic judging system."),
     )
 
     education = models.ForeignKey(
@@ -90,23 +90,27 @@ class Judge(models.Model):
         verbose_name="Which division(s) do you prefer to judge?",
     )
 
-    class Meta:
-        permissions = (("is_judge", "Designates this user as a judge"),)
-        ordering = ("user__last_name", "user__first_name")
-
     class WithUserManager(models.Manager):
         def get_queryset(self):
             return super().get_queryset().select_related("user")
 
     objects = WithUserManager()
 
+    class Meta:
+        permissions = (("is_judge", "Designates this user as a judge"),)
+        ordering = ("user__last_name", "user__first_name")
+
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name
 
     def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
+        self,
+        force_insert=False,  # noqa: FBT002
+        force_update=False,  # noqa: FBT002
+        using=None,
+        update_fields=None,
     ):
-        super(Judge, self).save(
+        super().save(
             force_insert=force_insert,
             force_update=force_update,
             using=using,
@@ -129,7 +133,7 @@ def create_judge(
     categories,
     divisions,
     password=None,
-    has_device=True,
+    has_device=True,  # noqa: FBT002
     output_stream=None,
 ):
     def write_output(message):
@@ -173,3 +177,5 @@ def create_judge(
             return judge
         else:
             return judge
+
+    return None

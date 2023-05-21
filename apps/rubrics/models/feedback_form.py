@@ -1,5 +1,6 @@
+from collections.abc import Generator, Iterable
 from itertools import groupby
-from typing import Any, Generator, Iterable, NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 import mistletoe
 from django.core.exceptions import ValidationError
@@ -26,8 +27,8 @@ class MarkdownField(models.TextField):
     def validate_markdown(value):
         try:
             mistletoe.markdown(value)
-        except Exception as err:
-            raise ValidationError(err)
+        except Exception as err:  # noqa: BLE001
+            raise ValidationError(err) from err
 
     def value_to_html(self, obj: models.Model) -> str:
         value = self.value_from_object(obj)
@@ -41,9 +42,44 @@ class FeedbackForm(models.Model):
         form: "FeedbackForm"
         html: SafeString
 
+    class FeedbackFormManager(models.Manager):
+        def get_queryset(self) -> QuerySet["FeedbackForm"]:
+            return (
+                super()
+                .get_queryset()
+                .select_related("rubric")
+                .prefetch_related("modules")
+            )
+
+        def for_rubric_responses(
+            self, rubric_responses: QuerySet[RubricResponse]
+        ) -> QuerySet["FeedbackForm"]:
+            """
+            Args:
+                rubric_responses: a queryset of rubric responses
+
+            Returns:
+                a queryset of FeedbackForms for the given queryset of RubricResponses
+            """
+            rubric_set = set(rubric_responses.values_list("rubric__id", flat=True))
+            return self.get_queryset().filter(rubric__in=rubric_set)
+
+        def render_html_for_responses(
+            self, rubric_responses: QuerySet[RubricResponse]
+        ) -> Generator["FeedbackForm.FeedbackFormContext", None, None]:
+            """
+            Render html for each feedback form associated with the rubric responses.
+            """
+            for feedback_form in self.for_rubric_responses(rubric_responses):
+                yield FeedbackForm.FeedbackFormContext(
+                    feedback_form, feedback_form.render_html(rubric_responses)
+                )
+
     rubric = models.ForeignKey("Rubric", on_delete=models.CASCADE)
 
-    def __str__(self):
+    objects = FeedbackFormManager()
+
+    def __str__(self) -> str:
         return f"Feedback Form for {self.rubric.name}"
 
     def get_typed_modules(self) -> Generator["FeedbackModule", None, None]:
@@ -63,47 +99,9 @@ class FeedbackForm(models.Model):
             ]
         }
 
-    def render_html(
-        self, rubric_responses: models.QuerySet[RubricResponse]
-    ) -> SafeString:
+    def render_html(self, rubric_responses: models.QuerySet[RubricResponse]) -> str:
         rubric_responses = rubric_responses.filter(rubric=self.rubric)
-        return mark_safe(
-            render_to_string(self.get_template(), self.get_context(rubric_responses))
-        )
-
-    class FeedbackFormManager(models.Manager):
-        def get_queryset(self) -> QuerySet["FeedbackForm"]:
-            return (
-                super()
-                .get_queryset()
-                .select_related("rubric")
-                .prefetch_related("modules")
-            )
-
-        def for_rubric_responses(
-            self, rubric_responses: QuerySet[RubricResponse]
-        ) -> QuerySet["FeedbackForm"]:
-            """
-            Args:
-                rubric_responses (QuerySet[RubricResponse]): a queryset of rubric responses
-
-            Returns:
-                QuerySet[RubricResponse]: a queryset of FeedbackForms for the
-                    given queryset of RubricResponses
-            """
-            rubric_set = set(rubric_responses.values_list("rubric__id", flat=True))
-            return self.get_queryset().filter(rubric__in=rubric_set)
-
-        def render_html_for_responses(
-            self, rubric_responses: QuerySet[RubricResponse]
-        ) -> Generator["FeedbackForm.FeedbackFormContext", None, None]:
-            """Render html for each feedback form associated with the rubric responses."""
-            for feedback_form in self.for_rubric_responses(rubric_responses):
-                yield FeedbackForm.FeedbackFormContext(
-                    feedback_form, feedback_form.render_html(rubric_responses)
-                )
-
-    objects = FeedbackFormManager()
+        return render_to_string(self.get_template(), self.get_context(rubric_responses))
 
 
 class FeedbackModule(ValidatedModel):
@@ -143,7 +141,7 @@ class FeedbackModule(ValidatedModel):
 
     def _save_child_object(self) -> Optional["FeedbackModule"]:
         for subclass in type(self).__subclasses__():
-            if subclass.MODULE_TYPE == self.module_type:
+            if self.module_type == subclass.MODULE_TYPE:
                 return subclass.objects.create(**self._to_child_field_dict())
         raise ValidationError(f"No child model created for {self}")
 
@@ -171,12 +169,8 @@ class FeedbackModule(ValidatedModel):
     ) -> dict[str, Any]:
         raise NotImplementedError
 
-    def render_html(
-        self, rubric_responses: models.QuerySet[RubricResponse]
-    ) -> SafeString:
-        return mark_safe(
-            render_to_string(self.get_template(), self.get_context(rubric_responses))
-        )
+    def render_html(self, rubric_responses: models.QuerySet[RubricResponse]) -> str:
+        return render_to_string(self.get_template(), self.get_context(rubric_responses))
 
 
 class MarkdownFeedbackModule(FeedbackModule):
@@ -187,21 +181,26 @@ class MarkdownFeedbackModule(FeedbackModule):
     )
     content = MarkdownField(
         default="# Heading 1\n\nWrite content here",
-        help_text="You may include <code>{{ average_score }}</code> in the text. It will be replaced by the average score for the project.",
+        help_text=(
+            "You may include <code>{{ average_score }}</code> in the text. It will be "
+            "replaced by the average score for the project."
+        ),
     )
 
     def get_html(self):
         return self._meta.get_field("content").value_to_html(self)
 
-    def __str__(self):
-        l = min(50, self.content.find("\n"))
-        first_line = self.content[:l]
+    def __str__(self) -> str:
+        _length = min(50, self.content.find("\n"))
+        first_line = self.content[:_length]
         return f"Markdown module ({self.order}) - {first_line}"
 
     def render_html(self, rubric_responses: models.QuerySet[RubricResponse]):
         average_score = self._get_average_score(rubric_responses)
         average_score = f"{average_score:.2f}" if average_score is not None else ""
-        return mark_safe(self.get_html().replace("{{ average_score }}", average_score))
+        return mark_safe(  # noqa: S308
+            self.get_html().replace("{{ average_score }}", average_score)
+        )
 
     def _get_average_score(
         self, rubric_responses: models.QuerySet[RubricResponse]
@@ -290,9 +289,15 @@ class ScoreTableFeedbackModule(FeedbackModule):
         long_description = question.long_description
 
         if self.use_weighted_scores:
-            get_score = lambda resp: resp.score()
+
+            def get_score(resp):
+                return resp.score()
+
         else:
-            get_score = lambda resp: resp.unweighted_score()
+
+            def get_score(resp):
+                return resp.unweighted_score()
+
         scores = map(get_score, question_responses)
 
         if self.remove_empty_scores:
@@ -326,15 +331,19 @@ class ChoiceResponseListFeedbackModule(FeedbackModule):
     display_description = models.BooleanField(
         "Display description",
         default=True,
-        help_text="If checked, the choice description is displayed in the list. Otherwise the choice key is displayed.",
+        help_text=(
+            "If checked, the choice description is displayed in the list. Otherwise "
+            "the choice key is displayed."
+        ),
     )
 
     remove_duplicates = models.BooleanField(
         "Remove duplicates",
         default=True,
         help_text=(
-            "If checked, response choices will only be displayed once, regardless of how many times the response is chosen. "
-            "Otherwise, choices will be listed once for each time they are chosen."
+            "If checked, response choices will only be displayed once, regardless of "
+            "how many times the response is chosen. Otherwise, choices will be listed "
+            "once for each time they are chosen."
         ),
     )
 
@@ -369,8 +378,8 @@ class ChoiceResponseListFeedbackModule(FeedbackModule):
 
         if self.display_description:
             return [resp[1] for resp in responses]
-        else:
-            return [resp[0] for resp in responses]
+
+        return [resp[0] for resp in responses]
 
     def _expand_responses(
         self, question_responses: Iterable[QuestionResponse]
@@ -381,7 +390,7 @@ class ChoiceResponseListFeedbackModule(FeedbackModule):
             elif isinstance(resp.response, list) and isinstance(
                 resp.response_external(), list
             ):
-                yield from zip(resp.response, resp.response_external())
+                yield from zip(resp.response, resp.response_external(), strict=True)
             else:
                 yield (resp.response, resp.response_external())
 

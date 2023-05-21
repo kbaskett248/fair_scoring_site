@@ -24,8 +24,27 @@ repos:
       - id: black
         name: Format code in python files using black
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: "v0.0.263"
     hooks:
-      - id: isort
-        name: Sort imports in python files with isort
+      - id: ruff
+        name: Lint python code with ruff
+        args: ["--fix", "--show-fixes"]
+
+  - repo: local
+    hooks:
+      - id: django-check
+        name: Check django
+        language: system
+        entry: poetry run manage.py check
+        pass_filenames: false
+        stages:
+          - manual
+
+      - id: django-migrations-check
+        name: Check django migrations
+        language: system
+        entry: poetry run manage.py makemigrations --check --dry-run
+        pass_filenames: false
+        stages:
+          - manual

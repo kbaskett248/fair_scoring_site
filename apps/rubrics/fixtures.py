@@ -5,7 +5,7 @@ from apps.rubrics.models.rubric import Choice, Question, Rubric
 
 def make_test_rubric(name: str = "Test Rubric") -> Rubric:
     rubric = baker.make(Rubric, name=name)
-    default_weight = float("{0:.3f}".format(1 / len(Question.CHOICE_TYPES)))
+    default_weight = float(f"{1 / len(Question.CHOICE_TYPES):.3f}")
     for idx, question_type in enumerate(Question.available_types(), start=1):
         question_is_choice_type = question_type in Question.CHOICE_TYPES
         weight = 0.0

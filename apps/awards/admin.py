@@ -46,15 +46,15 @@ class AwardRuleForm(forms.ModelForm):
     def get_possible_traits(cls):
         if cls.traits:
             return build_trait_list(cls.traits)
-        else:
-            return None
+
+        return None
 
     @staticmethod
     def get_validator_name(trait: str) -> str:
         return "validate_" + trait
 
     def clean(self):
-        cleaned_data = super(AwardRuleForm, self).clean()
+        cleaned_data = super().clean()
 
         operator_name = cleaned_data.get("operator_name", None)
         if operator_name == In.internal or operator_name == NotIn.internal:
@@ -78,8 +78,7 @@ class AwardRuleForm(forms.ModelForm):
         if (
             operator_name == In.internal or operator_name == NotIn.internal
         ) and value is not None:
-            for item in value.split(","):
-                yield item
+            yield from value.split(",")
         else:
             yield value
 
@@ -106,7 +105,7 @@ class AwardInstanceInline(admin.TabularInline):
     exclude = ("content_type", "object_id")
     readonly_fields = ("content_object_str",)
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request, obj=None):
         return False
 
 
@@ -161,8 +160,8 @@ class TraitListFilter(admin.SimpleListFilter):
         traits = self.award_rule_form_class.get_possible_traits()
         if traits:
             return filter(lambda x: x[0] is not None, traits)
-        else:
-            return []
+
+        return []
 
     def queryset(self, request, queryset):
         """
@@ -177,3 +176,5 @@ class TraitListFilter(admin.SimpleListFilter):
                 return queryset.filter(award__awardrule__trait=self.value())
             except FieldError:
                 return queryset.filter(awardrule__trait=self.value())
+
+        return None

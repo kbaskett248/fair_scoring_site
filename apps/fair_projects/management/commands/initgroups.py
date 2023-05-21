@@ -21,7 +21,7 @@ GROUPS = [
 
 
 class Command(BaseCommand):
-    help = "Initializes default Groups in the database"
+    help = "Initializes default Groups in the database"  # noqa: A003
 
     def handle(self, *args, **options):
         self.init_groups(GROUPS)
@@ -44,7 +44,7 @@ class Command(BaseCommand):
                     grp.permissions.add(permission)
                     self.stdout.write(
                         self.style.SUCCESS(
-                            '\tAdded Permission "%s" to Group "%s"' % (permission, grp)
+                            f'\tAdded Permission "{permission}" to Group "{grp}"'
                         )
                     )
                 else:

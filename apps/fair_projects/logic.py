@@ -1,9 +1,9 @@
 import csv
 from collections import defaultdict
+from collections.abc import Generator
 from functools import reduce
-from itertools import filterfalse, groupby, product
+from itertools import groupby, product
 from operator import ior
-from typing import Generator
 
 from constance import config
 from django.contrib.auth.tokens import default_token_generator
@@ -55,8 +55,8 @@ class StudentData:
     def gender(self):
         if self._gender[0].lower() == "m":
             return "M"
-        else:
-            return "F"
+
+        return "F"
 
     @property
     def teacher(self):
@@ -76,7 +76,6 @@ class ProjectData:
 
     def __init__(self, **kwargs):
         self.row_data = kwargs
-        print(self.row_data)
         self.title = self.row_data["Title"]
         self.abstract = self.row_data.get("Abstract", "")
 
@@ -84,8 +83,8 @@ class ProjectData:
     def category(self):
         if "Category" in self.row_data:
             return self.row_data["Category"]
-        else:
-            return self.subcategory.category
+
+        return self.subcategory.category
 
     @property
     def subcategory(self):
@@ -111,11 +110,7 @@ class ProjectData:
                 yield StudentData(**student_data)
 
     def is_student_field(self, key):
-        for label in self.STUDENT_FIELDS:
-            if label in key.lower():
-                return True
-        else:
-            return False
+        return any(label in key.lower() for label in self.STUDENT_FIELDS)
 
     @staticmethod
     def get_student_number_from_key(key):
@@ -168,25 +163,32 @@ def assign_judges():
     #    1. Search for projects with fewer than the minimum number of judges.
     #    2. For each project:
     #       1. Determine the number of judges the project needs.
-    #       2. Search for judges that can judge the project's category and division, sorted by the number of projects
-    #          ascending. Get the number of judges needed for the project.
+    #       2. Search for judges that can judge the project's category and division,
+    #          sorted by the number of projects ascending.
+    #          Get the number of judges needed for the project.
     #       3. Assign the judges to the project
 
     # 2. Switch projects from judges that have too many projects
-    #    1. Count the number of projects in each category division group, the number of judges that can judge that
+    #    1. Count the number of projects in each category division group,
+    #       the number of judges that can judge that
     #       category and division, and calculate their quotient.
     #    2. Compute the median and average number of projects assigned to all judges.
-    #    3. Compute the max of the median, average and minimum number of projects per judge.
+    #    3. Compute the max of the median, average and minimum number of projects per
+    #       judge.
     #    4. Search for judges that have more than this number of projects assigned
     #    5. For each judge:
-    #       1. Compute the number of projects needed to bring the judge down to the number computed above
+    #       1. Compute the number of projects needed to bring the judge down to the
+    #          number computed above
     #       2. Get a list of the projects for this judge that don't have any responses.
     #       3. Sort the projects by the quotient computed in step 1.
-    #       4. Loop through each project until the necessary number of projects have been removed or there are no
+    #       4. Loop through each project until the necessary number of projects have
+    #          been removed or there are no
     #          judges available to take the projects.
-    #          1. Search for judges that could be assigned the project and sort by number of projects, filtered by
-    #             judges that have fewer than the number computed above.
-    #          2. Remove the project from the first judge and assign it to the new judge.
+    #          1. Search for judges that could be assigned the project and sort by
+    #             number of projects, filtered by judges that have fewer than the number
+    #             computed above.
+    #          2. Remove the project from the first judge and assign it to the new
+    #             judge.
 
     rubric = get_judging_rubric()
     delete_instances_for_inactive_judges(rubric)
@@ -229,13 +231,13 @@ def assign_new_projects(rubric, judge_set):
             ]
             if project in judge_projects:
                 continue
-            else:
-                # print('Assigning {0} to {1}'.format(project, judge))
-                create_judging_instance(judge, project, rubric)
-                num_judges -= 1
 
-                if num_judges <= 0:
-                    break
+            # print('Assigning {0} to {1}'.format(project, judge))
+            create_judging_instance(judge, project, rubric)
+            num_judges -= 1
+
+            if num_judges <= 0:
+                break
 
 
 def get_minimum_judges_per_project():
@@ -267,7 +269,7 @@ def balance_judges(rubric, judge_queryset):
 
 
 def build_quotient_array(judge_queryset):
-    class Quotient(object):
+    class Quotient:
         def __init__(self, num_projects, num_judges):
             self.num_projects = num_projects
             self.num_judges = num_judges
@@ -277,7 +279,7 @@ def build_quotient_array(judge_queryset):
             return self.num_projects / self.num_judges
 
         def __str__(self):
-            return "Projects: {0}; Judges: {1}; Quotient: {2}".format(
+            return "Projects: {}; Judges: {}; Quotient: {}".format(
                 self.num_projects, self.num_judges, self.projects_per_judge
             )
 
@@ -333,15 +335,15 @@ def median_value(queryset, term):
     values = queryset.values_list(term, flat=True).order_by(term)
     if count % 2 == 1:
         return values[int(round(count / 2))]
-    else:
-        return sum(values[count / 2 - 1 : count / 2 + 1]) / 2.0
+
+    return sum(values[count / 2 - 1 : count / 2 + 1]) / 2.0
 
 
 def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
     # print(judge)
     num_to_reassign = judge.num_projects - lower_bound
-    cat_Q = reduce(ior, (Q(categories=cat) for cat in judge.categories.all()))
-    div_Q = reduce(ior, (Q(divisions=div) for div in judge.divisions.all()))
+    cat_q = reduce(ior, (Q(categories=cat) for cat in judge.categories.all()))
+    div_q = reduce(ior, (Q(divisions=div) for div in judge.divisions.all()))
     # print(num_to_reassign)
 
     def sort_value(judging_instance):
@@ -353,17 +355,16 @@ def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
     )
     for ji in instances:
         avail_judge = get_available_judge(ji.project, rubric, possible_judges)
-        if avail_judge:
-            if reassign_project(ji, avail_judge):
-                num_to_reassign -= 1
+        if avail_judge and reassign_project(ji, avail_judge):
+            num_to_reassign -= 1
 
-                # for j in possible_judges.filter(cat_Q, div_Q):
-                # print(j, j.num_projects)
+            # for j in possible_judges.filter(cat_Q, div_Q):
+            # print(j, j.num_projects)
 
-                if num_to_reassign <= 0:
-                    break
-                elif not possible_judges.filter(cat_Q, div_Q).exists():
-                    break
+            if num_to_reassign <= 0:
+                break
+            if not possible_judges.filter(cat_q, div_q).exists():
+                break
 
 
 def get_instances_that_can_be_reassigned(judge, rubric):
@@ -381,14 +382,13 @@ def get_available_judge(project, rubric, possible_judges):
         ).exists():
             # The judge has already been assigned this project, so continue
             continue
-        else:
-            return judge
+
+        return judge
     return None
 
 
 @transaction.atomic()
 def reassign_project(judging_instance, to_judge):
-    # print("Reassigning {0} from {1} to {2}".format(judging_instance.project.number, judging_instance.judge, to_judge))
     new_instance = create_judging_instance(
         to_judge, judging_instance.project, judging_instance.response.rubric
     )
@@ -396,7 +396,7 @@ def reassign_project(judging_instance, to_judge):
     return new_instance
 
 
-def email_teachers(site_name, domain, use_https=False):
+def email_teachers(site_name, domain, *, use_https=False):
     messages = []
     context = {
         "domain": domain,
@@ -491,11 +491,10 @@ def get_question_feedback_dict(project: Project) -> dict:
     question_responses = groupby(
         question_responses, lambda x: x.question.short_description
     )
-    question_dict = {
+
+    return {
         key: FeedbackQuestion(list(responses)) for key, responses in question_responses
     }
-
-    return question_dict
 
 
 class FeedbackQuestion:
@@ -527,7 +526,8 @@ class FeedbackQuestion:
         for resp in list_to_combine:
             if not resp:
                 continue
-            elif hasattr(resp, "__iter__"):
+
+            if hasattr(resp, "__iter__"):
                 combined_set.update(resp)
             else:
                 combined_set.add(resp)
@@ -568,4 +568,4 @@ class FeedbackQuestion:
             return None
 
     def __str__(self):
-        return "{0} responses".format(len(self.responses))
+        return f"{len(self.responses)} responses"

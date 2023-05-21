@@ -28,22 +28,19 @@ class Division(models.Model):
 
 
 class Category(models.Model):
-    class Meta:
-        verbose_name_plural = "categories"
-
     active = models.BooleanField(
         help_text=("Inactivate the category instead of deleting it"), default=True
     )
     short_description = models.CharField(max_length=100, verbose_name="Category name")
+
+    class Meta:
+        verbose_name_plural = "categories"
 
     def __str__(self):
         return self.short_description
 
 
 class Subcategory(models.Model):
-    class Meta:
-        verbose_name_plural = "subcategories"
-
     active = models.BooleanField(
         help_text=("Inactivate the subcategory instead of deleting it"), default=True
     )
@@ -53,18 +50,21 @@ class Subcategory(models.Model):
     )
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
 
+    class Meta:
+        verbose_name_plural = "subcategories"
+
     def __str__(self):
         return self.short_description
 
 
 class Ethnicity(models.Model):
-    class Meta:
-        verbose_name_plural = "ethnicities"
-
     active = models.BooleanField(
         help_text=("Inactivate the ethnicity instead of deleting it"), default=True
     )
     short_description = models.CharField(max_length=50, verbose_name="Ethnicity name")
+
+    class Meta:
+        verbose_name_plural = "ethnicities"
 
     def __str__(self):
         return self.short_description

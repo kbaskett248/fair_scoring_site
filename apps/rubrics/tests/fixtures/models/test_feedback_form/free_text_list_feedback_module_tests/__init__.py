@@ -9,7 +9,7 @@ for f in directory.iterdir():
         continue
 
     fixture_name = f.name.replace(".", "_")
-    with open(f, "r") as file_ptr:
+    with f.open() as file_ptr:
         fixture_contents = file_ptr.read()
 
     setattr(_mod, fixture_name, fixture_contents)

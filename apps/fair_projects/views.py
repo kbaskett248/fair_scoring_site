@@ -1,6 +1,6 @@
 import functools
 import logging
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from typing import Any
 
 from django.contrib import messages
@@ -48,13 +48,14 @@ class ProjectIndex(ListView):
     context_object_name = "project_list"
 
     def get_context_data(self, **kwargs):
-        context = super(ProjectIndex, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
 
         request_user = self.request.user
         context["allow_create"] = False
-        if request_user.is_authenticated:
-            if request_user.has_perm("fair_projects.add_project"):
-                context["allow_create"] = True
+        if request_user.is_authenticated and request_user.has_perm(
+            "fair_projects.add_project"
+        ):
+            context["allow_create"] = True
 
         return context
 
@@ -77,7 +78,7 @@ class ProjectModifyMixin(PermissionRequiredMixin):
         return reverse("fair_projects:detail", args=(self.object.number,))
 
     def get_context_data(self, **kwargs):
-        context = super(ProjectModifyMixin, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["student_formset"] = self.get_student_formset(self.request)
         return context
 
@@ -91,17 +92,17 @@ class ProjectModifyMixin(PermissionRequiredMixin):
             user_is_teacher = False
         else:
             user_is_teacher = True
-        finally:
-            return {"user_is_teacher": user_is_teacher}
+
+        return {"user_is_teacher": user_is_teacher}
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         fs = self.get_student_formset(request)
         if fs.is_valid():
             self.student_formset = fs
-            return super(ProjectModifyMixin, self).post(request, *args, **kwargs)
-        else:
-            return self.form_invalid(self.get_form(self.get_form_class()))
+            return super().post(request, *args, **kwargs)
+
+        return self.form_invalid(self.get_form(self.get_form_class()))
 
     @transaction.atomic
     def form_valid(self, form):
@@ -134,12 +135,12 @@ class ProjectCreate(ProjectModifyMixin, CreateView):
                 queryset=Project.objects.none(),
                 form_kwargs=self.get_formset_form_kwargs(request),
             )
-        else:
-            return StudentFormset(
-                prefix="Students",
-                queryset=Project.objects.none(),
-                form_kwargs=self.get_formset_form_kwargs(request),
-            )
+
+        return StudentFormset(
+            prefix="Students",
+            queryset=Project.objects.none(),
+            form_kwargs=self.get_formset_form_kwargs(request),
+        )
 
     def get_object(self, queryset=None):
         return None
@@ -158,12 +159,12 @@ class ProjectUpdate(ProjectModifyMixin, UpdateView):
                 instance=self.object,
                 form_kwargs=self.get_formset_form_kwargs(request),
             )
-        else:
-            return StudentFormset(
-                prefix="Students",
-                instance=self.object,
-                form_kwargs=self.get_formset_form_kwargs(request),
-            )
+
+        return StudentFormset(
+            prefix="Students",
+            instance=self.object,
+            form_kwargs=self.get_formset_form_kwargs(request),
+        )
 
 
 class ProjectDelete(PermissionRequiredMixin, DeleteView):
@@ -187,11 +188,11 @@ class ProjectDetail(DetailView):
 
         try:
             return queryset.get(number=self.kwargs["project_number"])
-        except ObjectDoesNotExist:
-            raise Http404()
+        except ObjectDoesNotExist as err:
+            raise Http404() from err
 
     def get_context_data(self, **kwargs):
-        context = super(ProjectDetail, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
 
         context["student_list"] = Student.objects.filter(project=self.object)
         judge_instances = JudgingInstance.objects.filter(project=self.object)
@@ -220,7 +221,7 @@ class ResultsIndex(PermissionRequiredMixin, AccessMixin, TemplateView):
     permission_denied_message = "This user has no access to the Results page."
 
     def get_context_data(self, **kwargs):
-        context = super(ResultsIndex, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
 
         context["project_list"] = get_projects_sorted_by_score()
         for project in context["project_list"]:
@@ -232,10 +233,7 @@ class ResultsIndex(PermissionRequiredMixin, AccessMixin, TemplateView):
 def delete_judge_assignments(request):
     _, deletion_dict = JudgingInstance.objects.all().delete()
     msg = "\n".join(
-        [
-            "Deleted {0} {1} objects".format(count, obj)
-            for obj, count in deletion_dict.items()
-        ]
+        [f"Deleted {count} {obj} objects" for obj, count in deletion_dict.items()]
     )
     messages.add_message(request, messages.INFO, msg)
     return HttpResponseRedirect("/admin/fair_projects/project/")
@@ -281,9 +279,8 @@ class SpecificUserRequiredMixin(AccessMixin):
 
     def get_required_user(self, *args, **kwargs):
         raise NotImplementedError(
-            "{0} is missing the implementation of the get_user_from_path() method.".format(
-                self.__class__.__name__
-            )
+            f"{self.__class__.__name__} is missing the implementation of the "
+            "get_user_from_path() method."
         )
 
     def dispatch(self, request, *args, **kwargs):
@@ -294,19 +291,15 @@ class SpecificUserRequiredMixin(AccessMixin):
             return self.handle_no_permission()
 
         if self.allow_superuser and current_user.is_superuser:
-            return super(SpecificUserRequiredMixin, self).dispatch(
-                request, *args, **kwargs
-            )
+            return super().dispatch(request, *args, **kwargs)
 
         if self.allow_staff and current_user.is_staff:
-            return super(SpecificUserRequiredMixin, self).dispatch(
-                request, *args, **kwargs
-            )
+            return super().dispatch(request, *args, **kwargs)
 
         if current_user != required_user:
             return self.handle_no_permission()
 
-        return super(SpecificUserRequiredMixin, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
 
 class JudgeIndex(UserPassesTestMixin, ListView):
@@ -345,7 +338,7 @@ class JudgeDetail(SpecificUserRequiredMixin, ListView):
         )
 
     def get_context_data(self, **kwargs):
-        context = super(JudgeDetail, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["judge"] = self.judge
         context["show_needs_attention"] = True
         return context
@@ -370,7 +363,7 @@ class JudgingInstanceMixin(SpecificUserRequiredMixin):
         return get_object_or_404(User, username=user_name)
 
     def get_context_data(self, **kwargs):
-        context = super(JudgingInstanceMixin, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
 
         context["judge"] = self.judge
         project = self.judging_instance.project
@@ -394,7 +387,7 @@ class JudgingInstanceMixin(SpecificUserRequiredMixin):
 
         """
         try:
-            return super(JudgingInstanceMixin, self).dispatch(request, *args, **kwargs)
+            return super().dispatch(request, *args, **kwargs)
         except JudgingInstance.DoesNotExist:
             messages.add_message(
                 request,
@@ -405,8 +398,8 @@ class JudgingInstanceMixin(SpecificUserRequiredMixin):
                 return redirect(
                     "fair_projects:judge_detail", judge_username=request.user.username
                 )
-            else:
-                return redirect("fair_projects:index")
+
+            return redirect("fair_projects:index")
 
 
 class JudgingInstanceDetail(JudgingInstanceMixin, DetailView):
@@ -417,7 +410,7 @@ class JudgingInstanceDetail(JudgingInstanceMixin, DetailView):
     default_template = "rubrics/default_type_view.html"
 
     def get_context_data(self, **kwargs):
-        context = super(JudgingInstanceDetail, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         template_dict = defaultdict(
             functools.partial(self.get_default_template, **kwargs)
         )
@@ -441,7 +434,7 @@ class JudgingInstanceDetail(JudgingInstanceMixin, DetailView):
 
 class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
     def get_context_data(self, **kwargs):
-        context = super(JudgingInstanceUpdate, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
 
         context["edit_mode"] = True
         context["post_url"] = reverse(
@@ -463,7 +456,7 @@ class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
         )
 
     def get_form_kwargs(self):
-        kwargs = super(JudgingInstanceUpdate, self).get_form_kwargs()
+        kwargs = super().get_form_kwargs()
         kwargs["instance"] = kwargs["instance"].response
         if "data" not in kwargs:
             kwargs["data"] = kwargs["instance"].get_form_data()
@@ -484,7 +477,7 @@ class JudgingInstanceUpdate(JudgingInstanceMixin, UpdateView):
             self.submit = True
         else:
             self.submit = False
-        return super(JudgingInstanceUpdate, self).post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
 
 class TeacherDetail(SpecificUserRequiredMixin, ListView):
@@ -507,14 +500,15 @@ class TeacherDetail(SpecificUserRequiredMixin, ListView):
         )
 
     def get_context_data(self, **kwargs):
-        context = super(TeacherDetail, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["teacher"] = self.teacher
 
         request_user = self.request.user
         context["allow_create"] = False
-        if request_user.is_authenticated:
-            if request_user.has_perm("fair_projects.add_project"):
-                context["allow_create"] = True
+        if request_user.is_authenticated and request_user.has_perm(
+            "fair_projects.add_project"
+        ):
+            context["allow_create"] = True
         return context
 
 
@@ -536,8 +530,8 @@ class StudentFeedbackForm(SpecificUserRequiredMixin, DetailView):
 
         try:
             return queryset.get(number=self.kwargs["project_number"])
-        except ObjectDoesNotExist:
-            raise Http404()
+        except ObjectDoesNotExist as err:
+            raise Http404() from err
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -584,7 +578,7 @@ class TeacherStudentsFeedbackForm(SpecificUserRequiredMixin, ListView):
         )
 
     def get_context_data(self, **kwargs):
-        context = super(TeacherStudentsFeedbackForm, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context["teacher"] = self.teacher
 
         context["feedback_list"] = [

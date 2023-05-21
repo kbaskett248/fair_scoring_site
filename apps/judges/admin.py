@@ -10,10 +10,7 @@ admin.site.register(JudgeEducation)
 # Provide the ability to register and display conditional inlines.
 def get_inline_instances(self, request, obj=None):
     inline_instances = []
-    if hasattr(self, "inlines"):
-        inlines = list(self.inlines)
-    else:
-        inlines = []
+    inlines = list(self.inlines) if hasattr(self, "inlines") else []
 
     for inline_class in self.conditional_inlines:
         if inline_class.condition(request, obj):

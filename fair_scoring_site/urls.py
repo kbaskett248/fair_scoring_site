@@ -19,16 +19,18 @@ from django.urls import include, re_path
 
 from apps.fair_projects.views import (
     delete_judge_assignments,
-    import_projects,
     judge_assignment,
     notify_teachers,
 )
 
-from . import admin  # This is needed to load the Awards admin
-from .views import *
+# We need to load the admin and signals here, otherwise they will not be loaded
+from . import (
+    admin,  # noqa: F401
+    signals,  # noqa: F401
+)
+from .views import home, profile
 
 urlpatterns = [
-    # re_path(r'^admin/fair_projects/project/import', import_projects, name='import_projects'),
     re_path(
         r"^admin/fair_projects/project/assign", judge_assignment, name="assign_projects"
     ),

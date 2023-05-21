@@ -54,8 +54,8 @@ class Question(ValidatedModel):
     rubric = models.ForeignKey("Rubric", on_delete=models.CASCADE)
     order = models.PositiveSmallIntegerField(null=True, blank=True)
     short_description = models.CharField(max_length=200)
-    long_description = models.TextField(null=True, blank=True)
-    help_text = models.TextField(null=True, blank=True)
+    long_description = models.TextField(blank=True)
+    help_text = models.TextField(blank=True)
     weight = models.DecimalField(max_digits=4, decimal_places=3, null=True)
     question_type = models.CharField(max_length=20, choices=TYPES)
     choice_sort = models.CharField(
@@ -68,7 +68,7 @@ class Question(ValidatedModel):
     def __init__(self, *args, **kwargs):
         # __init__ is run when objects are retrieved from the database
         # in addition to when they are created.
-        super(Question, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if not self.order:
             self.order = self._get_next_order()
 
@@ -80,12 +80,12 @@ class Question(ValidatedModel):
                 models.Max("order")
             )["order__max"]
         except Rubric.DoesNotExist:
-            return
+            return 1
 
         if max_order:
             return max_order + 1
-        else:
-            return 1
+
+        return 1
 
     def __str__(self):
         return f"{self.rubric.name}: {self.short_description}"
@@ -96,8 +96,8 @@ class Question(ValidatedModel):
     def num_choices_display(self):
         if self.show_choices():
             return self.choice_set.count()
-        else:
-            return "-"
+
+        return "-"
 
     def description(self):
         return self.long_description or self.short_description
@@ -125,8 +125,8 @@ class Question(ValidatedModel):
             self.__original_question_type in compatible_types
         ):
             return False
-        else:
-            return self.question_type_changed()
+
+        return self.question_type_changed()
 
     def validate_instance(
         self,
@@ -181,7 +181,8 @@ class Question(ValidatedModel):
 
         if not cls.is_allowed_type(question_type):
             raise ValidationError(
-                "Question_type was %(question_type)s. Should be one of %(available_types)s.",
+                "Question_type was %(question_type)s. "
+                "Should be one of %(available_types)s.",
                 code="invalid question type",
                 params={
                     "question_type": question_type,
@@ -203,7 +204,8 @@ class Question(ValidatedModel):
                     code="negative weight not allowed",
                     params={"weight": weight},
                 )
-            elif weight > 0 and question_type not in cls.CHOICE_TYPES:
+
+            if weight > 0 and question_type not in cls.CHOICE_TYPES:
                 raise ValidationError(
                     'Weight not allowed for questions of type "%(question_type)s"',
                     code="weight not allowed",
@@ -238,7 +240,7 @@ class Choice(ValidatedModel):
     def __init__(self, *args, **kwargs):
         # __init__ is run when objects are retrieved from the database
         # in addition to when they are created.
-        super(Choice, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if not self.order:
             self.order = self._get_next_order()
 
@@ -248,12 +250,12 @@ class Choice(ValidatedModel):
                 models.Max("order")
             )["order__max"]
         except Question.DoesNotExist:
-            return
+            return 1
 
         if max_order:
             return max_order + 1
-        else:
-            return 1
+
+        return 1
 
     def __str__(self):
         return self.description
@@ -287,8 +289,11 @@ class Choice(ValidatedModel):
 class RubricResponse(models.Model):
     rubric = models.ForeignKey("Rubric", on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"Response for {self.rubric}"
+
     def save(self, **kwargs):
-        super(RubricResponse, self).save(**kwargs)
+        super().save(**kwargs)
         if not self.questionresponse_set.exists():
             for ques in self.rubric.question_set.all():
                 QuestionResponse.objects.create(rubric_response=self, question=ques)
@@ -336,7 +341,11 @@ class RubricResponse(models.Model):
 
     def question_answer_iter(self):
         for resp in self.ordered_questionresponse_set.select_related("question").all():
-            yield resp.question.question_type, resp.question.description(), resp.response_external()
+            yield (
+                resp.question.question_type,
+                resp.question.description(),
+                resp.response_external(),
+            )
 
     def get_form_data(self):
         return {
@@ -355,8 +364,10 @@ class RubricResponse(models.Model):
 class QuestionResponse(models.Model):
     rubric_response = models.ForeignKey("RubricResponse", on_delete=models.CASCADE)
     question = models.ForeignKey("Question", on_delete=models.CASCADE)
-    choice_response = models.CharField(max_length=20, null=True, blank=True)
-    text_response = models.TextField(null=True, blank=True)
+    choice_response = models.CharField(  # noqa: DJ001
+        max_length=20, null=True, blank=True
+    )
+    text_response = models.TextField(null=True, blank=True)  # noqa: DJ001
     last_submitted = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
@@ -397,7 +408,7 @@ class QuestionResponse(models.Model):
         self.update_response(None)
 
 
-class QuestionType(object):
+class QuestionType:
     question = None
 
     @classmethod
@@ -407,7 +418,7 @@ class QuestionType(object):
         )
 
     def __init__(self, question: Question):
-        super(QuestionType, self).__init__()
+        super().__init__()
         self.question = question
 
     def show_choices(self):
@@ -436,7 +447,7 @@ class GenericQuestionType(QuestionType):
     pass
 
 
-class ChoiceSelectionMixin(object):
+class ChoiceSelectionMixin:
     def show_choices(self):
         return True
 
@@ -449,7 +460,7 @@ class SingleSelectionMixin(ChoiceSelectionMixin):
         resp = response.choice_response
         if resp is None:
             return None
-        choices = {key: value for key, value in self.question.choices()}
+        choices = dict(self.question.choices())
 
         return choices[resp]
 
@@ -460,8 +471,8 @@ class SingleSelectionMixin(ChoiceSelectionMixin):
         weight = float(self.question.weight)
         if weight == 0:
             return 0.0
-        else:
-            return self.unweighted_score(response) * weight
+
+        return self.unweighted_score(response) * weight
 
     def unweighted_score(self, response: QuestionResponse) -> float:
         try:
@@ -500,7 +511,7 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
         if not resp:
             return []
         resp = json.loads(resp)
-        choices = {key: value for key, value in self.question.choices()}
+        choices = dict(self.question.choices())
 
         return [choices[indv] for indv in resp]
 
@@ -514,10 +525,12 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
         weight = float(self.question.weight)
         if weight == 0:
             return 0.0
-        else:
-            return self.unweighted_score(response) * weight
+
+        return self.unweighted_score(response) * weight
 
     def unweighted_score(self, response: QuestionResponse) -> float:
+        if not response.text_response:
+            return 0.0
         responses = json.loads(response.text_response)
         value = 0.0
         for x in responses:
@@ -542,14 +555,10 @@ class LongTextQuestionType(QuestionType):
         response.text_response = value
 
     def score(self, response: QuestionResponse) -> float:
-        raise TypeError(
-            "Questions of type {0} cannot be scored".format(self.__class__.__name__)
-        )
+        raise TypeError(f"Questions of type {self.__class__.__name__} cannot be scored")
 
     def unweighted_score(self, response: QuestionResponse) -> float:
-        raise TypeError(
-            "Questions of type {0} cannot be scored".format(self.__class__.__name__)
-        )
+        raise TypeError(f"Questions of type {self.__class__.__name__} cannot be scored")
 
 
 QUESTION_TYPE_DICT = {

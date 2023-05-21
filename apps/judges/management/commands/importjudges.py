@@ -1,5 +1,5 @@
 import csv
-import os
+from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -9,11 +9,11 @@ from apps.judges.models import JudgeEducation, JudgeFairExperience, create_judge
 
 class DefaultDictReader(csv.DictReader):
     def __init__(self, *args, defaults=None, **kwargs):
-        super(DefaultDictReader, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.defaults = defaults
 
     def __next__(self):
-        result = super(DefaultDictReader, self).__next__()
+        result = super().__next__()
         if self.defaults:
             for key, value in self.defaults.items():
                 if key not in result:
@@ -49,22 +49,22 @@ class JudgeData:
     def username(self) -> str:
         if "Username" in self.row_data:
             return self.row_data["Username"]
-        else:
-            return (self.first_name[0] + self.last_name).lower()
+
+        return (self.first_name[0] + self.last_name).lower()
 
     @property
     def password(self):
         if "Password" in self.row_data:
             return self.row_data["Password"]
-        else:
-            return None
+
+        return None
 
     @property
     def phone(self) -> str:
         if "Phone" in self.row_data:
             return self.row_data["Phone"]
-        else:
-            return None
+
+        return None
 
     @property
     def education(self) -> JudgeEducation:
@@ -79,11 +79,11 @@ class JudgeData:
         )[0]
 
     def __str__(self) -> str:
-        return "{0} {1} ({2})".format(self.first_name, self.last_name, self.username)
+        return f"{self.first_name} {self.last_name} ({self.username})"
 
 
 class Command(BaseCommand):
-    help = "Imports a csv file of teachers"
+    help = "Imports a csv file of teachers"  # noqa: A003
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -96,9 +96,10 @@ class Command(BaseCommand):
             "--password",
             type=str,
             help=(
-                "Password to assign to each judge. This value will override any password stored "
-                "in the input file. If no password is specified here, and no password is stored "
-                "in the input file, then a random password is assigned."
+                "Password to assign to each judge. This value will override any "
+                "password stored in the input file. If no password is specified here, "
+                "and no password is stored in the input file, then a random password "
+                "is assigned."
             ),
         )
         parser.add_argument(
@@ -106,8 +107,8 @@ class Command(BaseCommand):
             "--email",
             type=str,
             help=(
-                "Email to assign to each judge. This will override any email stored in the input "
-                "file. Useful for setting up test judges."
+                "Email to assign to each judge. This will override any email stored "
+                "in the input file. Useful for setting up test judges."
             ),
         )
         parser.add_argument(
@@ -115,14 +116,14 @@ class Command(BaseCommand):
             "--phone",
             type=str,
             help=(
-                "Phone number to assign to each judge. This will override any email stored in the "
-                "input file. Useful for setting up test judges."
+                "Phone number to assign to each judge. This will override any email "
+                "stored in the input file. Useful for setting up test judges."
             ),
         )
 
     def handle(self, *args, **options):
-        tsv_path = options.pop("tsv_path")
-        if not os.path.isfile(tsv_path):
+        tsv_path = Path(options.pop("tsv_path"))
+        if not tsv_path.is_file():
             raise CommandError('File "%s" does not exist' % tsv_path)
 
         defaults = {}
@@ -136,10 +137,12 @@ class Command(BaseCommand):
         set_if_present("email", "Email")
         set_if_present("phone", "Phone")
 
-        with open(tsv_path, newline="") as tsv_file:
+        with tsv_path.open(newline="") as tsv_file:
             self.read_file(tsv_file, defaults=defaults)
 
-    def read_file(self, csv_file, defaults={}):
+    def read_file(self, csv_file, defaults=None):
+        if defaults is None:
+            defaults = {}
         dialect = csv.Sniffer().sniff(csv_file.read(1024))
         csv_file.seek(0)
         reader = DefaultDictReader(csv_file, dialect=dialect, defaults=defaults)

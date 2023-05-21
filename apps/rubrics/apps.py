@@ -6,4 +6,4 @@ class RubricsConfig(AppConfig):
 
     def ready(self) -> None:
         """Initializes signals for the app."""
-        from . import signals
+        from . import signals  # noqa: F401

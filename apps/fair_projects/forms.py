@@ -22,7 +22,7 @@ class StudentForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         user_is_teacher = kwargs.pop("user_is_teacher", False)
-        super(StudentForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if user_is_teacher:
             del self.fields["teacher"]

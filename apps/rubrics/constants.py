@@ -1,5 +1,5 @@
+from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Iterable, Tuple
 
 
 class FeedbackFormModuleType(str, Enum):
@@ -20,5 +20,5 @@ class FeedbackFormModuleType(str, Enum):
         return obj
 
     @classmethod
-    def choices(cls) -> Iterable[Tuple[Any, str]]:
+    def choices(cls) -> Iterable[tuple[str, str]]:
         return [(item.value, item.label) for item in cls]
