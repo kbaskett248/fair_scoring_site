@@ -216,7 +216,7 @@ class ProjectAwardFormset(BaseGenericInlineFormSet):
             for form in self.forms:
                 if not form.cleaned_data:
                     continue
-                elif form.cleaned_data["DELETE"]:
+                if form.cleaned_data["DELETE"]:
                     continue
                 self.clean_award(project_instance, form.cleaned_data["award"])
 
@@ -227,7 +227,7 @@ class ProjectAwardFormset(BaseGenericInlineFormSet):
                 code="invalid award for project",
                 params={"award": award},
             )
-        elif award.exclude_from_instance(instance):
+        if award.exclude_from_instance(instance):
             raise ValidationError(
                 _("Cannot assign %(award)s to this project due to excluded awards"),
                 code="excluded award for project",

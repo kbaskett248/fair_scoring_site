@@ -394,10 +394,8 @@ class SequentialAssignmentTests(AssignmentTests, HypTransTestCase):
 
         if num_projects < projects_per_judge or num_judges < judges_per_project:
             return num_projects * num_judges
-        else:
-            return max(
-                num_projects * judges_per_project, num_judges * projects_per_judge
-            )
+
+        return max(num_projects * judges_per_project, num_judges * projects_per_judge)
 
     @staticmethod
     def get_active_judge():

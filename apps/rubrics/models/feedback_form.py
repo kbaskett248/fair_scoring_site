@@ -378,8 +378,8 @@ class ChoiceResponseListFeedbackModule(FeedbackModule):
 
         if self.display_description:
             return [resp[1] for resp in responses]
-        else:
-            return [resp[0] for resp in responses]
+
+        return [resp[0] for resp in responses]
 
     def _expand_responses(
         self, question_responses: Iterable[QuestionResponse]

@@ -55,8 +55,8 @@ class StudentData:
     def gender(self):
         if self._gender[0].lower() == "m":
             return "M"
-        else:
-            return "F"
+
+        return "F"
 
     @property
     def teacher(self):
@@ -83,8 +83,8 @@ class ProjectData:
     def category(self):
         if "Category" in self.row_data:
             return self.row_data["Category"]
-        else:
-            return self.subcategory.category
+
+        return self.subcategory.category
 
     @property
     def subcategory(self):
@@ -235,13 +235,13 @@ def assign_new_projects(rubric, judge_set):
             ]
             if project in judge_projects:
                 continue
-            else:
-                # print('Assigning {0} to {1}'.format(project, judge))
-                create_judging_instance(judge, project, rubric)
-                num_judges -= 1
 
-                if num_judges <= 0:
-                    break
+            # print('Assigning {0} to {1}'.format(project, judge))
+            create_judging_instance(judge, project, rubric)
+            num_judges -= 1
+
+            if num_judges <= 0:
+                break
 
 
 def get_minimum_judges_per_project():
@@ -339,8 +339,8 @@ def median_value(queryset, term):
     values = queryset.values_list(term, flat=True).order_by(term)
     if count % 2 == 1:
         return values[int(round(count / 2))]
-    else:
-        return sum(values[count / 2 - 1 : count / 2 + 1]) / 2.0
+
+    return sum(values[count / 2 - 1 : count / 2 + 1]) / 2.0
 
 
 def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
@@ -368,7 +368,7 @@ def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
 
                 if num_to_reassign <= 0:
                     break
-                elif not possible_judges.filter(cat_q, div_q).exists():
+                if not possible_judges.filter(cat_q, div_q).exists():
                     break
 
 
@@ -387,8 +387,8 @@ def get_available_judge(project, rubric, possible_judges):
         ).exists():
             # The judge has already been assigned this project, so continue
             continue
-        else:
-            return judge
+
+        return judge
     return None
 
 
@@ -496,11 +496,10 @@ def get_question_feedback_dict(project: Project) -> dict:
     question_responses = groupby(
         question_responses, lambda x: x.question.short_description
     )
-    question_dict = {
+
+    return {
         key: FeedbackQuestion(list(responses)) for key, responses in question_responses
     }
-
-    return question_dict
 
 
 class FeedbackQuestion:
@@ -532,7 +531,8 @@ class FeedbackQuestion:
         for resp in list_to_combine:
             if not resp:
                 continue
-            elif hasattr(resp, "__iter__"):
+
+            if hasattr(resp, "__iter__"):
                 combined_set.update(resp)
             else:
                 combined_set.add(resp)

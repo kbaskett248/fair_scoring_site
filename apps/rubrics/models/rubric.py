@@ -80,12 +80,12 @@ class Question(ValidatedModel):
                 models.Max("order")
             )["order__max"]
         except Rubric.DoesNotExist:
-            return
+            return 1
 
         if max_order:
             return max_order + 1
-        else:
-            return 1
+
+        return 1
 
     def __str__(self):
         return f"{self.rubric.name}: {self.short_description}"
@@ -96,8 +96,8 @@ class Question(ValidatedModel):
     def num_choices_display(self):
         if self.show_choices():
             return self.choice_set.count()
-        else:
-            return "-"
+
+        return "-"
 
     def description(self):
         return self.long_description or self.short_description
@@ -125,8 +125,8 @@ class Question(ValidatedModel):
             self.__original_question_type in compatible_types
         ):
             return False
-        else:
-            return self.question_type_changed()
+
+        return self.question_type_changed()
 
     def validate_instance(
         self,
@@ -204,7 +204,8 @@ class Question(ValidatedModel):
                     code="negative weight not allowed",
                     params={"weight": weight},
                 )
-            elif weight > 0 and question_type not in cls.CHOICE_TYPES:
+
+            if weight > 0 and question_type not in cls.CHOICE_TYPES:
                 raise ValidationError(
                     'Weight not allowed for questions of type "%(question_type)s"',
                     code="weight not allowed",
@@ -249,12 +250,12 @@ class Choice(ValidatedModel):
                 models.Max("order")
             )["order__max"]
         except Question.DoesNotExist:
-            return
+            return 1
 
         if max_order:
             return max_order + 1
-        else:
-            return 1
+
+        return 1
 
     def __str__(self):
         return self.description
@@ -470,8 +471,8 @@ class SingleSelectionMixin(ChoiceSelectionMixin):
         weight = float(self.question.weight)
         if weight == 0:
             return 0.0
-        else:
-            return self.unweighted_score(response) * weight
+
+        return self.unweighted_score(response) * weight
 
     def unweighted_score(self, response: QuestionResponse) -> float:
         try:
@@ -524,8 +525,8 @@ class MultiSelectQuestionType(ChoiceSelectionMixin, QuestionType):
         weight = float(self.question.weight)
         if weight == 0:
             return 0.0
-        else:
-            return self.unweighted_score(response) * weight
+
+        return self.unweighted_score(response) * weight
 
     def unweighted_score(self, response: QuestionResponse) -> float:
         if not response.text_response:

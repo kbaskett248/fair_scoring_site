@@ -69,7 +69,7 @@ def clear_responses_for_question(
     """
     if created:
         return
-    elif instance.question_type_changed_compatibility():
+    if instance.question_type_changed_compatibility():
         delete_related_responses(instance.id)
 
 

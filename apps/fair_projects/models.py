@@ -86,6 +86,8 @@ def create_teacher(
         else:
             return teacher
 
+    return None
+
 
 def create_teachers_group(
     name: str = "Teachers",
@@ -199,7 +201,7 @@ def create_student_from_text(
 
     if not first_name:
         write_output("No input data")
-        return
+        return None
 
     ethnicity, _ = Ethnicity.objects.get_or_create(short_description=eth_name)
     teacher = Teacher.objects.get(user__last_name=teacher_name)
@@ -269,8 +271,8 @@ class Project(models.Model):
         max_proj_num = get_max(Project.objects.all())
         if max_proj_num:
             return str(int(max_proj_num) + 1001 - (int(max_proj_num) % 1000))
-        else:
-            return str(1001)
+
+        return str(1001)
 
     def average_score(self) -> float:
         _sum = 0
@@ -282,8 +284,8 @@ class Project(models.Model):
 
         if _count == 0:
             return 0
-        else:
-            return _sum / _count
+
+        return _sum / _count
 
     def num_scores(self) -> int:
         return len([ji for ji in self.judginginstance_set.all() if ji.has_response()])

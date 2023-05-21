@@ -46,8 +46,8 @@ class AwardRuleForm(forms.ModelForm):
     def get_possible_traits(cls):
         if cls.traits:
             return build_trait_list(cls.traits)
-        else:
-            return None
+
+        return None
 
     @staticmethod
     def get_validator_name(trait: str) -> str:
@@ -160,8 +160,8 @@ class TraitListFilter(admin.SimpleListFilter):
         traits = self.award_rule_form_class.get_possible_traits()
         if traits:
             return filter(lambda x: x[0] is not None, traits)
-        else:
-            return []
+
+        return []
 
     def queryset(self, request, queryset):
         """
@@ -176,3 +176,5 @@ class TraitListFilter(admin.SimpleListFilter):
                 return queryset.filter(award__awardrule__trait=self.value())
             except FieldError:
                 return queryset.filter(awardrule__trait=self.value())
+
+        return None

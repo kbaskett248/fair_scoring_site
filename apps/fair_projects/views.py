@@ -100,8 +100,8 @@ class ProjectModifyMixin(PermissionRequiredMixin):
         if fs.is_valid():
             self.student_formset = fs
             return super().post(request, *args, **kwargs)
-        else:
-            return self.form_invalid(self.get_form(self.get_form_class()))
+
+        return self.form_invalid(self.get_form(self.get_form_class()))
 
     @transaction.atomic
     def form_valid(self, form):
@@ -134,12 +134,12 @@ class ProjectCreate(ProjectModifyMixin, CreateView):
                 queryset=Project.objects.none(),
                 form_kwargs=self.get_formset_form_kwargs(request),
             )
-        else:
-            return StudentFormset(
-                prefix="Students",
-                queryset=Project.objects.none(),
-                form_kwargs=self.get_formset_form_kwargs(request),
-            )
+
+        return StudentFormset(
+            prefix="Students",
+            queryset=Project.objects.none(),
+            form_kwargs=self.get_formset_form_kwargs(request),
+        )
 
     def get_object(self, queryset=None):
         return None
@@ -158,12 +158,12 @@ class ProjectUpdate(ProjectModifyMixin, UpdateView):
                 instance=self.object,
                 form_kwargs=self.get_formset_form_kwargs(request),
             )
-        else:
-            return StudentFormset(
-                prefix="Students",
-                instance=self.object,
-                form_kwargs=self.get_formset_form_kwargs(request),
-            )
+
+        return StudentFormset(
+            prefix="Students",
+            instance=self.object,
+            form_kwargs=self.get_formset_form_kwargs(request),
+        )
 
 
 class ProjectDelete(PermissionRequiredMixin, DeleteView):
@@ -397,8 +397,8 @@ class JudgingInstanceMixin(SpecificUserRequiredMixin):
                 return redirect(
                     "fair_projects:judge_detail", judge_username=request.user.username
                 )
-            else:
-                return redirect("fair_projects:index")
+
+            return redirect("fair_projects:index")
 
 
 class JudgingInstanceDetail(JudgingInstanceMixin, DetailView):

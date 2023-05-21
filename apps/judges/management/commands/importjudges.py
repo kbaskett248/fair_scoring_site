@@ -49,22 +49,22 @@ class JudgeData:
     def username(self) -> str:
         if "Username" in self.row_data:
             return self.row_data["Username"]
-        else:
-            return (self.first_name[0] + self.last_name).lower()
+
+        return (self.first_name[0] + self.last_name).lower()
 
     @property
     def password(self):
         if "Password" in self.row_data:
             return self.row_data["Password"]
-        else:
-            return None
+
+        return None
 
     @property
     def phone(self) -> str:
         if "Phone" in self.row_data:
             return self.row_data["Phone"]
-        else:
-            return None
+
+        return None
 
     @property
     def education(self) -> JudgeEducation:

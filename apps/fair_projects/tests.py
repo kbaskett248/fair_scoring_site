@@ -529,6 +529,8 @@ class TestJudgeAssignmentAndProjectScoring(TestCase):
                 if not ji.has_response():
                     return ji.response
 
+            return None
+
         project = project_list[1]
         answer_rubric_response(get_unanswered_response(project))
 

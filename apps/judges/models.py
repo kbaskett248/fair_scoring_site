@@ -177,3 +177,5 @@ def create_judge(
             return judge
         else:
             return judge
+
+    return None
