@@ -1,5 +1,5 @@
 import csv
-import os
+from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -122,8 +122,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        tsv_path = options.pop("tsv_path")
-        if not os.path.isfile(tsv_path):
+        tsv_path = Path(options.pop("tsv_path"))
+        if not tsv_path.is_file():
             raise CommandError('File "%s" does not exist' % tsv_path)
 
         defaults = {}
@@ -137,7 +137,7 @@ class Command(BaseCommand):
         set_if_present("email", "Email")
         set_if_present("phone", "Phone")
 
-        with open(tsv_path, newline="") as tsv_file:
+        with tsv_path.open(newline="") as tsv_file:
             self.read_file(tsv_file, defaults=defaults)
 
     def read_file(self, csv_file, defaults=None):

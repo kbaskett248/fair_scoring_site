@@ -1,5 +1,5 @@
 import csv
-import os
+from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -13,11 +13,11 @@ class Command(BaseCommand):
         parser.add_argument("csv_path", type=str)
 
     def handle(self, *args, **options):
-        csv_path = options["csv_path"]
-        if not os.path.isfile(csv_path):
+        csv_path = Path(options["csv_path"])
+        if not csv_path.is_file():
             raise CommandError('File "%s" does not exist')
 
-        with open(csv_path, newline="") as csv_file:
+        with csv_path.open(newline="") as csv_file:
             self.read_file(csv_file)
 
     def read_file(self, csv_file):
