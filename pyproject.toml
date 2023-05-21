@@ -35,7 +35,7 @@ DJANGO_SETTINGS_MODULE = "fair_scoring_site.settings_test"
 
 [tool.ruff]
 select = ["E", "F", "I", "N", "UP", "YTT", "S", "BLE", "FBT", "B", "A", "COM", "C4", "DTZ", "T10", "DJ", "ISC", "ICN", "G2", "INP",
-          "PIE", "T20", "RET"
+          "PIE", "T20", "RET", "SIM"
           ]
 extend-exclude = [
     "migrations"

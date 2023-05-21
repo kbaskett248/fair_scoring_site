@@ -1,3 +1,5 @@
+import contextlib
+
 import django.contrib.auth.admin
 from django import forms
 from django.contrib import admin, messages
@@ -49,15 +51,12 @@ class ProjectResource(resources.ModelResource):
         instance = None
 
         if number:
-            try:
+            with contextlib.suppress(Project.DoesNotExist):
                 instance = self.get_queryset().get(number=number)
-            except Project.DoesNotExist:
-                pass
+
         elif title:
-            try:
+            with contextlib.suppress(Project.DoesNotExist):
                 instance = self.get_queryset().get(title=title)
-            except Project.DoesNotExist:
-                pass
 
         return instance
 
@@ -94,10 +93,8 @@ class StudentResource(resources.ModelResource):
 
         def clean(self, value, row=None, **kwargs):
             result = None
-            try:
+            with contextlib.suppress(IndexError):
                 result = super().clean(value.split()[1], row, **kwargs)
-            except IndexError:
-                pass
 
             if result:
                 return result

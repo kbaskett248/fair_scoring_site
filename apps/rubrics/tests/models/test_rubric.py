@@ -135,9 +135,9 @@ class QuestionTests(HypTestCase):
         question.question_type = quest2[0]
         self.assertEqual(question.question_type, quest2[0])
 
-        if quest1[0] == quest2[0]:
-            self.assertFalse(question.question_type_changed_compatibility())
-        elif (quest1[0] in compatible_types) and (quest2[0] in compatible_types):
+        if (quest1[0] == quest2[0]) or (
+            (quest1[0] in compatible_types) and (quest2[0] in compatible_types)
+        ):
             self.assertFalse(question.question_type_changed_compatibility())
         else:
             self.assertTrue(question.question_type_changed_compatibility())

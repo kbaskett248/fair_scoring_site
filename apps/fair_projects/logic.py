@@ -110,11 +110,7 @@ class ProjectData:
                 yield StudentData(**student_data)
 
     def is_student_field(self, key):
-        for label in self.STUDENT_FIELDS:
-            if label in key.lower():
-                return True
-        else:
-            return False
+        return any(label in key.lower() for label in self.STUDENT_FIELDS)
 
     @staticmethod
     def get_student_number_from_key(key):
@@ -359,17 +355,16 @@ def balance_judge(judge, rubric, possible_judges, lower_bound, quotients):
     )
     for ji in instances:
         avail_judge = get_available_judge(ji.project, rubric, possible_judges)
-        if avail_judge:
-            if reassign_project(ji, avail_judge):
-                num_to_reassign -= 1
+        if avail_judge and reassign_project(ji, avail_judge):
+            num_to_reassign -= 1
 
-                # for j in possible_judges.filter(cat_Q, div_Q):
-                # print(j, j.num_projects)
+            # for j in possible_judges.filter(cat_Q, div_Q):
+            # print(j, j.num_projects)
 
-                if num_to_reassign <= 0:
-                    break
-                if not possible_judges.filter(cat_q, div_q).exists():
-                    break
+            if num_to_reassign <= 0:
+                break
+            if not possible_judges.filter(cat_q, div_q).exists():
+                break
 
 
 def get_instances_that_can_be_reassigned(judge, rubric):

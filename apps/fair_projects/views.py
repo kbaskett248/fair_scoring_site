@@ -52,9 +52,10 @@ class ProjectIndex(ListView):
 
         request_user = self.request.user
         context["allow_create"] = False
-        if request_user.is_authenticated:
-            if request_user.has_perm("fair_projects.add_project"):
-                context["allow_create"] = True
+        if request_user.is_authenticated and request_user.has_perm(
+            "fair_projects.add_project"
+        ):
+            context["allow_create"] = True
 
         return context
 
@@ -504,9 +505,10 @@ class TeacherDetail(SpecificUserRequiredMixin, ListView):
 
         request_user = self.request.user
         context["allow_create"] = False
-        if request_user.is_authenticated:
-            if request_user.has_perm("fair_projects.add_project"):
-                context["allow_create"] = True
+        if request_user.is_authenticated and request_user.has_perm(
+            "fair_projects.add_project"
+        ):
+            context["allow_create"] = True
         return context
 
 

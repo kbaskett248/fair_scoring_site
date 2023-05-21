@@ -141,7 +141,7 @@ class FeedbackModule(ValidatedModel):
 
     def _save_child_object(self) -> Optional["FeedbackModule"]:
         for subclass in type(self).__subclasses__():
-            if subclass.MODULE_TYPE == self.module_type:
+            if self.module_type == subclass.MODULE_TYPE:
                 return subclass.objects.create(**self._to_child_field_dict())
         raise ValidationError(f"No child model created for {self}")
 

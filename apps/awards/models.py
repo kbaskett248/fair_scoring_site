@@ -48,11 +48,7 @@ class Award(models.Model):
         return False
 
     def instance_passes_all_rules(self, instance):
-        for rule in self.awardrule_set.all():
-            if not rule.allow_instance(instance):
-                return False
-
-        return True
+        return all(rule.allow_instance(instance) for rule in self.awardrule_set.all())
 
     def exclude_from_instance(self, instance):
         return set(instance.get_awards()) & set(self.exclude_awards.all())
