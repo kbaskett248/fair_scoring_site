@@ -13,7 +13,7 @@ django-constance = "^2.9"
 django-import-export = "^3.0"
 django-picklefield = "^3.1"
 django-widget-tweaks = "^1.4"
-hypothesis = "^6.75"
+hypothesis = "^6.76"
 coverage = "^7.2"
 mysqlclient = { version = "^2.1", optional = true }
 mistletoe = "^1.0.1"
